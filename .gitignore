@@ -1,0 +1,6 @@
+imgs/
+*.o
+*.dot
+*.txt
+*.html
+.DS_Store
