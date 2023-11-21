@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
+#include <math.h>
 
 #include "Differentiator.h"
 #include "../Common/StringFuncs.h"
@@ -26,13 +27,14 @@ static const char* DiffReadNodeValuePrefixFormat(DiffValue* value, DiffValueType
 static int GetOperator(const char* string);
 static const char* GetOperatorName(const char operation);
 
-
 static        void DiffGraphicDump   (const DiffTreeNodeType* node, FILE* outDotFile);
 static        void DotFileCreateNodes(const DiffTreeNodeType* node, FILE* outDotFile);
 static inline void CreateImgInLogFile(const size_t imgIndex, bool openImg);
 static inline void DotFileBegin(FILE* outDotFile);
 static inline void DotFileEnd(FILE* outDotFile);
-                            
+
+static double DiffCalculate(const DiffTreeNodeType* node);
+static double DiffCalculateUsingNodeOperation(const char operation, double firstVal, double secondVal);
 DiffErrors DiffCtor(DiffTreeType* diff, DiffTreeNodeType* root)
 {
     assert(diff);
@@ -414,4 +416,44 @@ void DiffDump(const DiffTreeType* tree, const char* fileName,
     DiffTextDump(tree, fileName, funcName, line);
 
     DiffGraphicDump(tree);
+}
+
+double DiffCalculate(const DiffTreeType* tree)
+{
+    assert(tree);
+
+    return DiffCalculate(tree->root);
+}
+
+static double DiffCalculate(const DiffTreeNodeType* node)
+{
+    assert(node);
+
+    if (node->valueType == DiffValueType::VALUE)
+        return node->value.value; //TODO: добавить еще переменные 
+
+    double firstVal  = DiffCalculate(node->left);
+    double secondVal = DiffCalculate(node->right);
+    
+    return DiffCalculateUsingNodeOperation(node->value.operation, firstVal, secondVal);
+}
+
+static double DiffCalculateUsingNodeOperation(const char operation, double firstVal, double secondVal)
+{
+    switch(operation)
+    {
+        case '+':
+            return firstVal + secondVal;
+        case '-':
+            return firstVal - secondVal;
+        case '*':
+            return firstVal * secondVal;
+        case '/':
+            return firstVal / secondVal;
+        
+        default:
+            return NAN;
+    }
+
+    return NAN;
 }

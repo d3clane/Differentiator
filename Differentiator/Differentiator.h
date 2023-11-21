@@ -42,7 +42,8 @@ enum class DiffErrors
 DiffErrors DiffCtor(DiffTreeType* diff, DiffTreeNodeType* root = nullptr);
 DiffErrors DiffDtor(DiffTreeType* diff);
 
-DiffErrors DiffPrintPrefixFormat(const DiffTreeType* diff, FILE* outStream = stdout);
+DiffErrors DiffPrintPrefixFormat      (const DiffTreeType* diff, FILE* outStream = stdout);
+DiffErrors DiffPrintEquationLikeFormat(const DiffTreeType* diff, FILE* outStream = stdout);
 
 DiffErrors DiffReadPrefixFormat(DiffTreeType* diff, FILE* inStream = stdin);
 
@@ -58,9 +59,13 @@ void DiffDump(const DiffTreeType* tree, const char* fileName,
                                         const char* funcName,
                                         const int   line);
 
+double DiffCalculate(const DiffTreeType* tree);
+
+/*
 #define TREE_ERRORS_LOG_ERROR(err) TreeErrorsLogError(err, __FILE__, __func__, __LINE__);
 void TreeErrorsLogError(const DiffErrors err, const char* fileName,
                                               const char* funcName,
                                               const int   line);
+*/
 
 #endif // DIFFERENTIATOR_H
