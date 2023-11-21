@@ -44,7 +44,8 @@ DiffErrors DiffDtor(DiffTreeType* diff);
 
 DiffErrors DiffPrintPrefixFormat     (const DiffTreeType* diff, FILE* outStream = stdout);
 DiffErrors DiffPrintEquationFormat   (const DiffTreeType* diff, FILE* outStream = stdout);
-DiffErrors DiffPrintEquationFormatTex(const DiffTreeType* diff, FILE* outStream = stdout);
+DiffErrors DiffPrintEquationFormatTex(const DiffTreeType* diff, FILE* outStream = stdout, 
+                                                                const char* string = nullptr);
 
 DiffErrors DiffReadPrefixFormat(DiffTreeType* diff, FILE* inStream = stdin);
 

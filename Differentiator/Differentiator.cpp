@@ -17,9 +17,10 @@ static DiffTreeNodeType* DiffTreeNodeCtor(DiffValue value, DiffValueType valueTy
 static void DiffNodeSetEdges(DiffTreeNodeType* node, DiffTreeNodeType* left, 
                                                      DiffTreeNodeType* right);
  
-static DiffErrors DiffPrintPrefixFormat      (const DiffTreeNodeType* node, FILE* outStream);
-static DiffErrors DiffPrintEquationFormat(const DiffTreeNodeType* node, FILE* outStream);
-static void DiffNodePrintValue(const DiffTreeNodeType* node, FILE* outStream);
+static DiffErrors DiffPrintPrefixFormat     (const DiffTreeNodeType* node, FILE* outStream);
+static DiffErrors DiffPrintEquationFormat   (const DiffTreeNodeType* node, FILE* outStream);
+static DiffErrors DiffPrintEquationFormatTex(const DiffTreeNodeType* node, FILE* outStream);
+static void       DiffNodePrintValue        (const DiffTreeNodeType* node, FILE* outStream);
 
 static DiffTreeNodeType* DiffReadPrefixFormat(const char* const string, const char** stringEndPtr);
 
@@ -156,7 +157,7 @@ static DiffErrors DiffPrintEquationFormat(const DiffTreeNodeType* node, FILE* ou
 
     bool haveToPutLeftBrackets = (node->left->valueType == DiffValueType::OPERATION) &&
                                   HaveToPutBrackets(node, node->left);
-
+    
     if (haveToPutLeftBrackets) PRINT(outStream, "(");
     err = DiffPrintEquationFormat(node->left, outStream);
     if (haveToPutLeftBrackets) PRINT(outStream, ")");
@@ -205,6 +206,79 @@ static void DiffNodePrintValue(const DiffTreeNodeType* node, FILE* outStream)
 }
 
 #undef PRINT
+
+DiffErrors DiffPrintEquationFormatTex(const DiffTreeType* diff, FILE* outStream,
+                                                                const char* string)
+{
+    assert(diff);
+    assert(outStream);
+
+    static const size_t            numberOfRoflStrings  = 7;
+    static const char* roflStrings[numberOfRoflStrings] = 
+    {
+        "Очевидно, что",
+        "Несложно заметить, что", 
+        "Любопытный читатель может показать, что",
+        "Не буду утруждать себя доказательством, что",
+        "Я нашел удивительное решение, но здесь маловато места, чтобы его поместить, ",
+        "Без комментариев, ",
+        "Это же не рокет саенс, поэтому легко видеть, что",
+    };
+
+    srand(time(NULL));
+
+    if (string == nullptr)
+        fprintf(outStream, "%s\n", roflStrings[rand() % numberOfRoflStrings]);
+    else
+        fprintf(outStream, "%s\n", string);
+    
+    fprintf(outStream, "$");
+
+    DiffErrors err = DiffPrintEquationFormatTex(diff->root, outStream);
+
+    fprintf(outStream, "$\n");
+
+    return err;
+}
+
+static DiffErrors DiffPrintEquationFormatTex(const DiffTreeNodeType* node, FILE* outStream)
+{
+    assert(node);
+    assert(outStream);
+
+    if (node->left == nullptr /* || node->right == nullptr */)
+    {
+        DiffNodePrintValue(node, outStream);
+
+        return DiffErrors::NO_ERR;
+    }
+
+    DiffErrors err = DiffErrors::NO_ERR;
+
+    bool isDivideOperation     = (node->valueType       == DiffValueType::OPERATION) &&
+                                 (node->value.operation == '/');
+    bool haveToPutLeftBrackets = (node->left->valueType == DiffValueType::OPERATION) &&
+                                 (HaveToPutBrackets(node, node->left));
+
+    if (isDivideOperation)                           fprintf(outStream, "\\frac{");
+    if (!isDivideOperation && haveToPutLeftBrackets) fprintf(outStream, "(");
+    err = DiffPrintEquationFormatTex(node->left, outStream);
+    if (!isDivideOperation && haveToPutLeftBrackets) fprintf(outStream, ")");
+    if (isDivideOperation)                           fprintf(outStream, "}");
+
+    if (!isDivideOperation) DiffNodePrintValue(node, outStream);
+    
+    bool haveToPutRightBrackets = (node->right->valueType == DiffValueType::OPERATION) &&
+                                   (HaveToPutBrackets(node, node->right));
+    
+    if (isDivideOperation)                            fprintf(outStream, "{");
+    if (!isDivideOperation && haveToPutRightBrackets) fprintf(outStream, "(");
+    err = DiffPrintEquationFormatTex(node->right, outStream);
+    if (!isDivideOperation && haveToPutRightBrackets) fprintf(outStream, ")");
+    if (isDivideOperation)                            fprintf(outStream, "}");
+
+    return err;   
+}
 
 DiffErrors DiffReadPrefixFormat(DiffTreeType* diff, FILE* inStream)
 {
@@ -470,8 +544,8 @@ static void DiffGraphicDump(const DiffTreeNodeType* node, FILE* outDotFile)
 }
 
 void DiffTextDump(const DiffTreeType* tree, const char* fileName, 
-                                        const char* funcName,
-                                        const int   line)
+                                            const char* funcName,
+                                            const int   line)
 {
     assert(tree);
     assert(fileName);
@@ -487,8 +561,8 @@ void DiffTextDump(const DiffTreeType* tree, const char* fileName,
 }
 
 void DiffDump(const DiffTreeType* tree, const char* fileName,
-                                    const char* funcName,
-                                    const int   line)
+                                        const char* funcName,
+                                        const int   line)
 {
     assert(tree);
     assert(fileName);
