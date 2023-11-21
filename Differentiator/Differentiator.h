@@ -42,8 +42,9 @@ enum class DiffErrors
 DiffErrors DiffCtor(DiffTreeType* diff, DiffTreeNodeType* root = nullptr);
 DiffErrors DiffDtor(DiffTreeType* diff);
 
-DiffErrors DiffPrintPrefixFormat      (const DiffTreeType* diff, FILE* outStream = stdout);
-DiffErrors DiffPrintEquationLikeFormat(const DiffTreeType* diff, FILE* outStream = stdout);
+DiffErrors DiffPrintPrefixFormat     (const DiffTreeType* diff, FILE* outStream = stdout);
+DiffErrors DiffPrintEquationFormat   (const DiffTreeType* diff, FILE* outStream = stdout);
+DiffErrors DiffPrintEquationFormatTex(const DiffTreeType* diff, FILE* outStream = stdout);
 
 DiffErrors DiffReadPrefixFormat(DiffTreeType* diff, FILE* inStream = stdin);
 

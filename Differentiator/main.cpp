@@ -12,8 +12,7 @@ int main(const int argc, const char* argv[])
     DiffReadPrefixFormat(&diffTree, inStream);
 
     DiffPrintPrefixFormat      (&diffTree);
-    DiffPrintEquationLikeFormat(&diffTree);
-    
+    DiffPrintEquationFormat(&diffTree);
     DiffGraphicDump(&diffTree, false);
 
     printf("%lf", DiffCalculate(&diffTree));

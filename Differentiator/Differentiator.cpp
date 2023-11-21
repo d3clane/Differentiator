@@ -18,7 +18,7 @@ static void DiffNodeSetEdges(DiffTreeNodeType* node, DiffTreeNodeType* left,
                                                      DiffTreeNodeType* right);
  
 static DiffErrors DiffPrintPrefixFormat      (const DiffTreeNodeType* node, FILE* outStream);
-static DiffErrors DiffPrintEquationLikeFormat(const DiffTreeNodeType* node, FILE* outStream);
+static DiffErrors DiffPrintEquationFormat(const DiffTreeNodeType* node, FILE* outStream);
 static void DiffNodePrintValue(const DiffTreeNodeType* node, FILE* outStream);
 
 static DiffTreeNodeType* DiffReadPrefixFormat(const char* const string, const char** stringEndPtr);
@@ -127,14 +127,14 @@ static DiffErrors DiffPrintPrefixFormat(const DiffTreeNodeType* node, FILE* outS
     return err;
 }
 
-DiffErrors DiffPrintEquationLikeFormat(const DiffTreeType* diff, FILE* outStream)
+DiffErrors DiffPrintEquationFormat(const DiffTreeType* diff, FILE* outStream)
 {
     assert(diff);
     assert(outStream);
 
     LOG_BEGIN();
 
-    DiffErrors err = DiffPrintEquationLikeFormat(diff->root, outStream);
+    DiffErrors err = DiffPrintEquationFormat(diff->root, outStream);
 
     PRINT(outStream, "\n");
 
@@ -143,7 +143,7 @@ DiffErrors DiffPrintEquationLikeFormat(const DiffTreeType* diff, FILE* outStream
     return err; 
 }
 
-static DiffErrors DiffPrintEquationLikeFormat(const DiffTreeNodeType* node, FILE* outStream)
+static DiffErrors DiffPrintEquationFormat(const DiffTreeNodeType* node, FILE* outStream)
 {
     if (node->left == nullptr /* || node->right == nullptr */)
     {
@@ -151,13 +151,14 @@ static DiffErrors DiffPrintEquationLikeFormat(const DiffTreeNodeType* node, FILE
 
         return DiffErrors::NO_ERR;
     }
+
     DiffErrors err = DiffErrors::NO_ERR;
 
     bool haveToPutLeftBrackets = (node->left->valueType == DiffValueType::OPERATION) &&
                                   HaveToPutBrackets(node, node->left);
 
     if (haveToPutLeftBrackets) PRINT(outStream, "(");
-    err = DiffPrintEquationLikeFormat(node->left, outStream);
+    err = DiffPrintEquationFormat(node->left, outStream);
     if (haveToPutLeftBrackets) PRINT(outStream, ")");
 
     DiffNodePrintValue(node, outStream);
@@ -165,7 +166,7 @@ static DiffErrors DiffPrintEquationLikeFormat(const DiffTreeNodeType* node, FILE
     bool haveToPutRightBrackets = (node->right->valueType == DiffValueType::OPERATION) &&
                                    HaveToPutBrackets(node, node->right);
     if (haveToPutRightBrackets) PRINT(outStream, "(");
-    err = DiffPrintEquationLikeFormat(node->right, outStream);
+    err = DiffPrintEquationFormat(node->right, outStream);
     if (haveToPutRightBrackets) PRINT(outStream, ")");
 
     return err;
