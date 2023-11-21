@@ -26,7 +26,8 @@ static DiffTreeNodeType* DiffReadPrefixFormat(const char* const string, const ch
 static const char* DiffReadNodeValuePrefixFormat(DiffValue* value, DiffValueType* valueType, 
                                                  const char* stringPtr);
 
-static int GetOperator(const char* string);
+static int  GetOperator(const char* string);
+static bool HaveToPutBrackets(const DiffTreeNodeType* parent, const DiffTreeNodeType* son);
 static const char* GetOperatorName(const char operation);
 
 static        void DiffGraphicDump   (const DiffTreeNodeType* node, FILE* outDotFile);
@@ -152,22 +153,44 @@ static DiffErrors DiffPrintEquationLikeFormat(const DiffTreeNodeType* node, FILE
     }
     DiffErrors err = DiffErrors::NO_ERR;
 
+    bool haveToPutLeftBrackets = (node->left->valueType == DiffValueType::OPERATION) &&
+                                  HaveToPutBrackets(node, node->left);
 
-    if (node->left->valueType == DiffValueType::OPERATION)
-        PRINT(outStream, "(");
+    if (haveToPutLeftBrackets) PRINT(outStream, "(");
     err = DiffPrintEquationLikeFormat(node->left, outStream);
-    if (node->left->valueType == DiffValueType::OPERATION)
-        PRINT(outStream, ")");
+    if (haveToPutLeftBrackets) PRINT(outStream, ")");
 
     DiffNodePrintValue(node, outStream);
     
-    if (node->right->valueType == DiffValueType::OPERATION)
-        PRINT(outStream, "(");
+    bool haveToPutRightBrackets = (node->right->valueType == DiffValueType::OPERATION) &&
+                                   HaveToPutBrackets(node, node->right);
+    if (haveToPutRightBrackets) PRINT(outStream, "(");
     err = DiffPrintEquationLikeFormat(node->right, outStream);
-    if (node->right->valueType == DiffValueType::OPERATION)
-        PRINT(outStream, ")");
+    if (haveToPutRightBrackets) PRINT(outStream, ")");
 
     return err;
+}
+
+static bool HaveToPutBrackets(const DiffTreeNodeType* parent, const DiffTreeNodeType* son)
+{
+    assert(parent);
+    assert(parent->valueType == DiffValueType::OPERATION);
+    assert(son->valueType    == DiffValueType::OPERATION);
+
+    char parentOperation = parent->value.operation;
+    char sonOperation    = son->value.operation;
+
+    if ((sonOperation    == '*' || sonOperation    == '/') &&
+        (parentOperation == '-' || parentOperation == '*'))
+        return false;
+
+    if (sonOperation == '+' && parentOperation == '+')
+        return false;
+    
+    if (sonOperation == '*' && parentOperation == '*')
+        return false;
+
+    return true;
 }
 
 static void DiffNodePrintValue(const DiffTreeNodeType* node, FILE* outStream)
