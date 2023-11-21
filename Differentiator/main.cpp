@@ -11,8 +11,9 @@ int main(const int argc, const char* argv[])
     FILE* inStream = fopen("input.txt", "r");
     DiffReadPrefixFormat(&diffTree, inStream);
 
-    DiffPrintPrefixFormat(&diffTree);
-
+    DiffPrintPrefixFormat      (&diffTree);
+    DiffPrintEquationLikeFormat(&diffTree);
+    
     DiffGraphicDump(&diffTree, false);
 
     printf("%lf", DiffCalculate(&diffTree));

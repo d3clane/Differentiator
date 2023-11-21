@@ -17,7 +17,9 @@ static DiffTreeNodeType* DiffTreeNodeCtor(DiffValue value, DiffValueType valueTy
 static void DiffNodeSetEdges(DiffTreeNodeType* node, DiffTreeNodeType* left, 
                                                      DiffTreeNodeType* right);
  
-static DiffErrors DiffPrintPrefixFormat(const DiffTreeNodeType* node, FILE* outStream);
+static DiffErrors DiffPrintPrefixFormat      (const DiffTreeNodeType* node, FILE* outStream);
+static DiffErrors DiffPrintEquationLikeFormat(const DiffTreeNodeType* node, FILE* outStream);
+static void DiffNodePrintValue(const DiffTreeNodeType* node, FILE* outStream);
 
 static DiffTreeNodeType* DiffReadPrefixFormat(const char* const string, const char** stringEndPtr);
 
@@ -35,6 +37,7 @@ static inline void DotFileEnd(FILE* outDotFile);
 
 static double DiffCalculate(const DiffTreeNodeType* node);
 static double DiffCalculateUsingNodeOperation(const char operation, double firstVal, double secondVal);
+
 DiffErrors DiffCtor(DiffTreeType* diff, DiffTreeNodeType* root)
 {
     assert(diff);
@@ -111,7 +114,7 @@ static DiffErrors DiffPrintPrefixFormat(const DiffTreeNodeType* node, FILE* outS
     else if (node->valueType == DiffValueType::VARIABLE)
         PRINT(outStream, "%c ", 'x'); //TODO: поменять на функцию, которая вернет тип переменной по его id, а не просто 'x'
     else
-        PRINT(outStream, "%s ", GetOperatorName(node->value.operation)); //TODO: вместо вывода +, -, /, ... вывести add sub div mul
+        PRINT(outStream, "%s ", GetOperatorName(node->value.operation));
 
     DiffErrors err = DiffErrors::NO_ERR;
 
@@ -121,6 +124,60 @@ static DiffErrors DiffPrintPrefixFormat(const DiffTreeNodeType* node, FILE* outS
     PRINT(outStream, ")");
     
     return err;
+}
+
+DiffErrors DiffPrintEquationLikeFormat(const DiffTreeType* diff, FILE* outStream)
+{
+    assert(diff);
+    assert(outStream);
+
+    LOG_BEGIN();
+
+    DiffErrors err = DiffPrintEquationLikeFormat(diff->root, outStream);
+
+    PRINT(outStream, "\n");
+
+    LOG_END();
+
+    return err; 
+}
+
+static DiffErrors DiffPrintEquationLikeFormat(const DiffTreeNodeType* node, FILE* outStream)
+{
+    if (node->left == nullptr /* || node->right == nullptr */)
+    {
+        DiffNodePrintValue(node, outStream);
+
+        return DiffErrors::NO_ERR;
+    }
+    DiffErrors err = DiffErrors::NO_ERR;
+
+
+    if (node->left->valueType == DiffValueType::OPERATION)
+        PRINT(outStream, "(");
+    err = DiffPrintEquationLikeFormat(node->left, outStream);
+    if (node->left->valueType == DiffValueType::OPERATION)
+        PRINT(outStream, ")");
+
+    DiffNodePrintValue(node, outStream);
+    
+    if (node->right->valueType == DiffValueType::OPERATION)
+        PRINT(outStream, "(");
+    err = DiffPrintEquationLikeFormat(node->right, outStream);
+    if (node->right->valueType == DiffValueType::OPERATION)
+        PRINT(outStream, ")");
+
+    return err;
+}
+
+static void DiffNodePrintValue(const DiffTreeNodeType* node, FILE* outStream)
+{
+    if (node->valueType == DiffValueType::VALUE)
+        PRINT(outStream, "%lf ", node->value.value);
+    else if (node->valueType == DiffValueType::VARIABLE)
+        PRINT(outStream, "%c ", 'x'); //TODO: поменять на функцию, которая вернет тип переменной по его id, а не просто 'x'
+    else
+        PRINT(outStream, "%c ", node->value.operation);
 }
 
 #undef PRINT
