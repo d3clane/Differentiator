@@ -82,11 +82,4 @@ void DiffDump(const DiffTreeType* tree, const char* fileName,
 
 double DiffCalculate(const DiffTreeType* tree);
 
-/*
-#define TREE_ERRORS_LOG_ERROR(err) TreeErrorsLogError(err, __FILE__, __func__, __LINE__);
-void TreeErrorsLogError(const DiffErrors err, const char* fileName,
-                                              const char* funcName,
-                                              const int   line);
-*/
-
 #endif // DIFFERENTIATOR_H
