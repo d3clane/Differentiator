@@ -18,11 +18,19 @@ struct DiffVariablesArrayType
     size_t size;
 };
 
+enum class DiffOperations
+{
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+};
+
 union DiffValue
 {
-    double   value;
-    int      varId;
-    char operation;
+    double             value;
+    int                varId;
+    DiffOperations operation;
 }; 
 
 enum class DiffValueType
@@ -63,7 +71,8 @@ DiffErrors DiffDtor(DiffTreeType* diff);
 DiffErrors DiffPrintPrefixFormat     (const DiffTreeType* diff, FILE* outStream = stdout);
 DiffErrors DiffPrintEquationFormat   (const DiffTreeType* diff, FILE* outStream = stdout);
 DiffErrors DiffPrintEquationFormatTex(const DiffTreeType* diff, FILE* outStream = stdout, 
-                                                                const char* string = nullptr);
+                                      const char* string = nullptr);
+
 DiffErrors DiffReadPrefixFormat(DiffTreeType* diff, FILE* inStream = stdin);
 
 DiffErrors DiffReadVariables(DiffTreeType* diff);

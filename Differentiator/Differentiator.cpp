@@ -35,8 +35,9 @@ static const char* DiffReadNodeValuePrefixFormat(DiffValue* value, DiffValueType
 
 static bool HaveToPutBrackets(const DiffTreeNodeType* parent, const DiffTreeNodeType* son);
 
-static int  GetOperator(const char* string);
-static const char* GetOperatorName(const char operation);
+static int         GetOperation(const char* operation);
+static const char* GetOperationLongName (const DiffOperations operation);
+static const char* GetOperationShortName(const DiffOperations operation);
 
 static        void DiffGraphicDump   (const DiffTreeNodeType* node, FILE* outDotFile);
 static        void DotFileCreateNodes(const DiffTreeNodeType* node, 
@@ -46,7 +47,8 @@ static inline void DotFileBegin(FILE* outDotFile);
 static inline void DotFileEnd(FILE* outDotFile);
 
 static double DiffCalculate(const DiffTreeNodeType* node, const DiffVariablesArrayType* varsArr);
-static double DiffCalculateUsingNodeOperation(const char operation, double firstVal, double secondVal);
+static double DiffCalculateUsingNodeOperation(const DiffOperations operation, 
+                                              double firstVal, double secondVal);
 
 static inline int AddVariable(DiffVariablesArrayType* varsArr,  
                               const char*  variableName, 
@@ -152,7 +154,7 @@ static DiffErrors DiffPrintPrefixFormat(const DiffTreeNodeType* node,
     else if (node->valueType == DiffValueType::VARIABLE)
         PRINT(outStream, "%s ", varsArr->data[node->value.varId].variableName);
     else
-        PRINT(outStream, "%s ", GetOperatorName(node->value.operation));
+        PRINT(outStream, "%s ", GetOperationLongName(node->value.operation));
 
     DiffErrors err = DiffErrors::NO_ERR;
 
@@ -216,17 +218,17 @@ static bool HaveToPutBrackets(const DiffTreeNodeType* parent, const DiffTreeNode
     assert(parent->valueType == DiffValueType::OPERATION);
     assert(son->valueType    == DiffValueType::OPERATION);
 
-    char parentOperation = parent->value.operation;
-    char sonOperation    = son->value.operation;
+    DiffOperations parentOperation = parent->value.operation;
+    DiffOperations sonOperation    = son->value.operation;
 
-    if ((sonOperation    == '*' || sonOperation    == '/') &&
-        (parentOperation == '-' || parentOperation == '*'))
+    if ((sonOperation    == DiffOperations::MUL || sonOperation    == DiffOperations::DIV) &&
+        (parentOperation == DiffOperations::SUB || parentOperation == DiffOperations::ADD))
         return false;
 
-    if (sonOperation == '+' && parentOperation == '+')
+    if (sonOperation == DiffOperations::ADD && parentOperation == DiffOperations::ADD)
         return false;
     
-    if (sonOperation == '*' && parentOperation == '*')
+    if (sonOperation == DiffOperations::MUL && parentOperation == DiffOperations::MUL)
         return false;
 
     return true;
@@ -240,7 +242,7 @@ static void DiffNodePrintValue(const DiffTreeNodeType* node,
     else if (node->valueType == DiffValueType::VARIABLE)
         PRINT(outStream, "%s ", varsArr->data[node->value.varId].variableName);
     else
-        PRINT(outStream, "%c ", node->value.operation);
+        PRINT(outStream, "%s ", GetOperationShortName(node->value.operation));
 }
 
 #undef PRINT
@@ -295,7 +297,7 @@ static DiffErrors DiffPrintEquationFormatTex(const DiffTreeNodeType* node,
     DiffErrors err = DiffErrors::NO_ERR;
 
     bool isDivideOperation     = (node->valueType       == DiffValueType::OPERATION) &&
-                                 (node->value.operation == '/');
+                                 (node->value.operation == DiffOperations::DIV);
     bool haveToPutLeftBrackets = (node->left->valueType == DiffValueType::OPERATION) &&
                                  (HaveToPutBrackets(node, node->left));
 
@@ -415,10 +417,10 @@ static const char* DiffReadNodeValuePrefixFormat(DiffValue* value, DiffValueType
     stringPtr = string + shift;
     assert(isspace(*stringPtr));
 
-    int ch = GetOperator(inputString);
-    if (ch != -1)
+    int operation = GetOperation(inputString);
+    if (operation != -1)
     {
-        value->operation = (char)ch;
+        value->operation = (DiffOperations) operation;
         *valueType       = DiffValueType::OPERATION;
         
         return stringPtr;
@@ -427,7 +429,7 @@ static const char* DiffReadNodeValuePrefixFormat(DiffValue* value, DiffValueType
     int varId = GetVariableIdByName(varsArr, inputString);
     if (varId == -1)
         varId = AddVariable(varsArr, inputString);
-    
+
     assert(varId != -1);
 
     value->varId = varId;
@@ -436,40 +438,60 @@ static const char* DiffReadNodeValuePrefixFormat(DiffValue* value, DiffValueType
     return stringPtr;
 }
 
-static int GetOperator(const char* string)
+static int GetOperation(const char* string)
 {
     assert(string);
 
     if (strcasecmp(string, "div") == 0)
-        return '/';
+        return (int)DiffOperations::DIV;
     else if (strcasecmp(string, "mul") == 0)
-        return '*';
+        return (int)DiffOperations::MUL;
     else if (strcasecmp(string, "sub") == 0)
-        return '-';
+        return (int)DiffOperations::SUB;
     else if (strcasecmp(string, "add") == 0)
-        return '+';
+        return (int)DiffOperations::ADD;
     else
         return -1;
 }
 
-static const char* GetOperatorName(const char operation)
+static const char* GetOperationLongName(const DiffOperations operation)
 {
     switch (operation)
     {
-        case '*':
+        case DiffOperations::MUL:
             return "mul";
-        case '/':
+        case DiffOperations::DIV:
             return "div";
-        case '-':
+        case DiffOperations::SUB:
             return "sub";
-        case '+':
+        case DiffOperations::ADD:
             return "add";
         
         default:
-            return "ERROR";
+            return nullptr;
     }
 
-    return "ERROR";
+    return nullptr;;
+}
+
+static const char* GetOperationShortName(const DiffOperations operation)
+{
+        switch (operation)
+    {
+        case DiffOperations::MUL:
+            return "*";
+        case DiffOperations::DIV:
+            return "/";
+        case DiffOperations::SUB:
+            return "-";
+        case DiffOperations::ADD:
+            return "+";
+        
+        default:
+            return nullptr;
+    }
+
+    return nullptr;
 }
 
 static DiffTreeNodeType* DiffTreeNodeCtor(DiffValue value, DiffValueType valueType)
@@ -560,7 +582,7 @@ static void DotFileCreateNodes(const DiffTreeNodeType* node,
     
     if (node->valueType == DiffValueType::OPERATION)
         fprintf(outDotFile, "fillcolor=\"#89AC76\", label = \"%s\", ", 
-                            GetOperatorName(node->value.operation));
+                            GetOperationLongName(node->value.operation));
     else if (node->valueType == DiffValueType::VALUE)
         fprintf(outDotFile, "fillcolor=\"#7293ba\", label = \"%lf\", ", node->value.value);
     else if (node->valueType == DiffValueType::VARIABLE)
@@ -645,17 +667,18 @@ static double DiffCalculate(const DiffTreeNodeType* node, const DiffVariablesArr
     return DiffCalculateUsingNodeOperation(node->value.operation, firstVal, secondVal);
 }
 
-static double DiffCalculateUsingNodeOperation(const char operation, double firstVal, double secondVal)
+static double DiffCalculateUsingNodeOperation(const DiffOperations operation, 
+                                              double firstVal, double secondVal)
 {
     switch(operation)
     {
-        case '+':
+        case DiffOperations::ADD:
             return firstVal + secondVal;
-        case '-':
+        case DiffOperations::SUB:
             return firstVal - secondVal;
-        case '*':
+        case DiffOperations::MUL:
             return firstVal * secondVal;
-        case '/':
+        case DiffOperations::DIV:
             return firstVal / secondVal;
         
         default:
