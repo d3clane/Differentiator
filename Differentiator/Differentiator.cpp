@@ -647,7 +647,7 @@ void DiffDump(const DiffTreeType* diff, const char* fileName,
 double DiffCalculate(const DiffTreeType* diff)
 {
     assert(diff);
-
+    
     return DiffCalculate(diff->root, &diff->variables);
 }
 
