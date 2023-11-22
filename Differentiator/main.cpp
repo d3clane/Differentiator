@@ -19,5 +19,5 @@ int main(const int argc, const char* argv[])
     DiffPrintEquationFormatTex(&diffTree);
     DiffGraphicDump(&diffTree, false);
 
-    printf("%lf", DiffCalculate(&diffTree));
+    printf("Calculation result: %lf", DiffCalculate(&diffTree));
 }
