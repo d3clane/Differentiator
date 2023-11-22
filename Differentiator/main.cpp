@@ -12,6 +12,8 @@ int main(const int argc, const char* argv[])
     FILE* inStream = fopen("input.txt", "r");
     DiffReadPrefixFormat(&diffTree, inStream);
 
+    DiffReadVariables(&diffTree);
+
     DiffPrintPrefixFormat     (&diffTree);
     DiffPrintEquationFormat   (&diffTree);
     DiffPrintEquationFormatTex(&diffTree);

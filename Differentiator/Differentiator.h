@@ -32,7 +32,6 @@ enum class DiffValueType
     OPERATION, 
 };
 
-//TODO: подумать можно ли перенести внутрь cpp
 struct DiffTreeNodeType
 {
     DiffValue     value;
@@ -54,6 +53,8 @@ enum class DiffErrors
     NO_ERR,
 
     MEM_ERR,
+
+    READING_ERR
 };
 
 DiffErrors DiffCtor(DiffTreeType* diff, DiffTreeNodeType* root = nullptr);
@@ -63,8 +64,9 @@ DiffErrors DiffPrintPrefixFormat     (const DiffTreeType* diff, FILE* outStream 
 DiffErrors DiffPrintEquationFormat   (const DiffTreeType* diff, FILE* outStream = stdout);
 DiffErrors DiffPrintEquationFormatTex(const DiffTreeType* diff, FILE* outStream = stdout, 
                                                                 const char* string = nullptr);
-
 DiffErrors DiffReadPrefixFormat(DiffTreeType* diff, FILE* inStream = stdin);
+
+DiffErrors DiffReadVariables(DiffTreeType* diff);
 
 #define DIFF_TEXT_DUMP(tree) DiffTextDump((tree), __FILE__, __func__, __LINE__)
 void DiffTextDump(const DiffTreeType* tree, const char* fileName, 

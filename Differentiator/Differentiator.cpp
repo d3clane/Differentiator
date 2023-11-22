@@ -699,3 +699,20 @@ static int GetVariableIdByName(const DiffVariablesArrayType* varsArr,
     
     return -1;
 }
+
+DiffErrors DiffReadVariables(DiffTreeType* diff)
+{
+    assert(diff);
+
+    printf("Enter variables values: \n");
+    for (size_t i = 0; i < diff->variables.size; ++i)
+    {
+        printf("%s: ", diff->variables.data[i].variableName);
+        int scanfResult = scanf("%lf",  &diff->variables.data[i].variableValue);
+
+        if (scanfResult == 0)
+            return DiffErrors::READING_ERR;
+    }
+
+    return DiffErrors::NO_ERR;
+}
