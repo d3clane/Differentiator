@@ -7,6 +7,7 @@
 #include "../Common/StringFuncs.h"
 #include "../Common/Log.h"
 #include "../FastInput/InputOutput.h"
+#include "../Common/DoubleFuncs.h"
 
 const int POISON = 0xDEAD;
 
@@ -28,10 +29,12 @@ static void       DiffNodePrintValue        (const DiffTreeNodeType* node,
 
 static DiffTreeNodeType* DiffReadPrefixFormat(const char* const string, const char** stringEndPtr,
                                               DiffVariablesArrayType* varsArr);
+static DiffTreeNodeType* DiffReadInfixFormat(const char* const string, const char** stringEndPtr,
+                                             DiffVariablesArrayType* varsArr);
 
-static const char* DiffReadNodeValuePrefixFormat(DiffValue* value, DiffValueType* valueType, 
-                                                 DiffVariablesArrayType* varsArr,
-                                                 const char* stringPtr);
+static const char* DiffReadNodeValue(DiffValue* value, DiffValueType* valueType, 
+                                     DiffVariablesArrayType* varsArr,
+                                     const char* stringPtr);
 
 static bool HaveToPutBrackets(const DiffTreeNodeType* parent, const DiffTreeNodeType* son);
 
@@ -332,6 +335,7 @@ DiffErrors DiffReadPrefixFormat(DiffTreeType* diff, FILE* inStream)
         return DiffErrors::MEM_ERR;
 
     const char* inputTreeEndPtr = inputTree;
+
     diff->root = DiffReadPrefixFormat(inputTree, &inputTreeEndPtr, &diff->variables);
 
     free(inputTree);
@@ -363,7 +367,7 @@ static DiffTreeNodeType* DiffReadPrefixFormat(const char* const string, const ch
     DiffValue value;
     DiffValueType valueType;
 
-    stringPtr = DiffReadNodeValuePrefixFormat(&value, &valueType, varsArr, stringPtr);
+    stringPtr = DiffReadNodeValue(&value, &valueType, varsArr, stringPtr);
     DiffTreeNodeType* node = DiffTreeNodeCtor(value, valueType);
 
     DiffTreeNodeType* left  = DiffReadPrefixFormat(stringPtr, &stringPtr, varsArr);
@@ -378,16 +382,66 @@ static DiffTreeNodeType* DiffReadPrefixFormat(const char* const string, const ch
     return node;
 }
 
-static void DiffNodeSetEdges(DiffTreeNodeType* node, DiffTreeNodeType* left, 
-                                                     DiffTreeNodeType* right)
+DiffErrors DiffReadInfixFormat (DiffTreeType* diff, FILE* inStream)
 {
-    assert(node);
+    assert(diff);
+    assert(inStream);
 
-    node->left  = left;
-    node->right = right;
+    char* inputTree = ReadText(inStream);
+
+    if (inputTree == nullptr)
+        return DiffErrors::MEM_ERR;
+    
+    const char* inputTreeEndPtr = inputTree;
+
+    diff->root = DiffReadInfixFormat(inputTree, &inputTreeEndPtr, &diff->variables);
+
+    free(inputTree);
+
+    return DiffErrors::NO_ERR;
 }
 
-static const char* DiffReadNodeValuePrefixFormat(DiffValue* value, DiffValueType* valueType, 
+static DiffTreeNodeType* DiffReadInfixFormat(const char* const string, const char** stringEndPtr,
+                                             DiffVariablesArrayType* varsArr)
+{
+    assert(string);
+
+    const char* stringPtr = string;
+
+    stringPtr = SkipSymbolsWhileStatement(stringPtr, isspace);
+
+    DiffValue     value;
+    DiffValueType valueType;
+
+    int symbol = *stringPtr;
+    stringPtr++;
+
+    if (symbol != '(')
+    {
+        --stringPtr;
+
+        stringPtr = DiffReadNodeValue(&value, &valueType, varsArr, stringPtr);
+        DiffTreeNodeType* node = DiffTreeNodeCtor(value, valueType);
+
+        *stringEndPtr = stringPtr;
+        return node;
+    }
+
+    DiffTreeNodeType* left  = DiffReadInfixFormat(stringPtr, &stringPtr, varsArr);
+
+    stringPtr = DiffReadNodeValue(&value, &valueType, varsArr, stringPtr);
+    DiffTreeNodeType* node = DiffTreeNodeCtor(value, valueType);
+    DiffTreeNodeType* right = DiffReadInfixFormat(stringPtr, &stringPtr, varsArr);
+
+    DiffNodeSetEdges(node, left, right);
+
+    stringPtr = SkipSymbolsWhileChar(stringPtr, ')');
+
+    *stringEndPtr = stringPtr;
+    return node;
+}
+
+static const char* DiffReadNodeValue(DiffValue* value, DiffValueType* valueType, 
                                                  DiffVariablesArrayType* varsArr,
                                                  const char* string)
 {
@@ -442,16 +496,16 @@ static int GetOperation(const char* string)
 {
     assert(string);
 
-    if (strcasecmp(string, "div") == 0)
+    if (strcasecmp(string, "/") == 0      || strcasecmp(string, "div") == 0)
         return (int)DiffOperations::DIV;
-    else if (strcasecmp(string, "mul") == 0)
+    else if (strcasecmp(string, "*") == 0 || strcasecmp(string, "mul") == 0)
         return (int)DiffOperations::MUL;
-    else if (strcasecmp(string, "sub") == 0)
+    else if (strcasecmp(string, "-") == 0 || strcasecmp(string, "sub") == 0)
         return (int)DiffOperations::SUB;
-    else if (strcasecmp(string, "add") == 0)
+    else if (strcasecmp(string, "+") == 0 || strcasecmp(string, "add") == 0)
         return (int)DiffOperations::ADD;
-    else
-        return -1;
+    
+    return -1;
 }
 
 static const char* GetOperationLongName(const DiffOperations operation)
@@ -647,7 +701,7 @@ void DiffDump(const DiffTreeType* diff, const char* fileName,
 double DiffCalculate(const DiffTreeType* diff)
 {
     assert(diff);
-    
+
     return DiffCalculate(diff->root, &diff->variables);
 }
 
@@ -679,8 +733,10 @@ static double DiffCalculateUsingNodeOperation(const DiffOperations operation,
         case DiffOperations::MUL:
             return firstVal * secondVal;
         case DiffOperations::DIV:
+        {
+            assert(!DoubleEqual(secondVal, 0));
             return firstVal / secondVal;
-        
+        }
         default:
             return NAN;
     }
@@ -738,4 +794,13 @@ DiffErrors DiffReadVariables(DiffTreeType* diff)
     }
 
     return DiffErrors::NO_ERR;
+}
+
+static void DiffNodeSetEdges(DiffTreeNodeType* node, DiffTreeNodeType* left, 
+                                                     DiffTreeNodeType* right)
+{
+    assert(node);
+
+    node->left  = left;
+    node->right = right;
 }

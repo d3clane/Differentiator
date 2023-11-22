@@ -6,18 +6,25 @@ int main(const int argc, const char* argv[])
     setbuf(stdout, nullptr);
     LogOpen(argv[0]);
 
-    DiffTreeType diffTree;
-    DiffCtor(&diffTree);
+    DiffTreeType diffTreePrefixInput;
+    DiffTreeType diffTreeInfixInput;
+    DiffCtor(&diffTreePrefixInput);
+    DiffCtor(&diffTreeInfixInput);
 
-    FILE* inStream = fopen("input.txt", "r");
-    DiffReadPrefixFormat(&diffTree, inStream);
+    FILE* inStreamPrefix = fopen("input.txt",  "r");
+    FILE* inStreamInfix  = fopen("input2.txt", "r");
+    DiffReadPrefixFormat(&diffTreePrefixInput, inStreamPrefix);
+    DiffReadInfixFormat(&diffTreeInfixInput,  inStreamInfix);
 
-    DiffReadVariables(&diffTree);
+    DiffReadVariables(&diffTreePrefixInput);
 
-    DiffPrintPrefixFormat     (&diffTree);
-    DiffPrintEquationFormat   (&diffTree);
-    DiffPrintEquationFormatTex(&diffTree);
-    DiffGraphicDump(&diffTree, false);
+    DiffPrintPrefixFormat     (&diffTreePrefixInput);
+    DiffPrintEquationFormat   (&diffTreePrefixInput);
+    DiffPrintEquationFormatTex(&diffTreePrefixInput);
+    DiffGraphicDump(&diffTreePrefixInput);
+    DiffGraphicDump(&diffTreeInfixInput);
+    printf("\n\n");
+    DiffPrintEquationFormat(&diffTreeInfixInput);
 
-    printf("Calculation result: %lf", DiffCalculate(&diffTree));
+    //printf("Calculation result: %lf", DiffCalculate(&diffTreePrefixInput));
 }

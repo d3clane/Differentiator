@@ -74,7 +74,7 @@ DiffErrors DiffPrintEquationFormatTex(const DiffTreeType* diff, FILE* outStream 
                                       const char* string = nullptr);
 
 DiffErrors DiffReadPrefixFormat(DiffTreeType* diff, FILE* inStream = stdin);
-
+DiffErrors DiffReadInfixFormat (DiffTreeType* diff, FILE* inStream = stdin);
 DiffErrors DiffReadVariables(DiffTreeType* diff);
 
 #define DIFF_TEXT_DUMP(tree) DiffTextDump((tree), __FILE__, __func__, __LINE__)
