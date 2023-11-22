@@ -3,6 +3,21 @@
 
 #include <stdio.h>
 
+
+struct DiffVariableType
+{
+    char* variableName;
+    double      variableValue; 
+};
+
+struct DiffVariablesArrayType
+{
+    DiffVariableType* data;
+
+    size_t capacity;
+    size_t size;
+};
+
 union DiffValue
 {
     double   value;
@@ -30,7 +45,9 @@ struct DiffTreeNodeType
 struct DiffTreeType
 {
     DiffTreeNodeType* root;
-}; 
+
+    DiffVariablesArrayType variables;
+};
 
 enum class DiffErrors
 {

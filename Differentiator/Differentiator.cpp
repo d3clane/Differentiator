@@ -17,28 +17,43 @@ static DiffTreeNodeType* DiffTreeNodeCtor(DiffValue value, DiffValueType valueTy
 static void DiffNodeSetEdges(DiffTreeNodeType* node, DiffTreeNodeType* left, 
                                                      DiffTreeNodeType* right);
  
-static DiffErrors DiffPrintPrefixFormat     (const DiffTreeNodeType* node, FILE* outStream);
-static DiffErrors DiffPrintEquationFormat   (const DiffTreeNodeType* node, FILE* outStream);
-static DiffErrors DiffPrintEquationFormatTex(const DiffTreeNodeType* node, FILE* outStream);
-static void       DiffNodePrintValue        (const DiffTreeNodeType* node, FILE* outStream);
+static DiffErrors DiffPrintPrefixFormat     (const DiffTreeNodeType* node, 
+                                             const DiffVariablesArrayType* varsArr, FILE* outStream);
+static DiffErrors DiffPrintEquationFormat   (const DiffTreeNodeType* node, 
+                                             const DiffVariablesArrayType* varsArr, FILE* outStream);
+static DiffErrors DiffPrintEquationFormatTex(const DiffTreeNodeType* node, 
+                                             const DiffVariablesArrayType* varsArr, FILE* outStream);
+static void       DiffNodePrintValue        (const DiffTreeNodeType* node, 
+                                             const DiffVariablesArrayType* varsArr, FILE* outStream);
 
-static DiffTreeNodeType* DiffReadPrefixFormat(const char* const string, const char** stringEndPtr);
+static DiffTreeNodeType* DiffReadPrefixFormat(const char* const string, const char** stringEndPtr,
+                                              DiffVariablesArrayType* varsArr);
 
 static const char* DiffReadNodeValuePrefixFormat(DiffValue* value, DiffValueType* valueType, 
+                                                 DiffVariablesArrayType* varsArr,
                                                  const char* stringPtr);
 
-static int  GetOperator(const char* string);
 static bool HaveToPutBrackets(const DiffTreeNodeType* parent, const DiffTreeNodeType* son);
+
+static int  GetOperator(const char* string);
 static const char* GetOperatorName(const char operation);
 
 static        void DiffGraphicDump   (const DiffTreeNodeType* node, FILE* outDotFile);
-static        void DotFileCreateNodes(const DiffTreeNodeType* node, FILE* outDotFile);
+static        void DotFileCreateNodes(const DiffTreeNodeType* node, 
+                                      const DiffVariablesArrayType* varsArr, FILE* outDotFile);
 static inline void CreateImgInLogFile(const size_t imgIndex, bool openImg);
 static inline void DotFileBegin(FILE* outDotFile);
 static inline void DotFileEnd(FILE* outDotFile);
 
-static double DiffCalculate(const DiffTreeNodeType* node);
+static double DiffCalculate(const DiffTreeNodeType* node, const DiffVariablesArrayType* varsArr);
 static double DiffCalculateUsingNodeOperation(const char operation, double firstVal, double secondVal);
+
+static inline int AddVariable(DiffVariablesArrayType* varsArr,  
+                              const char*  variableName, 
+                              const double variableValue = 0);
+
+static int GetVariableIdByName(const DiffVariablesArrayType* varsArr, 
+                               const char* variableName);
 
 DiffErrors DiffCtor(DiffTreeType* diff, DiffTreeNodeType* root)
 {
@@ -52,6 +67,11 @@ DiffErrors DiffCtor(DiffTreeType* diff, DiffTreeNodeType* root)
 
     diff->root = nullptr;
 
+    diff->variables.capacity = 100;
+    diff->variables.size     =   0;
+    diff->variables.data     = (DiffVariableType*)calloc(diff->variables.capacity, 
+                                                         sizeof(*(diff->variables.data)));
+    
     return DiffErrors::NO_ERR;
 }
 
@@ -61,6 +81,21 @@ DiffErrors DiffDtor(DiffTreeType* diff)
 
     DiffDtor(diff->root);
     diff->root = nullptr;
+
+    for (size_t i = 0; i < diff->variables.capacity; ++i)
+    {
+        if      (diff->variables.data->variableName)
+            free(diff->variables.data->variableName);
+
+        diff->variables.data->variableName = nullptr;
+        diff->variables.data->variableValue = POISON;
+    }
+
+    free(diff->variables.data);
+    diff->variables.data     = nullptr;
+    diff->variables.size     = 0;
+    diff->variables.capacity = 0;
+
 
     return DiffErrors::NO_ERR;
 }
@@ -92,7 +127,7 @@ DiffErrors DiffPrintPrefixFormat(const DiffTreeType* diff, FILE* outStream)
 
     LOG_BEGIN();
 
-    DiffErrors err = DiffPrintPrefixFormat(diff->root, outStream);
+    DiffErrors err = DiffPrintPrefixFormat(diff->root, &diff->variables, outStream);
 
     PRINT(outStream, "\n");
 
@@ -101,7 +136,8 @@ DiffErrors DiffPrintPrefixFormat(const DiffTreeType* diff, FILE* outStream)
     return err;
 }
 
-static DiffErrors DiffPrintPrefixFormat(const DiffTreeNodeType* node, FILE* outStream)
+static DiffErrors DiffPrintPrefixFormat(const DiffTreeNodeType* node, 
+                                        const DiffVariablesArrayType* varsArr, FILE* outStream)
 {
     if (node == nullptr)
     {
@@ -114,14 +150,14 @@ static DiffErrors DiffPrintPrefixFormat(const DiffTreeNodeType* node, FILE* outS
     if (node->valueType == DiffValueType::VALUE)
         PRINT(outStream, "%lf ", node->value.value);
     else if (node->valueType == DiffValueType::VARIABLE)
-        PRINT(outStream, "%c ", 'x'); //TODO: поменять на функцию, которая вернет тип переменной по его id, а не просто 'x'
+        PRINT(outStream, "%s ", varsArr->data[node->value.varId].variableName);
     else
         PRINT(outStream, "%s ", GetOperatorName(node->value.operation));
 
     DiffErrors err = DiffErrors::NO_ERR;
 
-    err = DiffPrintPrefixFormat(node->left, outStream);
-    err = DiffPrintPrefixFormat(node->right, outStream);
+    err = DiffPrintPrefixFormat(node->left,  varsArr, outStream);
+    err = DiffPrintPrefixFormat(node->right, varsArr, outStream);
 
     PRINT(outStream, ")");
     
@@ -135,7 +171,7 @@ DiffErrors DiffPrintEquationFormat(const DiffTreeType* diff, FILE* outStream)
 
     LOG_BEGIN();
 
-    DiffErrors err = DiffPrintEquationFormat(diff->root, outStream);
+    DiffErrors err = DiffPrintEquationFormat(diff->root, &diff->variables, outStream);
 
     PRINT(outStream, "\n");
 
@@ -144,11 +180,12 @@ DiffErrors DiffPrintEquationFormat(const DiffTreeType* diff, FILE* outStream)
     return err; 
 }
 
-static DiffErrors DiffPrintEquationFormat(const DiffTreeNodeType* node, FILE* outStream)
+static DiffErrors DiffPrintEquationFormat(const DiffTreeNodeType* node, 
+                                          const DiffVariablesArrayType* varsArr, FILE* outStream)
 {
     if (node->left == nullptr /* || node->right == nullptr */)
     {
-        DiffNodePrintValue(node, outStream);
+        DiffNodePrintValue(node, varsArr, outStream);
 
         return DiffErrors::NO_ERR;
     }
@@ -159,15 +196,15 @@ static DiffErrors DiffPrintEquationFormat(const DiffTreeNodeType* node, FILE* ou
                                   HaveToPutBrackets(node, node->left);
     
     if (haveToPutLeftBrackets) PRINT(outStream, "(");
-    err = DiffPrintEquationFormat(node->left, outStream);
+    err = DiffPrintEquationFormat(node->left, varsArr, outStream);
     if (haveToPutLeftBrackets) PRINT(outStream, ")");
 
-    DiffNodePrintValue(node, outStream);
+    DiffNodePrintValue(node, varsArr, outStream);
     
     bool haveToPutRightBrackets = (node->right->valueType == DiffValueType::OPERATION) &&
                                    HaveToPutBrackets(node, node->right);
     if (haveToPutRightBrackets) PRINT(outStream, "(");
-    err = DiffPrintEquationFormat(node->right, outStream);
+    err = DiffPrintEquationFormat(node->right, varsArr, outStream);
     if (haveToPutRightBrackets) PRINT(outStream, ")");
 
     return err;
@@ -195,12 +232,13 @@ static bool HaveToPutBrackets(const DiffTreeNodeType* parent, const DiffTreeNode
     return true;
 }
 
-static void DiffNodePrintValue(const DiffTreeNodeType* node, FILE* outStream)
+static void DiffNodePrintValue(const DiffTreeNodeType* node, 
+                               const DiffVariablesArrayType* varsArr, FILE* outStream)
 {
     if (node->valueType == DiffValueType::VALUE)
         PRINT(outStream, "%lf ", node->value.value);
     else if (node->valueType == DiffValueType::VARIABLE)
-        PRINT(outStream, "%c ", 'x'); //TODO: поменять на функцию, которая вернет тип переменной по его id, а не просто 'x'
+        PRINT(outStream, "%s ", varsArr->data[node->value.varId].variableName);
     else
         PRINT(outStream, "%c ", node->value.operation);
 }
@@ -234,21 +272,22 @@ DiffErrors DiffPrintEquationFormatTex(const DiffTreeType* diff, FILE* outStream,
     
     fprintf(outStream, "$");
 
-    DiffErrors err = DiffPrintEquationFormatTex(diff->root, outStream);
+    DiffErrors err = DiffPrintEquationFormatTex(diff->root, &diff->variables, outStream);
 
     fprintf(outStream, "$\n");
 
     return err;
 }
 
-static DiffErrors DiffPrintEquationFormatTex(const DiffTreeNodeType* node, FILE* outStream)
+static DiffErrors DiffPrintEquationFormatTex(const DiffTreeNodeType* node, 
+                                             const DiffVariablesArrayType* varsArr, FILE* outStream)
 {
     assert(node);
     assert(outStream);
 
     if (node->left == nullptr /* || node->right == nullptr */)
     {
-        DiffNodePrintValue(node, outStream);
+        DiffNodePrintValue(node, varsArr, outStream);
 
         return DiffErrors::NO_ERR;
     }
@@ -262,18 +301,18 @@ static DiffErrors DiffPrintEquationFormatTex(const DiffTreeNodeType* node, FILE*
 
     if (isDivideOperation)                           fprintf(outStream, "\\frac{");
     if (!isDivideOperation && haveToPutLeftBrackets) fprintf(outStream, "(");
-    err = DiffPrintEquationFormatTex(node->left, outStream);
+    err = DiffPrintEquationFormatTex(node->left, varsArr, outStream);
     if (!isDivideOperation && haveToPutLeftBrackets) fprintf(outStream, ")");
     if (isDivideOperation)                           fprintf(outStream, "}");
 
-    if (!isDivideOperation) DiffNodePrintValue(node, outStream);
+    if (!isDivideOperation) DiffNodePrintValue(node, varsArr, outStream);
     
     bool haveToPutRightBrackets = (node->right->valueType == DiffValueType::OPERATION) &&
                                    (HaveToPutBrackets(node, node->right));
     
     if (isDivideOperation)                            fprintf(outStream, "{");
     if (!isDivideOperation && haveToPutRightBrackets) fprintf(outStream, "(");
-    err = DiffPrintEquationFormatTex(node->right, outStream);
+    err = DiffPrintEquationFormatTex(node->right, varsArr, outStream);
     if (!isDivideOperation && haveToPutRightBrackets) fprintf(outStream, ")");
     if (isDivideOperation)                            fprintf(outStream, "}");
 
@@ -291,14 +330,15 @@ DiffErrors DiffReadPrefixFormat(DiffTreeType* diff, FILE* inStream)
         return DiffErrors::MEM_ERR;
 
     const char* inputTreeEndPtr = inputTree;
-    diff->root = DiffReadPrefixFormat(inputTree, &inputTreeEndPtr);
+    diff->root = DiffReadPrefixFormat(inputTree, &inputTreeEndPtr, &diff->variables);
 
     free(inputTree);
 
     return DiffErrors::NO_ERR;
 }
 
-static DiffTreeNodeType* DiffReadPrefixFormat(const char* const string, const char** stringEndPtr)
+static DiffTreeNodeType* DiffReadPrefixFormat(const char* const string, const char** stringEndPtr,
+                                              DiffVariablesArrayType* varsArr)
 {
     assert(string);
 
@@ -321,11 +361,11 @@ static DiffTreeNodeType* DiffReadPrefixFormat(const char* const string, const ch
     DiffValue value;
     DiffValueType valueType;
 
-    stringPtr = DiffReadNodeValuePrefixFormat(&value, &valueType, stringPtr);
+    stringPtr = DiffReadNodeValuePrefixFormat(&value, &valueType, varsArr, stringPtr);
     DiffTreeNodeType* node = DiffTreeNodeCtor(value, valueType);
 
-    DiffTreeNodeType* left  = DiffReadPrefixFormat(stringPtr, &stringPtr);
-    DiffTreeNodeType* right = DiffReadPrefixFormat(stringPtr, &stringPtr);
+    DiffTreeNodeType* left  = DiffReadPrefixFormat(stringPtr, &stringPtr, varsArr);
+    DiffTreeNodeType* right = DiffReadPrefixFormat(stringPtr, &stringPtr, varsArr);
 
     stringPtr = SkipSymbolsUntilStopChar(stringPtr, ')');
     ++stringPtr;
@@ -346,6 +386,7 @@ static void DiffNodeSetEdges(DiffTreeNodeType* node, DiffTreeNodeType* left,
 }
 
 static const char* DiffReadNodeValuePrefixFormat(DiffValue* value, DiffValueType* valueType, 
+                                                 DiffVariablesArrayType* varsArr,
                                                  const char* string)
 {
     assert(value);
@@ -383,7 +424,13 @@ static const char* DiffReadNodeValuePrefixFormat(DiffValue* value, DiffValueType
         return stringPtr;
     }
 
-    value->varId = 0; //TODO: заполнить таблицу labels, предоставить номер оттуда
+    int varId = GetVariableIdByName(varsArr, inputString);
+    if (varId == -1)
+        varId = AddVariable(varsArr, inputString);
+    
+    assert(varId != -1);
+
+    value->varId = varId;
     *valueType   = DiffValueType::VARIABLE;
 
     return stringPtr;
@@ -477,9 +524,9 @@ static inline void DotFileEnd(FILE* outDotFile)
     fprintf(outDotFile, "\n}\n");
 }
 
-void DiffGraphicDump(const DiffTreeType* tree, bool openImg)
+void DiffGraphicDump(const DiffTreeType* diff, bool openImg)
 {
-    assert(tree);
+    assert(diff);
 
     static const char* dotFileName = "differentiator.dot";
     FILE* outDotFile = fopen(dotFileName, "w");
@@ -489,9 +536,9 @@ void DiffGraphicDump(const DiffTreeType* tree, bool openImg)
 
     DotFileBegin(outDotFile);
 
-    DotFileCreateNodes(tree->root, outDotFile);
+    DotFileCreateNodes(diff->root, &diff->variables, outDotFile);
 
-    DiffGraphicDump(tree->root, outDotFile);
+    DiffGraphicDump(diff->root, outDotFile);
 
     DotFileEnd(outDotFile);
 
@@ -502,7 +549,8 @@ void DiffGraphicDump(const DiffTreeType* tree, bool openImg)
     imgIndex++;
 }
 
-static void DotFileCreateNodes(const DiffTreeNodeType* node, FILE* outDotFile)
+static void DotFileCreateNodes(const DiffTreeNodeType* node,    
+                               const DiffVariablesArrayType* varsArr, FILE* outDotFile)
 {
     if (node == nullptr)
         return;
@@ -516,14 +564,15 @@ static void DotFileCreateNodes(const DiffTreeNodeType* node, FILE* outDotFile)
     else if (node->valueType == DiffValueType::VALUE)
         fprintf(outDotFile, "fillcolor=\"#7293ba\", label = \"%lf\", ", node->value.value);
     else if (node->valueType == DiffValueType::VARIABLE)
-        fprintf(outDotFile, "fillcolor=\"#78DBE2\", label = \"%c\", ", 'x'); //TODO: вывод нужной переменной
+        fprintf(outDotFile, "fillcolor=\"#78DBE2\", label = \"%s\", ", 
+                            varsArr->data[node->value.varId].variableName);
     else 
         fprintf(outDotFile, "fillcolor=\"#FF0000\", label = \"ERROR\", ");
 
     fprintf(outDotFile, "color = \"#D0D000\"];\n");
 
-    DotFileCreateNodes(node->left,  outDotFile);
-    DotFileCreateNodes(node->right, outDotFile);
+    DotFileCreateNodes(node->left,  varsArr, outDotFile);
+    DotFileCreateNodes(node->right, varsArr, outDotFile);
 }
 
 static void DiffGraphicDump(const DiffTreeNodeType* node, FILE* outDotFile)
@@ -543,52 +592,55 @@ static void DiffGraphicDump(const DiffTreeNodeType* node, FILE* outDotFile)
     DiffGraphicDump(node->right, outDotFile);
 }
 
-void DiffTextDump(const DiffTreeType* tree, const char* fileName, 
+void DiffTextDump(const DiffTreeType* diff, const char* fileName, 
                                             const char* funcName,
                                             const int   line)
 {
-    assert(tree);
+    assert(diff);
     assert(fileName);
     assert(funcName);
 
     LogBegin(fileName, funcName, line);
 
-    Log("Tree root: %p, value: %s\n", tree->root, tree->root->value);
+    Log("Tree root: %p, value: %s\n", diff->root, diff->root->value);
     Log("Tree: ");
-    DiffPrintPrefixFormat(tree, nullptr);
+    DiffPrintPrefixFormat(diff, nullptr);
 
     LOG_END();
 }
 
-void DiffDump(const DiffTreeType* tree, const char* fileName,
+void DiffDump(const DiffTreeType* diff, const char* fileName,
                                         const char* funcName,
                                         const int   line)
 {
-    assert(tree);
+    assert(diff);
     assert(fileName);
     assert(funcName);
 
-    DiffTextDump(tree, fileName, funcName, line);
+    DiffTextDump(diff, fileName, funcName, line);
 
-    DiffGraphicDump(tree);
+    DiffGraphicDump(diff);
 }
 
-double DiffCalculate(const DiffTreeType* tree)
+double DiffCalculate(const DiffTreeType* diff)
 {
-    assert(tree);
+    assert(diff);
 
-    return DiffCalculate(tree->root);
+    return DiffCalculate(diff->root, &diff->variables);
 }
 
-static double DiffCalculate(const DiffTreeNodeType* node)
+static double DiffCalculate(const DiffTreeNodeType* node, const DiffVariablesArrayType* varsArr)
 {
     assert(node);
 
     if (node->valueType == DiffValueType::VALUE)
-        return node->value.value; //TODO: добавить еще переменные 
+        return node->value.value;
 
-    double firstVal  = DiffCalculate(node->left);
-    double secondVal = DiffCalculate(node->right);
+    if (node->valueType == DiffValueType::VARIABLE)
+        return varsArr->data[node->value.varId].variableValue;
+
+    double firstVal  = DiffCalculate(node->left,  varsArr);
+    double secondVal = DiffCalculate(node->right, varsArr);
     
     return DiffCalculateUsingNodeOperation(node->value.operation, firstVal, secondVal);
 }
@@ -611,4 +663,39 @@ static double DiffCalculateUsingNodeOperation(const char operation, double first
     }
 
     return NAN;
+}
+
+static inline int AddVariable(DiffVariablesArrayType* varsArr,  
+                              const char*  variableName, 
+                              const double variableValue)
+{
+    assert(varsArr);
+    assert(variableName);
+    assert(varsArr->size < varsArr->capacity);
+
+    varsArr->data[varsArr->size].variableName  = strdup(variableName);
+
+    assert(varsArr->data[varsArr->size].variableName);
+    if (varsArr->data[varsArr->size].variableName == nullptr)
+        return -1;
+    
+    varsArr->data[varsArr->size].variableValue = variableValue;
+    varsArr->size++;
+
+    return (int)varsArr->size - 1;
+}
+
+static int GetVariableIdByName(const DiffVariablesArrayType* varsArr, 
+                               const char* variableName)
+{
+    assert(varsArr);
+    assert(variableName);
+
+    for (size_t i = 0; i < varsArr->size; ++i)
+    {
+        if (strcmp(varsArr->data[i].variableName, variableName) == 0)
+            return (int)i;
+    }
+    
+    return -1;
 }
