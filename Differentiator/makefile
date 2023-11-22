@@ -18,9 +18,11 @@ TARGET = differentiator
 DOXYFILE = Others/Doxyfile
 
 HEADERS  = Differentiator.h ../Common/Log.h ../Common/Errors.h ../Common/Colors.h ../Common/StringFuncs.h \
+							../Common/DoubleFuncs.h 					\
 							../FastInput/InputOutput.h ../FastInput/StringFuncs.h
 
 FILESCPP = Differentiator.cpp main.cpp ../Common/Log.cpp ../Common/Errors.cpp ../Common/StringFuncs.cpp \
+									   ../Common/DoubleFuncs.cpp 	\
 							../FastInput/InputOutput.cpp ../FastInput/StringFuncs.cpp
 
 objects = $(FILESCPP:%.cpp=%.o)
