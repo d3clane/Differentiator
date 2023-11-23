@@ -17,11 +17,11 @@ CXXFLAGS = -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++ -Waggressive-l
 TARGET = differentiator
 DOXYFILE = Others/Doxyfile
 
-HEADERS  = Differentiator.h ../Common/Log.h ../Common/Errors.h ../Common/Colors.h ../Common/StringFuncs.h \
+HEADERS  = MathExpressionsHandler.h ../Common/Log.h ../Common/Errors.h ../Common/Colors.h ../Common/StringFuncs.h \
 							../Common/DoubleFuncs.h 					\
 							../FastInput/InputOutput.h ../FastInput/StringFuncs.h
 
-FILESCPP = Differentiator.cpp main.cpp ../Common/Log.cpp ../Common/Errors.cpp ../Common/StringFuncs.cpp \
+FILESCPP = MathExpressionsHandler.cpp main.cpp ../Common/Log.cpp ../Common/Errors.cpp ../Common/StringFuncs.cpp \
 									   ../Common/DoubleFuncs.cpp 	\
 							../FastInput/InputOutput.cpp ../FastInput/StringFuncs.cpp
 
@@ -41,7 +41,8 @@ docs:
 	doxygen $(DOXYFILE)
 
 clean:
-	rm -rf $(OBJECTDIR)/*.o
+	rm -rf *.o
+
 
 buildDirs:
 	mkdir $(OBJECTDIR)

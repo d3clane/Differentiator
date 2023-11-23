@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 
-//TODO: ваще было бы логично поменять название на что-то типо equation, потому что это реально просто equation хранит
 struct MathExpressionVariableType
 {
     char* variableName;
@@ -65,32 +64,40 @@ enum class MathExpressionErrors
     READING_ERR
 };
 
-MathExpressionErrors MathExpressionCtor(MathExpressionType* MathExpression, MathExpressionTokenType* root = nullptr);
-MathExpressionErrors MathExpressionDtor(MathExpressionType* MathExpression);
+MathExpressionErrors MathExpressionCtor(MathExpressionType* expression);
+MathExpressionErrors MathExpressionDtor(MathExpressionType* expression);
 
-MathExpressionErrors MathExpressionPrintPrefixFormat     (const MathExpressionType* MathExpression, FILE* outStream = stdout);
-MathExpressionErrors MathExpressionPrintEquationFormat   (const MathExpressionType* MathExpression, FILE* outStream = stdout);
-MathExpressionErrors MathExpressionPrintEquationFormatTex(const MathExpressionType* MathExpression, FILE* outStream = stdout, 
-                                      const char* string = nullptr);
+MathExpressionErrors MathExpressionPrintPrefixFormat     (const MathExpressionType* expression, 
+                                                          FILE* outStream = stdout);
+MathExpressionErrors MathExpressionPrintEquationFormat   (const MathExpressionType* expression, 
+                                                          FILE* outStream = stdout);
+MathExpressionErrors MathExpressionPrintEquationFormatTex(const MathExpressionType* expression,
+                                                          FILE* outStream = stdout, 
+                                                          const char* funnyString = nullptr);
 
-MathExpressionErrors MathExpressionReadPrefixFormat(MathExpressionType* MathExpression, FILE* inStream = stdin);
-MathExpressionErrors MathExpressionReadInfixFormat (MathExpressionType* MathExpression, FILE* inStream = stdin);
-MathExpressionErrors MathExpressionReadVariables(MathExpressionType* MathExpression);
+MathExpressionErrors MathExpressionReadPrefixFormat(MathExpressionType* expression, 
+                                                    FILE* inStream = stdin);
+MathExpressionErrors MathExpressionReadInfixFormat (MathExpressionType* expression, 
+                                                    FILE* inStream = stdin);
+MathExpressionErrors MathExpressionReadVariables(MathExpressionType* expression);
 
-#define MathExpression_TEXT_DUMP(tree) MathExpressionTextDump((tree), __FILE__, __func__, __LINE__)
-void MathExpressionTextDump(const MathExpressionType* tree, const char* fileName, 
-                                            const char* funcName,
-                                            const int   line);
+#define MATH_EXPRESSION_TEXT_DUMP(expression) MathExpressionTextDump((expression), __FILE__, \
+                                                                                   __func__, \
+                                                                                   __LINE__)
 
-void MathExpressionGraphicDump(const MathExpressionType* tree, bool openImg = false);
+void MathExpressionTextDump(const MathExpressionType* expression, const char* fileName, 
+                                                                  const char* funcName,
+                                                                  const int   line);
 
-#define MathExpression_DUMP(tree) MathExpressionDump((tree), __FILE__, __func__, __LINE__)
-void MathExpressionDump(const MathExpressionType* tree, const char* fileName,
-                                        const char* funcName,
-                                        const int   line);
+void MathExpressionGraphicDump(const MathExpressionType* expression, bool openImg = false);
 
-double MathExpressionCalculate(const MathExpressionType* tree);
+#define MATH_EXPRESSION_DUMP(tree) MathExpressionDump((tree), __FILE__, __func__, __LINE__)
+void MathExpressionDump(const MathExpressionType* expression, const char* fileName,
+                                                              const char* funcName,
+                                                              const int   line);
 
-MathExpressionErrors MathExpressionMathExpressionerentiate();
+double MathExpressionCalculate(const MathExpressionType* expression);
+
+MathExpressionErrors MathExpressionDifferentiate(const MathExpressionType* expression);
 
 #endif // MATH_EXPRESSIONS_HADNLER_H

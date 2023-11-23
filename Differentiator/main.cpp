@@ -6,26 +6,27 @@ int main(const int argc, const char* argv[])
     setbuf(stdout, nullptr);
     LogOpen(argv[0]);
 
-    MathExpressionType MathExpressionTreePrefixInput;
-    MathExpressionType MathExpressionTreeInfixInput;
-    MathExpressionCtor(&MathExpressionTreePrefixInput);
-    MathExpressionCtor(&MathExpressionTreeInfixInput);
+    MathExpressionType mathExpressionPrefixInput;
+    MathExpressionType mathExpressionInfixInput;
+    MathExpressionCtor(&mathExpressionPrefixInput);
+    //MathExpressionCtor(&mathExpressionPrefixInput);
+    //MathExpressionCtor(&mathExpressionInfixInput);
 
     FILE* inStreamPrefix = fopen("input.txt",  "r");
     //FILE* inStreamInfix  = fopen("input2.txt", "r");
-    MathExpressionReadPrefixFormat(&MathExpressionTreePrefixInput, inStreamPrefix);
-    //MathExpressionReadInfixFormat(&MathExpressionTreeInfixInput,  inStreamInfix);
+    MathExpressionReadPrefixFormat(&mathExpressionPrefixInput, inStreamPrefix);
+    //MathExpressionReadInfixFormat(&mathExpressionInfixInput,  inStreamInfix);
 
-    MathExpressionReadVariables(&MathExpressionTreePrefixInput);
+    MathExpressionReadVariables(&mathExpressionPrefixInput);
 
-    MathExpressionPrintPrefixFormat     (&MathExpressionTreePrefixInput);
-    MathExpressionPrintEquationFormat   (&MathExpressionTreePrefixInput);
-    MathExpressionPrintEquationFormatTex(&MathExpressionTreePrefixInput);
-    MathExpressionGraphicDump(&MathExpressionTreePrefixInput);
+    MathExpressionPrintPrefixFormat     (&mathExpressionPrefixInput);
+    MathExpressionPrintEquationFormat   (&mathExpressionPrefixInput);
+    MathExpressionPrintEquationFormatTex(&mathExpressionPrefixInput);
+    MathExpressionGraphicDump(&mathExpressionPrefixInput);
     
-    //MathExpressionGraphicDump(&MathExpressionTreeInfixInput);
+    //MathExpressionGraphicDump(&mathExpressionInfixInput);
     //printf("\n\n");
-    //MathExpressionPrintEquationFormat(&MathExpressionTreeInfixInput);
+    //MathExpressionPrintEquationFormat(&mathExpressionInfixInput);
 
-    printf("Calculation result: %lf", MathExpressionCalculate(&MathExpressionTreePrefixInput));
+    printf("Calculation result: %lf", MathExpressionCalculate(&mathExpressionPrefixInput));
 }
