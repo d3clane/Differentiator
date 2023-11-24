@@ -27,16 +27,14 @@ int main(const int argc, const char* argv[])
     MathExpressionPrintEquationFormat   (&mathExpressionPrefixInput);
     MathExpressionPrintEquationFormatTex(&mathExpressionPrefixInput, outputTex);
     
-    //printf("\n\n");
-    //MathExpressionPrintEquationFormat(&mathExpressionInfixInput);
 
     printf("Calculation result: %lf\n\n\n", MathExpressionCalculate(&mathExpressionPrefixInput));
-    /*
+
     MathExpressionType mathExpressionDiff =  MathExpressionDifferentiate(&mathExpressionPrefixInput);
 
-    MathExpressionPrintEquationFormatTex(&mathExpressionDiff);
+    MathExpressionPrintEquationFormatTex(&mathExpressionDiff, outputTex);
     MathExpressionGraphicDump(&mathExpressionDiff, true);
+
+
     printf("Diff result in x: %lf\n\n\n", MathExpressionCalculate(&mathExpressionDiff));
-    //MATH_EXPRESSION_DUMP(&mathExpressionDiff);
-    */
 }

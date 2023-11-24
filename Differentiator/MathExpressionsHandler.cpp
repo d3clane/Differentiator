@@ -177,7 +177,7 @@ static MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType
 static void MathExpressionsCopyVariables(      MathExpressionType* target, 
                                          const MathExpressionType* source);
 
-static MathExpressionOperationType MathExpressionOperationTypeGet(
+static MathExpressionOperationType GetOperationStruct(
                                         MathExpressionsOperationsEnum operationId);
 
 static bool IsPrefixOperation   (const MathExpressionOperationType* operation, bool inTex = false);
@@ -276,7 +276,7 @@ static MathExpressionErrors MathExpressionPrintPrefixFormat(
     PRINT(outStream, "(");
     
     if (token->valueType == MathExpressionTokenValueTypeof::VALUE)
-        PRINT(outStream, "%lf ", token->value.value);
+        PRINT(outStream, "%.2lf ", token->value.value);
     else if (token->valueType == MathExpressionTokenValueTypeof::VARIABLE)
         PRINT(outStream, "%s ", varsArr->data[token->value.varId].variableName);
     else
@@ -409,7 +409,7 @@ static void MathExpressionTokenPrintValue(const MathExpressionTokenType* token,
     assert(token->valueType != MathExpressionTokenValueTypeof::OPERATION);
 
     if (token->valueType == MathExpressionTokenValueTypeof::VALUE)
-        PRINT(outStream, "%lf ", token->value.value);
+        PRINT(outStream, "%.2lf ", token->value.value);
     else if (token->valueType == MathExpressionTokenValueTypeof::VARIABLE)
         PRINT(outStream, "%s ", varsArr->data[token->value.varId].variableName);
 }
@@ -678,8 +678,7 @@ static const char* MathExpressionReadTokenValue(MathExpressionTokenValue* value,
     if (operationId != -1)
     {
         //TODO: подумать над именем функции
-        value->operation = MathExpressionOperationTypeGet(
-                                                (MathExpressionsOperationsEnum) operationId);
+        value->operation = GetOperationStruct((MathExpressionsOperationsEnum) operationId);
         *valueType                   = MathExpressionTokenValueTypeof::OPERATION;
         return stringPtr;
     }
@@ -696,7 +695,7 @@ static const char* MathExpressionReadTokenValue(MathExpressionTokenValue* value,
     return stringPtr;
 }
 
-static MathExpressionOperationType MathExpressionOperationTypeGet(
+static MathExpressionOperationType GetOperationStruct(
                                         MathExpressionsOperationsEnum operationId)
 {
     switch (operationId)
@@ -877,7 +876,7 @@ static void DotFileCreateTokens(const MathExpressionTokenType* token,
         fprintf(outDotFile, "fillcolor=\"#89AC76\", label = \"%s\", ", 
                             token->value.operation.longName);
     else if (token->valueType == MathExpressionTokenValueTypeof::VALUE)
-        fprintf(outDotFile, "fillcolor=\"#7293ba\", label = \"%lf\", ", token->value.value);
+        fprintf(outDotFile, "fillcolor=\"#7293ba\", label = \"%.2lf\", ", token->value.value);
     else if (token->valueType == MathExpressionTokenValueTypeof::VARIABLE)
         fprintf(outDotFile, "fillcolor=\"#78DBE2\", label = \"%s\", ", 
                             varsArr->data[token->value.varId].variableName);
@@ -1143,25 +1142,46 @@ MathExpressionType MathExpressionDifferentiate(const MathExpressionType* express
     return diffMathExpression;
 }
 
+static inline MathExpressionTokenValue MathExpressionCreateTokenValue(double value)
+{
+    MathExpressionTokenValue tokenValue =
+    {
+        .value = value
+    };
+
+    return tokenValue;
+}
+
 static inline MathExpressionTokenValue MathExpressionCreateTokenValue(
                                                         MathExpressionsOperationsEnum operationId)
 {
     MathExpressionTokenValue value =
     {
-        .operation = MathExpressionOperationTypeGet(operationId),
+        .operation = GetOperationStruct(operationId),
     };
 
     return value;
 }
 
+static inline MathExpressionTokenType* MathExpressionCreateNumericToken(double value)
+{
+    MathExpressionTokenValue tokenVal = MathExpressionCreateTokenValue(value);
+
+    return MathExpressionTokenCtor(tokenVal, MathExpressionTokenValueTypeof::VALUE);
+}
+
 #define D(TOKEN) MathExpressionDifferentiate(TOKEN)
 #define C(TOKEN) MathExpressionCopy(TOKEN)
+
+#define CONST_TOKEN(VALUE) MathExpressionCreateNumericToken(VALUE)
 
 #define TOKEN(OPERATION_NAME, LEFT_TOKEN, RIGHT_TOKEN)                                        \
     MathExpressionTokenCtor(MathExpressionCreateTokenValue(                                   \
                                             MathExpressionsOperationsEnum::OPERATION_NAME),   \
                             MathExpressionTokenValueTypeof::OPERATION,                        \
                             LEFT_TOKEN, RIGHT_TOKEN)                                               
+
+#define UNARY_TOKEN(OPERATION_NAME, LEFT_TOKEN) TOKEN(OPERATION_NAME, LEFT_TOKEN, nullptr)
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateAdd(
                                                             const MathExpressionTokenType* token)
@@ -1206,6 +1226,102 @@ static inline MathExpressionTokenType* MathExpressionDifferentiateDiv(
                       TOKEN(MUL, C(token->right), C(token->right)));
 }
 
+static inline MathExpressionTokenType* MathExpressionDifferentiateSin(
+                                                            const MathExpressionTokenType* token)
+{
+    assert(token);
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::SIN);
+
+    return TOKEN(MUL, UNARY_TOKEN(COS, C(token->left)), D(token->left));
+}
+
+static inline MathExpressionTokenType* MathExpressionDifferentiateCos(
+                                                            const MathExpressionTokenType* token)
+{
+    assert(token);
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::COS);
+
+    return TOKEN(MUL, CONST_TOKEN(-1), 
+                      TOKEN(MUL, UNARY_TOKEN(SIN, C(token->left)), D(token->left)));
+}
+
+static inline MathExpressionTokenType* MathExpressionDifferentiateTan(
+                                                            const MathExpressionTokenType* token)
+{
+    assert(token);
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::TAN);
+
+    return TOKEN(DIV, D(token->left), 
+                      TOKEN(POW, UNARY_TOKEN(COS, C(token->left)), CONST_TOKEN(2)));
+}
+
+static inline MathExpressionTokenType* MathExpressionDifferentiateCot(
+                                                            const MathExpressionTokenType* token)
+{
+    assert(token);
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::COT);
+
+    return TOKEN(MUL, CONST_TOKEN(-1), 
+                      TOKEN(DIV, D(token->left), 
+                                 TOKEN(POW, UNARY_TOKEN(SIN, C(token->left)), CONST_TOKEN(2))));
+} 
+
+static inline MathExpressionTokenType* MathExpressionDifferentiateArcsin(
+                                                            const MathExpressionTokenType* token)
+{
+    assert(token);
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::ARCSIN);
+
+    return TOKEN(DIV, D(token->left),
+                      TOKEN(POW, TOKEN(SUB, CONST_TOKEN(1), 
+                                            TOKEN(POW, C(token->left), CONST_TOKEN(2))),
+                                 CONST_TOKEN(0.5)));
+} 
+
+static inline MathExpressionTokenType* MathExpressionDifferentiateArccos(
+                                                            const MathExpressionTokenType* token)
+{
+    assert(token);
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::ARCCOS);
+
+    return TOKEN(DIV, CONST_TOKEN(-1),
+                      TOKEN(MUL, D(token->left),
+                                 TOKEN(POW, TOKEN(SUB, CONST_TOKEN(1), 
+                                                       TOKEN(POW, C(token->left), CONST_TOKEN(2))),
+                                            CONST_TOKEN(0.5))));
+}
+
+static inline MathExpressionTokenType* MathExpressionDifferentiateArctan(
+                                                            const MathExpressionTokenType* token)
+{
+    assert(token);
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::ARCTAN);
+
+    return TOKEN(DIV, D(token->left), 
+                      TOKEN(ADD, CONST_TOKEN(1),
+                                 TOKEN(POW, C(token->left), CONST_TOKEN(2))));
+}
+
+static inline MathExpressionTokenType* MathExpressionDifferentiateArccot(
+                                                            const MathExpressionTokenType* token)
+{
+    assert(token);
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::ARCTAN);
+
+    return TOKEN(MUL, CONST_TOKEN(-1),
+                      TOKEN(DIV, D(token->left),
+                                 TOKEN(ADD, CONST_TOKEN(1),
+                                            TOKEN(POW, C(token->left), CONST_TOKEN(2)))));
+}
+
 static MathExpressionTokenType* MathExpressionDifferentiate(const MathExpressionTokenType* token)
 {
     assert(token);
@@ -1226,11 +1342,9 @@ static MathExpressionTokenType* MathExpressionDifferentiate(const MathExpression
 
             return MathExpressionTokenCtor(val, MathExpressionTokenValueTypeof::VALUE);
         }
-        
         case MathExpressionTokenValueTypeof::OPERATION:
         default:
             break;
-
     }
 
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
@@ -1245,7 +1359,30 @@ static MathExpressionTokenType* MathExpressionDifferentiate(const MathExpression
             return MathExpressionDifferentiateMul(token);
         case MathExpressionsOperationsEnum::DIV:
             return MathExpressionDifferentiateDiv(token);
-    
+
+        case MathExpressionsOperationsEnum::POW:
+            break; //TODO: самая большая, оставляю на потом
+        case MathExpressionsOperationsEnum::LOG:
+            break; //TODO: тоже большая, попозже
+
+        case MathExpressionsOperationsEnum::SIN:
+            return MathExpressionDifferentiateSin(token);
+        case MathExpressionsOperationsEnum::COS:
+            return MathExpressionDifferentiateCos(token);
+        case MathExpressionsOperationsEnum::TAN:
+            return MathExpressionDifferentiateTan(token);
+        case MathExpressionsOperationsEnum::COT:
+            return MathExpressionDifferentiateCot(token);
+
+        case MathExpressionsOperationsEnum::ARCSIN:
+            return MathExpressionDifferentiateArcsin(token);
+        case MathExpressionsOperationsEnum::ARCCOS:
+            return MathExpressionDifferentiateArccos(token);
+        case MathExpressionsOperationsEnum::ARCTAN:
+            return MathExpressionDifferentiateArctan(token);
+        case MathExpressionsOperationsEnum::ARCCOT:
+            return MathExpressionDifferentiateArccot(token);
+                  
         default:
             break;
     }
