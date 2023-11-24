@@ -13,6 +13,19 @@
 
 const int POISON = 0xDEAD;
 
+static double CalculateAdd(const double val1, const double val2);
+static double CalculateSub(const double val1, const double val2);
+static double CalculateMul(const double val1, const double val2);
+static double CalculateDiv(const double val1, const double val2);
+
+//Important - don't use for nothing else than construction of standard operations.
+static MathExpressionOperationType MathExpressionOperationTypeCtor(
+                                                    MathExpressionsOperationsEnum operationId,
+                                                    MathExpressionOperationFormat operationFormat, 
+                                                    const char* longName,
+                                                    const char* shortName,
+                                                    CalculationFuncType* CalculationFunc);
+
 static const char* const ADD_STR = "add";
 static const char* const SUB_STR = "sub";
 static const char* const MUL_STR = "mul";
@@ -30,6 +43,33 @@ static const char* const ARCCOT_STR = "arccot";
 
 static const char* const POW_STR = "pow";
 static const char* const LOG_STR = "log";
+
+static const MathExpressionOperationType ADD_STRUCT = MathExpressionOperationTypeCtor(
+                                                        MathExpressionsOperationsEnum::ADD,
+                                                        MathExpressionOperationFormat::INFIX,
+                                                        ADD_STR,
+                                                        "+",
+                                                        CalculateAdd);
+static const MathExpressionOperationType SUB_STRUCT = MathExpressionOperationTypeCtor(
+                                                        MathExpressionsOperationsEnum::SUB,
+                                                        MathExpressionOperationFormat::INFIX,
+                                                        SUB_STR,
+                                                        "-",
+                                                        CalculateSub);
+static const MathExpressionOperationType MUL_STRUCT = MathExpressionOperationTypeCtor(
+                                                        MathExpressionsOperationsEnum::MUL,
+                                                        MathExpressionOperationFormat::INFIX,
+                                                        MUL_STR,
+                                                        "*",
+                                                        CalculateMul);
+static const MathExpressionOperationType DIV_STRUCT = MathExpressionOperationTypeCtor(
+                                                        MathExpressionsOperationsEnum::DIV,
+                                                        MathExpressionOperationFormat::INFIX,
+                                                        DIV_STR,
+                                                        "/",
+                                                        CalculateDiv);
+
+
 
 static void MathExpressionDtor    (MathExpressionTokenType* token);
 static void MathExpressionTokenDtor(MathExpressionTokenType* token);
@@ -81,9 +121,7 @@ static const char* MathExpressionReadTokenValue(MathExpressionTokenValue* value,
 static bool HaveToPutBrackets(const MathExpressionTokenType* parent, 
                               const MathExpressionTokenType* son);
 
-static int         GetOperation(const char* operation);
-static const char* GetOperationLongName (const MathExpressionsOperations operation);
-static const char* GetOperationShortName(const MathExpressionsOperations operation);
+static int         GetOperationId(const char* operationId);
 
 static void MathExpressionGraphicDump(const MathExpressionTokenType* token, FILE* outDotFile);
 static void DotFileCreateTokens(const MathExpressionTokenType* token, 
@@ -95,7 +133,7 @@ static inline void DotFileEnd(FILE* outDotFile);
 
 static double MathExpressionCalculate(const MathExpressionTokenType* token, 
                                       const MathExpressionVariablesArrayType* varsArr);
-static double MathExpressionCalculateUsingTokenOperation(const MathExpressionsOperations operation,
+static double MathExpressionCalculateUsingTokenOperation(const MathExpressionsOperationsEnum operationId,
                                                         double firstVal, double secondVal);
 
 static inline int AddVariable(MathExpressionVariablesArrayType* varsArr,  
@@ -109,6 +147,9 @@ static MathExpressionTokenType* MathExpressionDifferentiate(const MathExpression
 static MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType* token);
 static void MathExpressionsCopyVariables(      MathExpressionType* target, 
                                          const MathExpressionType* source);
+
+static MathExpressionOperationType MathExpressionOperationTypeGet(
+                                        MathExpressionsOperationsEnum operationId);
 
 static bool IsPrefixFunction(const MathExpressionTokenType* token);
 
@@ -209,7 +250,7 @@ static MathExpressionErrors MathExpressionPrintPrefixFormat(
     else if (token->valueType == MathExpressionTokenValueTypeof::VARIABLE)
         PRINT(outStream, "%s ", varsArr->data[token->value.varId].variableName);
     else
-        PRINT(outStream, "%s ", GetOperationLongName(token->value.operation));
+        PRINT(outStream, "%s ", token->value.operation.longName);
 
     MathExpressionErrors err = MathExpressionErrors::NO_ERR;
 
@@ -284,21 +325,21 @@ static bool HaveToPutBrackets(const MathExpressionTokenType* parent,
     assert(parent->valueType == MathExpressionTokenValueTypeof::OPERATION);
     assert(son->valueType    == MathExpressionTokenValueTypeof::OPERATION);
 
-    MathExpressionsOperations parentOperation = parent->value.operation;
-    MathExpressionsOperations sonOperation    = son->value.operation;
+    MathExpressionsOperationsEnum parentOperation = parent->value.operation.operationId;
+    MathExpressionsOperationsEnum sonOperation    = son->value.operation.operationId;
 
-    if ((sonOperation    == MathExpressionsOperations::MUL  || 
-         sonOperation    == MathExpressionsOperations::DIV) &&
-        (parentOperation == MathExpressionsOperations::SUB  || 
-         parentOperation == MathExpressionsOperations::ADD))
+    if ((sonOperation    == MathExpressionsOperationsEnum::MUL  || 
+         sonOperation    == MathExpressionsOperationsEnum::DIV) &&
+        (parentOperation == MathExpressionsOperationsEnum::SUB  || 
+         parentOperation == MathExpressionsOperationsEnum::ADD))
         return false;
 
-    if (sonOperation    == MathExpressionsOperations::ADD && 
-        parentOperation == MathExpressionsOperations::ADD)
+    if (sonOperation    == MathExpressionsOperationsEnum::ADD && 
+        parentOperation == MathExpressionsOperationsEnum::ADD)
         return false;
     
-    if (sonOperation    == MathExpressionsOperations::MUL && 
-        parentOperation == MathExpressionsOperations::MUL)
+    if (sonOperation    == MathExpressionsOperationsEnum::MUL && 
+        parentOperation == MathExpressionsOperationsEnum::MUL)
         return false;
 
     return true;
@@ -308,18 +349,7 @@ static bool IsPrefixFunction(const MathExpressionTokenType* token)
 {
     assert(token);
 
-    return token->value.operation.operationType;
-        
-    if (token->valueType != MathExpressionTokenValueTypeof::OPERATION)
-        return false;
-
-    if ((token->value.operation == MathExpressionsOperations::ADD) ||
-        (token->value.operation == MathExpressionsOperations::SUB) ||
-        (token->value.operation == MathExpressionsOperations::MUL) ||
-        (token->value.operation == MathExpressionsOperations::DIV) ||
-        (token->value.operation == MathExpressionsOperations::))
-        return true;
-    
+    return (token->value.operation.operationFormat == MathExpressionOperationFormat::PREFIX);
 }
 
 static void MathExpressionTokenPrintValue(const MathExpressionTokenType* token, 
@@ -331,7 +361,7 @@ static void MathExpressionTokenPrintValue(const MathExpressionTokenType* token,
     else if (token->valueType == MathExpressionTokenValueTypeof::VARIABLE)
         PRINT(outStream, "%s ", varsArr->data[token->value.varId].variableName);
     else
-        PRINT(outStream, "%s ", GetOperationShortName(token->value.operation));
+        PRINT(outStream, "%s ", token->value.operation.shortName);
 }
 
 #undef PRINT
@@ -402,8 +432,8 @@ static MathExpressionErrors MathExpressionPrintEquationFormatTex(
 
     MathExpressionErrors err = MathExpressionErrors::NO_ERR;
 
-    bool isDivideOperation     = (token->valueType       == MathExpressionTokenValueTypeof::OPERATION) &&
-                                 (token->value.operation == MathExpressionsOperations::DIV);
+    bool isDivideOperation     = (token->valueType                 == MathExpressionTokenValueTypeof::OPERATION) &&
+                                 (token->value.operation.operationId == MathExpressionsOperationsEnum::DIV);
     bool haveToPutLeftBrackets = (token->left->valueType == MathExpressionTokenValueTypeof::OPERATION) &&
                                  (HaveToPutBrackets(token, token->left));
 
@@ -583,12 +613,13 @@ static const char* MathExpressionReadTokenValue(MathExpressionTokenValue* value,
     stringPtr = string + shift;
     assert(isspace(*stringPtr));
 
-    int operation = GetOperation(inputString);
-    if (operation != -1)
+    int operationId = GetOperationId(inputString);
+    if (operationId != -1)
     {
-        value->operation = (MathExpressionsOperations) operation;
-        *valueType       = MathExpressionTokenValueTypeof::OPERATION;
-        
+        //TODO: подумать над именем функции
+        value->operation = MathExpressionOperationTypeGet(
+                                                (MathExpressionsOperationsEnum) operationId);
+        *valueType                   = MathExpressionTokenValueTypeof::OPERATION;
         return stringPtr;
     }
 
@@ -604,112 +635,66 @@ static const char* MathExpressionReadTokenValue(MathExpressionTokenValue* value,
     return stringPtr;
 }
 
-static int GetOperation(const char* string)
+static MathExpressionOperationType MathExpressionOperationTypeGet(
+                                        MathExpressionsOperationsEnum operationId)
 {
-    assert(string);
-
-    if (     strcasecmp(string, "/") == 0 || strcasecmp(string, DIV_STR) == 0)
-        return (int)MathExpressionsOperations::DIV;
-    else if (strcasecmp(string, "*") == 0 || strcasecmp(string, MUL_STR) == 0)
-        return (int)MathExpressionsOperations::MUL;
-    else if (strcasecmp(string, "-") == 0 || strcasecmp(string, SUB_STR) == 0)
-        return (int)MathExpressionsOperations::SUB;
-    else if (strcasecmp(string, "+") == 0 || strcasecmp(string, ADD_STR) == 0)
-        return (int)MathExpressionsOperations::ADD;
-
-    else if (strcasecmp(string, POW_STR) == 0)
-        return (int)MathExpressionsOperations::POW;
-
-    else if (strcasecmp(string, LOG_STR) == 0)
-        return (int)MathExpressionsOperations::LOG;
-
-    else if (strcasecmp(string, SIN_STR) == 0)
-        return (int)MathExpressionsOperations::SIN;
-    else if (strcasecmp(string, COS_STR) == 0)
-        return (int)MathExpressionsOperations::COS;
-    else if (strcasecmp(string, TAN_STR) == 0)
-        return (int)MathExpressionsOperations::TAN;
-    else if (strcasecmp(string, COT_STR) == 0)
-        return (int)MathExpressionsOperations::COT;
-    
-    else if (strcasecmp(string, ARCSIN_STR) == 0)
-        return (int)MathExpressionsOperations::ARCSIN;
-    else if (strcasecmp(string, ARCCOS_STR) == 0)
-        return (int)MathExpressionsOperations::ARCCOS;
-    else if (strcasecmp(string, ARCTAN_STR) == 0)
-        return (int)MathExpressionsOperations::ARCTAN;
-    else if (strcasecmp(string, ARCCOT_STR) == 0)
-        return (int)MathExpressionsOperations::ARCCOT;
-    
-    return -1;
-}
-
-static const char* GetOperationLongName(const MathExpressionsOperations operation)
-{
-    switch (operation)
+    switch (operationId)
     {
-        case MathExpressionsOperations::MUL:
-            return MUL_STR;
-        case MathExpressionsOperations::DIV:
-            return DIV_STR;
-        case MathExpressionsOperations::SUB:
-            return SUB_STR;
-        case MathExpressionsOperations::ADD:
-            return ADD_STR;
-        
-        case MathExpressionsOperations::POW:
-            return POW_STR;
-        case MathExpressionsOperations::LOG:
-            return LOG_STR;
-        
-        case MathExpressionsOperations::SIN:
-            return SIN_STR;
-        case MathExpressionsOperations::COS:
-            return COS_STR;
-        case MathExpressionsOperations::TAN:
-            return TAN_STR;
-        case MathExpressionsOperations::COT:
-            return COT_STR;
-        
-        case MathExpressionsOperations::ARCSIN:
-            return ARCSIN_STR;
-        case MathExpressionsOperations::ARCCOS:
-            return ARCCOS_STR;
-        case MathExpressionsOperations::ARCTAN:
-            return ARCTAN_STR;
-        case MathExpressionsOperations::ARCCOT:
-            return ARCCOT_STR;
-        
-        default:
-            return nullptr;
-    }
-
-    return nullptr;
-}
-
-static const char* GetOperationShortName(const MathExpressionsOperations operation)
-{
-
-#pragma GCC diagnostic ignored "-Wswitch-enum"
-
-    switch (operation)
-    {
-        case MathExpressionsOperations::MUL:
-            return "*";
-        case MathExpressionsOperations::DIV:
-            return "/";
-        case MathExpressionsOperations::SUB:
-            return "-";
-        case MathExpressionsOperations::ADD:
-            return "+";
-        
+        case MathExpressionsOperationsEnum::ADD:
+            return ADD_STRUCT;
+        case MathExpressionsOperationsEnum::SUB:
+            return SUB_STRUCT;
+        case MathExpressionsOperationsEnum::MUL:
+            return MUL_STRUCT;
+        case MathExpressionsOperationsEnum::DIV:
+            return DIV_STRUCT;    
+    
         default:
             break;
     }
-#pragma GCC diagnostic warning "-Wswitch-enum"
 
-    //все остальные случаи уходят сюда
-    return GetOperationLongName(operation);
+    return {};
+}
+
+static int GetOperationId(const char* string)
+{
+    assert(string);
+
+    //TODO: можно создать массив с моими стандартными структурами и пройтись по нему, это лучше выглядеть будет
+    if (     strcasecmp(string, "/") == 0 || strcasecmp(string, DIV_STR) == 0)
+        return (int)MathExpressionsOperationsEnum::DIV;
+    else if (strcasecmp(string, "*") == 0 || strcasecmp(string, MUL_STR) == 0)
+        return (int)MathExpressionsOperationsEnum::MUL;
+    else if (strcasecmp(string, "-") == 0 || strcasecmp(string, SUB_STR) == 0)
+        return (int)MathExpressionsOperationsEnum::SUB;
+    else if (strcasecmp(string, "+") == 0 || strcasecmp(string, ADD_STR) == 0)
+        return (int)MathExpressionsOperationsEnum::ADD;
+
+    else if (strcasecmp(string, POW_STR) == 0)
+        return (int)MathExpressionsOperationsEnum::POW;
+
+    else if (strcasecmp(string, LOG_STR) == 0)
+        return (int)MathExpressionsOperationsEnum::LOG;
+
+    else if (strcasecmp(string, SIN_STR) == 0)
+        return (int)MathExpressionsOperationsEnum::SIN;
+    else if (strcasecmp(string, COS_STR) == 0)
+        return (int)MathExpressionsOperationsEnum::COS;
+    else if (strcasecmp(string, TAN_STR) == 0)
+        return (int)MathExpressionsOperationsEnum::TAN;
+    else if (strcasecmp(string, COT_STR) == 0)
+        return (int)MathExpressionsOperationsEnum::COT;
+    
+    else if (strcasecmp(string, ARCSIN_STR) == 0)
+        return (int)MathExpressionsOperationsEnum::ARCSIN;
+    else if (strcasecmp(string, ARCCOS_STR) == 0)
+        return (int)MathExpressionsOperationsEnum::ARCCOS;
+    else if (strcasecmp(string, ARCTAN_STR) == 0)
+        return (int)MathExpressionsOperationsEnum::ARCTAN;
+    else if (strcasecmp(string, ARCCOT_STR) == 0)
+        return (int)MathExpressionsOperationsEnum::ARCCOT;
+    
+    return -1;
 }
 
 static MathExpressionTokenType* MathExpressionTokenCtor(MathExpressionTokenValue value, 
@@ -803,7 +788,7 @@ static void DotFileCreateTokens(const MathExpressionTokenType* token,
     
     if (token->valueType == MathExpressionTokenValueTypeof::OPERATION)
         fprintf(outDotFile, "fillcolor=\"#89AC76\", label = \"%s\", ", 
-                            GetOperationLongName(token->value.operation));
+                            token->value.operation.longName);
     else if (token->valueType == MathExpressionTokenValueTypeof::VALUE)
         fprintf(outDotFile, "fillcolor=\"#7293ba\", label = \"%lf\", ", token->value.value);
     else if (token->valueType == MathExpressionTokenValueTypeof::VARIABLE)
@@ -877,6 +862,9 @@ static double MathExpressionCalculate(const MathExpressionTokenType* token,
 {
     assert(token);
 
+    if (token == nullptr)
+        return NAN;
+    
     if (token->valueType == MathExpressionTokenValueTypeof::VALUE)
         return token->value.value;
 
@@ -886,7 +874,40 @@ static double MathExpressionCalculate(const MathExpressionTokenType* token,
     double firstVal  = MathExpressionCalculate(token->left,  varsArr);
     double secondVal = MathExpressionCalculate(token->right, varsArr);
     
-    return MathExpressionCalculateUsingTokenOperation(token->value.operation, firstVal, secondVal);
+    return token->value.operation.CalculationFunc(firstVal, secondVal);
+}
+
+static double CalculateAdd(const double val1, const double val2)
+{
+    assert(isfinite(val1));
+    assert(isfinite(val2));
+
+    return val1 + val2;
+}
+
+static double CalculateSub(const double val1, const double val2)
+{
+    assert(isfinite(val1));
+    assert(isfinite(val2));
+
+    return val1 - val2;
+}
+
+static double CalculateMul(const double val1, const double val2)
+{
+    assert(isfinite(val1));
+    assert(isfinite(val2));
+
+    return val1 * val2;
+}
+
+static double CalculateDiv(const double val1, const double val2)
+{
+    assert(isfinite(val1));
+    assert(isfinite(val2));
+    assert(!DoubleEqual(val2, 0));
+
+    return val1 / val2;
 }
 
 static double CalculateLog(const double base, const double value)
@@ -901,61 +922,68 @@ static double CalculateLog(const double base, const double value)
     return log(value) / log_Base;
 }
 
-static double CalculateCot(const double val)
+static double CalculateTan(const double val1, const double val2 = NAN)
 {
-    assert(isfinite(val));
+    assert(isfinite(val1));
+    
+    return tan(val1);
+}
 
-    double tan_val = tan(val);
+static double CalculateCot(const double val1, const double val2 = NAN)
+{
+    assert(isfinite(val1));
+
+    double tan_val = tan(val1);
 
     assert(!DoubleEqual(tan_val, 0));
 
     return 1 / tan_val;
 }
 
-static double MathExpressionCalculateUsingTokenOperation(const MathExpressionsOperations operation, 
+static double MathExpressionCalculateUsingTokenOperation(const MathExpressionsOperationsEnum operationId, 
                                                          double firstVal, double secondVal = NAN)
 {
     assert(isfinite(firstVal));
 
-    switch(operation)
+    switch(operationId)
     {
-        case MathExpressionsOperations::ADD:
+        case MathExpressionsOperationsEnum::ADD:
             assert(isfinite(secondVal));
             return firstVal + secondVal;
-        case MathExpressionsOperations::SUB:
+        case MathExpressionsOperationsEnum::SUB:
             assert(isfinite(secondVal));
             return firstVal - secondVal;
-        case MathExpressionsOperations::MUL:
+        case MathExpressionsOperationsEnum::MUL:
             assert(isfinite(secondVal));
             return firstVal * secondVal;
-        case MathExpressionsOperations::DIV:
+        case MathExpressionsOperationsEnum::DIV:
             assert(isfinite(secondVal));
             assert(!DoubleEqual(secondVal, 0));
             return firstVal / secondVal;
 
-        case MathExpressionsOperations::POW:
+        case MathExpressionsOperationsEnum::POW:
             assert(isfinite(secondVal));
             return pow(firstVal, secondVal);
-        case MathExpressionsOperations::LOG:
+        case MathExpressionsOperationsEnum::LOG:
             assert(isfinite(secondVal));
             return CalculateLog(firstVal, secondVal);
         
-        case MathExpressionsOperations::SIN:
+        case MathExpressionsOperationsEnum::SIN:
             return sin(firstVal);
-        case MathExpressionsOperations::COS:
+        case MathExpressionsOperationsEnum::COS:
             return cos(firstVal);
-        case MathExpressionsOperations::TAN:
+        case MathExpressionsOperationsEnum::TAN:
             return tan(firstVal);
-        case MathExpressionsOperations::COT:
+        case MathExpressionsOperationsEnum::COT:
             return CalculateCot(firstVal);
 
-        case MathExpressionsOperations::ARCSIN:
+        case MathExpressionsOperationsEnum::ARCSIN:
             return asin(firstVal);
-        case MathExpressionsOperations::ARCCOS:
+        case MathExpressionsOperationsEnum::ARCCOS:
             return acos(firstVal);
-        case MathExpressionsOperations::ARCTAN:
+        case MathExpressionsOperationsEnum::ARCTAN:
             return atan(firstVal);
-        case MathExpressionsOperations::ARCCOT:
+        case MathExpressionsOperationsEnum::ARCCOT:
             return PI / 2 - atan(firstVal);
         
         default:
@@ -1032,12 +1060,12 @@ MathExpressionType MathExpressionDifferentiate(const MathExpressionType* express
     return diffMathExpression;
 }
 
-static inline MathExpressionTokenValue MathExpressionCreateValue(
-                                                        MathExpressionsOperations operation)
+static inline MathExpressionTokenValue MathExpressionCreateTokenValue(
+                                                        MathExpressionsOperationsEnum operationId)
 {
     MathExpressionTokenValue value =
     {
-        .operation = operation,
+        .operation = MathExpressionOperationTypeGet(operationId),
     };
 
     return value;
@@ -1046,9 +1074,10 @@ static inline MathExpressionTokenValue MathExpressionCreateValue(
 #define D(TOKEN) MathExpressionDifferentiate(TOKEN)
 #define C(TOKEN) MathExpressionCopy(TOKEN)
 
-#define TOKEN(OPERATION_NAME, LEFT_TOKEN, RIGHT_TOKEN)                                             \
-    MathExpressionTokenCtor(MathExpressionCreateValue(MathExpressionsOperations::OPERATION_NAME),  \
-                            MathExpressionTokenValueTypeof::OPERATION,                             \
+#define TOKEN(OPERATION_NAME, LEFT_TOKEN, RIGHT_TOKEN)                                        \
+    MathExpressionTokenCtor(MathExpressionCreateTokenValue(                                   \
+                                            MathExpressionsOperationsEnum::OPERATION_NAME),   \
+                            MathExpressionTokenValueTypeof::OPERATION,                         \
                             LEFT_TOKEN, RIGHT_TOKEN)                                               
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateAdd(
@@ -1056,7 +1085,7 @@ static inline MathExpressionTokenType* MathExpressionDifferentiateAdd(
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation == MathExpressionsOperations::ADD);
+    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::ADD);
 
     return TOKEN(ADD, D(token->left), D(token->right));
 }
@@ -1066,7 +1095,7 @@ static inline MathExpressionTokenType* MathExpressionDifferentiateSub(
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation == MathExpressionsOperations::SUB);
+    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::SUB);
 
     return TOKEN(SUB, D(token->left), D(token->right));
 }
@@ -1076,8 +1105,7 @@ static inline MathExpressionTokenType* MathExpressionDifferentiateMul(
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation == MathExpressionsOperations::MUL);
-
+    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::MUL);
 
     return TOKEN(ADD, TOKEN(MUL, D(token->left), C(token->right)), 
                       TOKEN(MUL, C(token->left), D(token->right)));
@@ -1088,7 +1116,7 @@ static inline MathExpressionTokenType* MathExpressionDifferentiateDiv(
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation == MathExpressionsOperations::DIV);
+    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::DIV);
 
     return TOKEN(DIV, TOKEN(SUB, TOKEN(MUL, D(token->left), C(token->right)), 
                                  TOKEN(MUL, C(token->left), D(token->right))),
@@ -1124,19 +1152,20 @@ static MathExpressionTokenType* MathExpressionDifferentiate(const MathExpression
 
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
     
-    switch(token->value.operation)
+    switch (token->value.operation.operationId)
     {
-        case MathExpressionsOperations::ADD:
-            return MathExpressionDifferentiateAdd(token);
-        case MathExpressionsOperations::SUB:
+        case MathExpressionsOperationsEnum::ADD:
+            return MathExpressionDifferentiateAdd(token);    
+        case MathExpressionsOperationsEnum::SUB:
             return MathExpressionDifferentiateSub(token);
-        case MathExpressionsOperations::MUL:
+        case MathExpressionsOperationsEnum::MUL:
             return MathExpressionDifferentiateMul(token);
-        case MathExpressionsOperations::DIV:
+        case MathExpressionsOperationsEnum::DIV:
             return MathExpressionDifferentiateDiv(token);
+    
+        default:
+            break;
     }
-
-    return nullptr;
 }
 
 static MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType* token)
@@ -1174,4 +1203,28 @@ static void MathExpressionTokenSetEdges(MathExpressionTokenType* token, MathExpr
 
     token->left  = left;
     token->right = right;
+}
+
+static MathExpressionOperationType MathExpressionOperationTypeCtor(
+                                                    MathExpressionsOperationsEnum operationId,
+                                                    MathExpressionOperationFormat operationFormat, 
+                                                    const char* longName,
+                                                    const char* shortName,
+                                                    CalculationFuncType* CalculationFunc)
+{
+    assert(longName);
+    assert(shortName);
+
+    MathExpressionOperationType operation = 
+    {
+        .operationId     = operationId,
+        .operationFormat = operationFormat,
+
+        .longName        = longName, 
+        .shortName       = shortName,
+
+        .CalculationFunc = CalculationFunc,
+    };
+
+    return operation;
 }

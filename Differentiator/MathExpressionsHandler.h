@@ -2,6 +2,7 @@
 #define MATH_EXPRESSIONS_HADNLER_H
 
 #include <stdio.h>
+#include <math.h>
 
 struct MathExpressionVariableType
 {
@@ -17,6 +18,7 @@ struct MathExpressionVariablesArrayType
     size_t size;
 };
 
+//TODO: rename Enum -> id, Expressions->expression
 enum class MathExpressionsOperationsEnum
 {
     ADD,
@@ -37,27 +39,32 @@ enum class MathExpressionsOperationsEnum
     ARCCOT,
 };
 
-struct MathExpressionsOperations
+enum class MathExpressionOperationFormat
 {
-    enum OperationType
-    {
-        PREFIX,
-        INFIX,
-        POSTFIX,
-    };
+    PREFIX,
+    INFIX,
+    POSTFIX,
+};
 
-    const MathExpressionsOperationsEnum operation;
-    const OperationType                 operationType;
+typedef double (CalculationFuncType)(double firstVal, double secondVal);
 
-    const char* const longName;
-    const char* const shortName;
+struct MathExpressionOperationType
+{
+
+    MathExpressionsOperationsEnum operationId;
+    MathExpressionOperationFormat operationFormat;
+
+    const char* longName;
+    const char* shortName;
+
+    CalculationFuncType* CalculationFunc;
 };
 
 union MathExpressionTokenValue
 {
     double             value;
     int                varId;
-    MathExpressionsOperations operation;
+    MathExpressionOperationType operation;
 }; 
 
 enum class MathExpressionTokenValueTypeof
