@@ -133,8 +133,6 @@ static inline void DotFileEnd(FILE* outDotFile);
 
 static double MathExpressionCalculate(const MathExpressionTokenType* token, 
                                       const MathExpressionVariablesArrayType* varsArr);
-static double MathExpressionCalculateUsingTokenOperation(const MathExpressionsOperationsEnum operationId,
-                                                        double firstVal, double secondVal);
 
 static inline int AddVariable(MathExpressionVariablesArrayType* varsArr,  
                               const char*  variableName, 
@@ -940,59 +938,6 @@ static double CalculateCot(const double val1, const double val2 = NAN)
     return 1 / tan_val;
 }
 
-static double MathExpressionCalculateUsingTokenOperation(const MathExpressionsOperationsEnum operationId, 
-                                                         double firstVal, double secondVal = NAN)
-{
-    assert(isfinite(firstVal));
-
-    switch(operationId)
-    {
-        case MathExpressionsOperationsEnum::ADD:
-            assert(isfinite(secondVal));
-            return firstVal + secondVal;
-        case MathExpressionsOperationsEnum::SUB:
-            assert(isfinite(secondVal));
-            return firstVal - secondVal;
-        case MathExpressionsOperationsEnum::MUL:
-            assert(isfinite(secondVal));
-            return firstVal * secondVal;
-        case MathExpressionsOperationsEnum::DIV:
-            assert(isfinite(secondVal));
-            assert(!DoubleEqual(secondVal, 0));
-            return firstVal / secondVal;
-
-        case MathExpressionsOperationsEnum::POW:
-            assert(isfinite(secondVal));
-            return pow(firstVal, secondVal);
-        case MathExpressionsOperationsEnum::LOG:
-            assert(isfinite(secondVal));
-            return CalculateLog(firstVal, secondVal);
-        
-        case MathExpressionsOperationsEnum::SIN:
-            return sin(firstVal);
-        case MathExpressionsOperationsEnum::COS:
-            return cos(firstVal);
-        case MathExpressionsOperationsEnum::TAN:
-            return tan(firstVal);
-        case MathExpressionsOperationsEnum::COT:
-            return CalculateCot(firstVal);
-
-        case MathExpressionsOperationsEnum::ARCSIN:
-            return asin(firstVal);
-        case MathExpressionsOperationsEnum::ARCCOS:
-            return acos(firstVal);
-        case MathExpressionsOperationsEnum::ARCTAN:
-            return atan(firstVal);
-        case MathExpressionsOperationsEnum::ARCCOT:
-            return PI / 2 - atan(firstVal);
-        
-        default:
-            return NAN;
-    }
-
-    return NAN;
-}
-
 static inline int AddVariable(MathExpressionVariablesArrayType* varsArr,  
                               const char*  variableName, 
                               const double variableValue)
@@ -1077,7 +1022,7 @@ static inline MathExpressionTokenValue MathExpressionCreateTokenValue(
 #define TOKEN(OPERATION_NAME, LEFT_TOKEN, RIGHT_TOKEN)                                        \
     MathExpressionTokenCtor(MathExpressionCreateTokenValue(                                   \
                                             MathExpressionsOperationsEnum::OPERATION_NAME),   \
-                            MathExpressionTokenValueTypeof::OPERATION,                         \
+                            MathExpressionTokenValueTypeof::OPERATION,                        \
                             LEFT_TOKEN, RIGHT_TOKEN)                                               
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateAdd(
