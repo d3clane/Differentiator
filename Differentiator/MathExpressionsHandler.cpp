@@ -9,35 +9,40 @@
 #include "../FastInput/InputOutput.h"
 #include "../Common/DoubleFuncs.h"
 
+//TODO: накидать inline когда будет не лень, я их тут проебал
+
 const int POISON = 0xDEAD;
 
-static void MathExpressionDtor    (MathExpressionTokenType* node);
-static void MathExpressionNodeDtor(MathExpressionTokenType* node);
+
+static void MathExpressionDtor    (MathExpressionTokenType* token);
+static void MathExpressionTokenDtor(MathExpressionTokenType* token);
 
 static MathExpressionTokenType* MathExpressionTokenCtor(MathExpressionTokenValue value, 
-                                                        MathExpressionTokenValueTypeof valueType);
+                                                        MathExpressionTokenValueTypeof valueType,
+                                                        MathExpressionTokenType* left  = nullptr,
+                                                        MathExpressionTokenType* right = nullptr);
 
-static void MathExpressionNodeSetEdges(MathExpressionTokenType* node, 
+static void MathExpressionTokenSetEdges(MathExpressionTokenType* token, 
                                        MathExpressionTokenType* left, 
                                        MathExpressionTokenType* right);
  
 static MathExpressionErrors MathExpressionPrintPrefixFormat     (
-                                                const MathExpressionTokenType* node, 
+                                                const MathExpressionTokenType* token, 
                                                 const MathExpressionVariablesArrayType* varsArr, 
                                                 FILE* outStream);
 
 static MathExpressionErrors MathExpressionPrintEquationFormat   (
-                                                const MathExpressionTokenType* node, 
+                                                const MathExpressionTokenType* token, 
                                                 const MathExpressionVariablesArrayType* varsArr,
                                                 FILE* outStream);
 
 static MathExpressionErrors MathExpressionPrintEquationFormatTex(
-                                                const MathExpressionTokenType* node, 
+                                                const MathExpressionTokenType* token, 
                                                 const MathExpressionVariablesArrayType* varsArr, 
                                                 FILE* outStream);
 
-static void       MathExpressionNodePrintValue                  (
-                                                const MathExpressionTokenType* node, 
+static void       MathExpressionTokenPrintValue                 (
+                                                const MathExpressionTokenType* token, 
                                                 const MathExpressionVariablesArrayType* varsArr, 
                                                 FILE* outStream);
 
@@ -51,7 +56,7 @@ static MathExpressionTokenType* MathExpressionReadInfixFormat(
                                                 const char** stringEndPtr,
                                                 MathExpressionVariablesArrayType* varsArr);
 
-static const char* MathExpressionReadNodeValue(MathExpressionTokenValue* value, 
+static const char* MathExpressionReadTokenValue(MathExpressionTokenValue* value, 
                                                MathExpressionTokenValueTypeof* valueType, 
                                                MathExpressionVariablesArrayType* varsArr,
                                                const char* stringPtr);
@@ -63,17 +68,17 @@ static int         GetOperation(const char* operation);
 static const char* GetOperationLongName (const MathExpressionsOperations operation);
 static const char* GetOperationShortName(const MathExpressionsOperations operation);
 
-static void MathExpressionGraphicDump(const MathExpressionTokenType* node, FILE* outDotFile);
-static void DotFileCreateNodes(const MathExpressionTokenType* node, 
+static void MathExpressionGraphicDump(const MathExpressionTokenType* token, FILE* outDotFile);
+static void DotFileCreateTokens(const MathExpressionTokenType* token, 
                                const MathExpressionVariablesArrayType* varsArr, FILE* outDotFile);
 
 static inline void CreateImgInLogFile(const size_t imgIndex, bool openImg);
 static inline void DotFileBegin(FILE* outDotFile);
 static inline void DotFileEnd(FILE* outDotFile);
 
-static double MathExpressionCalculate(const MathExpressionTokenType* node, 
+static double MathExpressionCalculate(const MathExpressionTokenType* token, 
                                       const MathExpressionVariablesArrayType* varsArr);
-static double MathExpressionCalculateUsingNodeOperation(const MathExpressionsOperations operation,
+static double MathExpressionCalculateUsingTokenOperation(const MathExpressionsOperations operation,
                                                         double firstVal, double secondVal);
 
 static inline int AddVariable(MathExpressionVariablesArrayType* varsArr,  
@@ -82,6 +87,11 @@ static inline int AddVariable(MathExpressionVariablesArrayType* varsArr,
 
 static int GetVariableIdByName(const MathExpressionVariablesArrayType* varsArr, 
                                const char* variableName);
+
+static MathExpressionTokenType* MathExpressionDifferentiate(const MathExpressionTokenType* token);
+static MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType* token);
+static void MathExpressionsCopyVariables(      MathExpressionType* target, 
+                                         const MathExpressionType* source);
 
 MathExpressionErrors MathExpressionCtor(MathExpressionType* expression)
 {
@@ -123,17 +133,17 @@ MathExpressionErrors MathExpressionDtor(MathExpressionType* expression)
     return MathExpressionErrors::NO_ERR;
 }
 
-static void MathExpressionDtor(MathExpressionTokenType* node)
+static void MathExpressionDtor(MathExpressionTokenType* token)
 {
-    if (node == nullptr)
+    if (token == nullptr)
         return;
     
-    assert(node);
+    assert(token);
 
-    MathExpressionDtor(node->left);
-    MathExpressionDtor(node->right);
+    MathExpressionDtor(token->left);
+    MathExpressionDtor(token->right);
 
-    MathExpressionNodeDtor(node);
+    MathExpressionTokenDtor(token);
 }
 
 #define PRINT(outStream, ...)                          \
@@ -163,11 +173,11 @@ MathExpressionErrors MathExpressionPrintPrefixFormat(const MathExpressionType* e
 }
 
 static MathExpressionErrors MathExpressionPrintPrefixFormat(
-                                                    const MathExpressionTokenType* node, 
+                                                    const MathExpressionTokenType* token, 
                                                     const MathExpressionVariablesArrayType* varsArr, 
                                                     FILE* outStream)
 {
-    if (node == nullptr)
+    if (token == nullptr)
     {
         PRINT(outStream, "nil ");
         return MathExpressionErrors::NO_ERR;
@@ -175,17 +185,17 @@ static MathExpressionErrors MathExpressionPrintPrefixFormat(
 
     PRINT(outStream, "(");
     
-    if (node->valueType == MathExpressionTokenValueTypeof::VALUE)
-        PRINT(outStream, "%lf ", node->value.value);
-    else if (node->valueType == MathExpressionTokenValueTypeof::VARIABLE)
-        PRINT(outStream, "%s ", varsArr->data[node->value.varId].variableName);
+    if (token->valueType == MathExpressionTokenValueTypeof::VALUE)
+        PRINT(outStream, "%lf ", token->value.value);
+    else if (token->valueType == MathExpressionTokenValueTypeof::VARIABLE)
+        PRINT(outStream, "%s ", varsArr->data[token->value.varId].variableName);
     else
-        PRINT(outStream, "%s ", GetOperationLongName(node->value.operation));
+        PRINT(outStream, "%s ", GetOperationLongName(token->value.operation));
 
     MathExpressionErrors err = MathExpressionErrors::NO_ERR;
 
-    err = MathExpressionPrintPrefixFormat(node->left,  varsArr, outStream);
-    err = MathExpressionPrintPrefixFormat(node->right, varsArr, outStream);
+    err = MathExpressionPrintPrefixFormat(token->left,  varsArr, outStream);
+    err = MathExpressionPrintPrefixFormat(token->right, varsArr, outStream);
 
     PRINT(outStream, ")");
     
@@ -212,32 +222,32 @@ MathExpressionErrors MathExpressionPrintEquationFormat(const MathExpressionType*
 }
 
 static MathExpressionErrors MathExpressionPrintEquationFormat(
-                                          const MathExpressionTokenType* node, 
+                                          const MathExpressionTokenType* token, 
                                           const MathExpressionVariablesArrayType* varsArr,
                                           FILE* outStream)
 {
-    if (node->left == nullptr && node->right == nullptr)
+    if (token->left == nullptr && token->right == nullptr)
     {
-        MathExpressionNodePrintValue(node, varsArr, outStream);
+        MathExpressionTokenPrintValue(token, varsArr, outStream);
 
         return MathExpressionErrors::NO_ERR;
     }
 
     MathExpressionErrors err = MathExpressionErrors::NO_ERR;
 
-    bool haveToPutLeftBrackets = (node->left->valueType == MathExpressionTokenValueTypeof::OPERATION) &&
-                                  HaveToPutBrackets(node, node->left);
+    bool haveToPutLeftBrackets = (token->left->valueType == MathExpressionTokenValueTypeof::OPERATION) &&
+                                  HaveToPutBrackets(token, token->left);
     
     if (haveToPutLeftBrackets) PRINT(outStream, "(");
-    err = MathExpressionPrintEquationFormat(node->left, varsArr, outStream);
+    err = MathExpressionPrintEquationFormat(token->left, varsArr, outStream);
     if (haveToPutLeftBrackets) PRINT(outStream, ")");
 
-    MathExpressionNodePrintValue(node, varsArr, outStream);
+    MathExpressionTokenPrintValue(token, varsArr, outStream);
     
-    bool haveToPutRightBrackets = (node->right->valueType == MathExpressionTokenValueTypeof::OPERATION) &&
-                                   HaveToPutBrackets(node, node->right);
+    bool haveToPutRightBrackets = (token->right->valueType == MathExpressionTokenValueTypeof::OPERATION) &&
+                                   HaveToPutBrackets(token, token->right);
     if (haveToPutRightBrackets) PRINT(outStream, "(");
-    err = MathExpressionPrintEquationFormat(node->right, varsArr, outStream);
+    err = MathExpressionPrintEquationFormat(token->right, varsArr, outStream);
     if (haveToPutRightBrackets) PRINT(outStream, ")");
 
     return err;
@@ -270,16 +280,16 @@ static bool HaveToPutBrackets(const MathExpressionTokenType* parent,
     return true;
 }
 
-static void MathExpressionNodePrintValue(const MathExpressionTokenType* node, 
+static void MathExpressionTokenPrintValue(const MathExpressionTokenType* token, 
                                          const MathExpressionVariablesArrayType* varsArr, 
                                          FILE* outStream)
 {
-    if (node->valueType == MathExpressionTokenValueTypeof::VALUE)
-        PRINT(outStream, "%lf ", node->value.value);
-    else if (node->valueType == MathExpressionTokenValueTypeof::VARIABLE)
-        PRINT(outStream, "%s ", varsArr->data[node->value.varId].variableName);
+    if (token->valueType == MathExpressionTokenValueTypeof::VALUE)
+        PRINT(outStream, "%lf ", token->value.value);
+    else if (token->valueType == MathExpressionTokenValueTypeof::VARIABLE)
+        PRINT(outStream, "%s ", varsArr->data[token->value.varId].variableName);
     else
-        PRINT(outStream, "%s ", GetOperationShortName(node->value.operation));
+        PRINT(outStream, "%s ", GetOperationShortName(token->value.operation));
 }
 
 #undef PRINT
@@ -334,41 +344,41 @@ MathExpressionErrors MathExpressionPrintEquationFormatTex(const MathExpressionTy
 }
 
 static MathExpressionErrors MathExpressionPrintEquationFormatTex(
-                                             const MathExpressionTokenType* node, 
+                                             const MathExpressionTokenType* token, 
                                              const MathExpressionVariablesArrayType* varsArr, 
                                              FILE* outStream)
 {
-    assert(node);
+    assert(token);
     assert(outStream);
 
-    if (node->left == nullptr && node->right == nullptr)
+    if (token->left == nullptr && token->right == nullptr)
     {
-        MathExpressionNodePrintValue(node, varsArr, outStream);
+        MathExpressionTokenPrintValue(token, varsArr, outStream);
 
         return MathExpressionErrors::NO_ERR;
     }
 
     MathExpressionErrors err = MathExpressionErrors::NO_ERR;
 
-    bool isDivideOperation     = (node->valueType       == MathExpressionTokenValueTypeof::OPERATION) &&
-                                 (node->value.operation == MathExpressionsOperations::DIV);
-    bool haveToPutLeftBrackets = (node->left->valueType == MathExpressionTokenValueTypeof::OPERATION) &&
-                                 (HaveToPutBrackets(node, node->left));
+    bool isDivideOperation     = (token->valueType       == MathExpressionTokenValueTypeof::OPERATION) &&
+                                 (token->value.operation == MathExpressionsOperations::DIV);
+    bool haveToPutLeftBrackets = (token->left->valueType == MathExpressionTokenValueTypeof::OPERATION) &&
+                                 (HaveToPutBrackets(token, token->left));
 
     if (isDivideOperation)                           fprintf(outStream, "\\frac{");
     if (!isDivideOperation && haveToPutLeftBrackets) fprintf(outStream, "(");
-    err = MathExpressionPrintEquationFormatTex(node->left, varsArr, outStream);
+    err = MathExpressionPrintEquationFormatTex(token->left, varsArr, outStream);
     if (!isDivideOperation && haveToPutLeftBrackets) fprintf(outStream, ")");
     if (isDivideOperation)                           fprintf(outStream, "}");
 
-    if (!isDivideOperation) MathExpressionNodePrintValue(node, varsArr, outStream);
+    if (!isDivideOperation) MathExpressionTokenPrintValue(token, varsArr, outStream);
     
-    bool haveToPutRightBrackets = (node->right->valueType == MathExpressionTokenValueTypeof::OPERATION) &&
-                                   (HaveToPutBrackets(node, node->right));
+    bool haveToPutRightBrackets = (token->right->valueType == MathExpressionTokenValueTypeof::OPERATION) &&
+                                   (HaveToPutBrackets(token, token->right));
     
     if (isDivideOperation)                            fprintf(outStream, "{");
     if (!isDivideOperation && haveToPutRightBrackets) fprintf(outStream, "(");
-    err = MathExpressionPrintEquationFormatTex(node->right, varsArr, outStream);
+    err = MathExpressionPrintEquationFormatTex(token->right, varsArr, outStream);
     if (!isDivideOperation && haveToPutRightBrackets) fprintf(outStream, ")");
     if (isDivideOperation)                            fprintf(outStream, "}");
 
@@ -422,8 +432,8 @@ static MathExpressionTokenType* MathExpressionReadPrefixFormat(
     MathExpressionTokenValue value;
     MathExpressionTokenValueTypeof valueType;
 
-    stringPtr = MathExpressionReadNodeValue(&value, &valueType, varsArr, stringPtr);
-    MathExpressionTokenType* node = MathExpressionTokenCtor(value, valueType);
+    stringPtr = MathExpressionReadTokenValue(&value, &valueType, varsArr, stringPtr);
+    MathExpressionTokenType* token = MathExpressionTokenCtor(value, valueType);
 
     MathExpressionTokenType* left  = MathExpressionReadPrefixFormat(stringPtr, &stringPtr, varsArr);
     MathExpressionTokenType* right = MathExpressionReadPrefixFormat(stringPtr, &stringPtr, varsArr);
@@ -431,10 +441,10 @@ static MathExpressionTokenType* MathExpressionReadPrefixFormat(
     stringPtr = SkipSymbolsUntilStopChar(stringPtr, ')');
     ++stringPtr;
 
-    MathExpressionNodeSetEdges(node, left, right);
+    MathExpressionTokenSetEdges(token, left, right);
 
     *stringEndPtr = stringPtr;
-    return node;
+    return token;
 }
 
 MathExpressionErrors MathExpressionReadInfixFormat (MathExpressionType* expression, FILE* inStream)
@@ -479,28 +489,28 @@ static MathExpressionTokenType* MathExpressionReadInfixFormat(
     {
         --stringPtr;
 
-        stringPtr = MathExpressionReadNodeValue(&value, &valueType, varsArr, stringPtr);
-        MathExpressionTokenType* node = MathExpressionTokenCtor(value, valueType);
+        stringPtr = MathExpressionReadTokenValue(&value, &valueType, varsArr, stringPtr);
+        MathExpressionTokenType* token = MathExpressionTokenCtor(value, valueType);
 
         *stringEndPtr = stringPtr;
-        return node;
+        return token;
     }
 
     MathExpressionTokenType* left  = MathExpressionReadInfixFormat(stringPtr, &stringPtr, varsArr);
 
-    stringPtr = MathExpressionReadNodeValue(&value, &valueType, varsArr, stringPtr);
-    MathExpressionTokenType* node = MathExpressionTokenCtor(value, valueType);
+    stringPtr = MathExpressionReadTokenValue(&value, &valueType, varsArr, stringPtr);
+    MathExpressionTokenType* token = MathExpressionTokenCtor(value, valueType);
     MathExpressionTokenType* right = MathExpressionReadInfixFormat(stringPtr, &stringPtr, varsArr);
 
-    MathExpressionNodeSetEdges(node, left, right);
+    MathExpressionTokenSetEdges(token, left, right);
 
     stringPtr = SkipSymbolsWhileChar(stringPtr, ')');
 
     *stringEndPtr = stringPtr;
-    return node;
+    return token;
 }
 
-static const char* MathExpressionReadNodeValue(MathExpressionTokenValue* value, 
+static const char* MathExpressionReadTokenValue(MathExpressionTokenValue* value, 
                                                MathExpressionTokenValueTypeof* valueType, 
                                                MathExpressionVariablesArrayType* varsArr,
                                                const char* string)
@@ -609,24 +619,26 @@ static const char* GetOperationShortName(const MathExpressionsOperations operati
 }
 
 static MathExpressionTokenType* MathExpressionTokenCtor(MathExpressionTokenValue value, 
-                                                        MathExpressionTokenValueTypeof valueType)
+                                                        MathExpressionTokenValueTypeof valueType,
+                                                        MathExpressionTokenType* left,
+                                                        MathExpressionTokenType* right)
 {   
-    MathExpressionTokenType* node = (MathExpressionTokenType*)calloc(1, sizeof(*node));
-    node->left      = nullptr;
-    node->right     = nullptr;
-    node->value     = value;
-    node->valueType = valueType;
+    MathExpressionTokenType* token = (MathExpressionTokenType*)calloc(1, sizeof(*token));
+    token->left      = left;
+    token->right     = right;
+    token->value     = value;
+    token->valueType = valueType;
 
-    return node;
+    return token;
 }
 
-static void MathExpressionNodeDtor(MathExpressionTokenType* node)
+static void MathExpressionTokenDtor(MathExpressionTokenType* token)
 {
-    node->left        = nullptr;
-    node->right       = nullptr;
-    node->value.varId =  POISON;
+    token->left        = nullptr;
+    token->right       = nullptr;
+    token->value.varId =  POISON;
 
-    free(node);
+    free(token);
 }
 
 static inline void CreateImgInLogFile(const size_t imgIndex, bool openImg)
@@ -637,7 +649,7 @@ static inline void CreateImgInLogFile(const size_t imgIndex, bool openImg)
 
     static const size_t     maxCommandLength  = 128;
     static char commandName[maxCommandLength] =  "";
-    snprintf(commandName, maxCommandLength, "dot MathExpressionerentiator.dot -T png -o %s", imgName);
+    snprintf(commandName, maxCommandLength, "dot MathExpressionHandler.dot -T png -o %s", imgName);
     system(commandName);
 
     snprintf(commandName, maxCommandLength, "<img src = \"%s\">\n", imgName);    
@@ -665,7 +677,7 @@ void MathExpressionGraphicDump(const MathExpressionType* expression, bool openIm
 {
     assert(expression);
 
-    static const char* dotFileName = "MathExpressionerentiator.dot";
+    static const char* dotFileName = "MathExpressionHandler.dot";
     FILE* outDotFile = fopen(dotFileName, "w");
 
     if (outDotFile == nullptr)
@@ -673,7 +685,7 @@ void MathExpressionGraphicDump(const MathExpressionType* expression, bool openIm
 
     DotFileBegin(outDotFile);
 
-    DotFileCreateNodes(expression->root, &expression->variables, outDotFile);
+    DotFileCreateTokens(expression->root, &expression->variables, outDotFile);
 
     MathExpressionGraphicDump(expression->root, outDotFile);
 
@@ -686,47 +698,47 @@ void MathExpressionGraphicDump(const MathExpressionType* expression, bool openIm
     imgIndex++;
 }
 
-static void DotFileCreateNodes(const MathExpressionTokenType* node,    
+static void DotFileCreateTokens(const MathExpressionTokenType* token,    
                                const MathExpressionVariablesArrayType* varsArr, FILE* outDotFile)
 {
-    if (node == nullptr)
+    if (token == nullptr)
         return;
     
-    fprintf(outDotFile, "node%p"
-                        "[shape=Mrecord, style=filled, ", node);
+    fprintf(outDotFile, "token%p"
+                        "[shape=Mrecord, style=filled, ", token);
     
-    if (node->valueType == MathExpressionTokenValueTypeof::OPERATION)
+    if (token->valueType == MathExpressionTokenValueTypeof::OPERATION)
         fprintf(outDotFile, "fillcolor=\"#89AC76\", label = \"%s\", ", 
-                            GetOperationLongName(node->value.operation));
-    else if (node->valueType == MathExpressionTokenValueTypeof::VALUE)
-        fprintf(outDotFile, "fillcolor=\"#7293ba\", label = \"%lf\", ", node->value.value);
-    else if (node->valueType == MathExpressionTokenValueTypeof::VARIABLE)
+                            GetOperationLongName(token->value.operation));
+    else if (token->valueType == MathExpressionTokenValueTypeof::VALUE)
+        fprintf(outDotFile, "fillcolor=\"#7293ba\", label = \"%lf\", ", token->value.value);
+    else if (token->valueType == MathExpressionTokenValueTypeof::VARIABLE)
         fprintf(outDotFile, "fillcolor=\"#78DBE2\", label = \"%s\", ", 
-                            varsArr->data[node->value.varId].variableName);
+                            varsArr->data[token->value.varId].variableName);
     else 
         fprintf(outDotFile, "fillcolor=\"#FF0000\", label = \"ERROR\", ");
 
     fprintf(outDotFile, "color = \"#D0D000\"];\n");
 
-    DotFileCreateNodes(node->left,  varsArr, outDotFile);
-    DotFileCreateNodes(node->right, varsArr, outDotFile);
+    DotFileCreateTokens(token->left,  varsArr, outDotFile);
+    DotFileCreateTokens(token->right, varsArr, outDotFile);
 }
 
-static void MathExpressionGraphicDump(const MathExpressionTokenType* node, FILE* outDotFile)
+static void MathExpressionGraphicDump(const MathExpressionTokenType* token, FILE* outDotFile)
 {
-    if (node == nullptr)
+    if (token == nullptr)
     {
         fprintf(outDotFile, "\n");
         return;
     }
     
-    fprintf(outDotFile, "node%p;\n", node);
+    fprintf(outDotFile, "token%p;\n", token);
 
-    if (node->left != nullptr) fprintf(outDotFile, "node%p->", node);
-    MathExpressionGraphicDump(node->left, outDotFile);
+    if (token->left != nullptr) fprintf(outDotFile, "token%p->", token);
+    MathExpressionGraphicDump(token->left, outDotFile);
 
-    if (node->right != nullptr) fprintf(outDotFile, "node%p->", node);
-    MathExpressionGraphicDump(node->right, outDotFile);
+    if (token->right != nullptr) fprintf(outDotFile, "token%p->", token);
+    MathExpressionGraphicDump(token->right, outDotFile);
 }
 
 void MathExpressionTextDump(const MathExpressionType* expression, const char* fileName, 
@@ -766,25 +778,25 @@ double MathExpressionCalculate(const MathExpressionType* expression)
     return MathExpressionCalculate(expression->root, &expression->variables);
 }
 
-static double MathExpressionCalculate(const MathExpressionTokenType* node, 
+static double MathExpressionCalculate(const MathExpressionTokenType* token, 
                                       const MathExpressionVariablesArrayType* varsArr)
 {
-    assert(node);
+    assert(token);
 
-    if (node->valueType == MathExpressionTokenValueTypeof::VALUE)
-        return node->value.value;
+    if (token->valueType == MathExpressionTokenValueTypeof::VALUE)
+        return token->value.value;
 
-    if (node->valueType == MathExpressionTokenValueTypeof::VARIABLE)
-        return varsArr->data[node->value.varId].variableValue;
+    if (token->valueType == MathExpressionTokenValueTypeof::VARIABLE)
+        return varsArr->data[token->value.varId].variableValue;
 
-    double firstVal  = MathExpressionCalculate(node->left,  varsArr);
-    double secondVal = MathExpressionCalculate(node->right, varsArr);
+    double firstVal  = MathExpressionCalculate(token->left,  varsArr);
+    double secondVal = MathExpressionCalculate(token->right, varsArr);
     
-    return MathExpressionCalculateUsingNodeOperation(node->value.operation, firstVal, secondVal);
+    return MathExpressionCalculateUsingTokenOperation(token->value.operation, firstVal, secondVal);
 }
 
-static double MathExpressionCalculateUsingNodeOperation(const MathExpressionsOperations operation, 
-                                              double firstVal, double secondVal)
+static double MathExpressionCalculateUsingTokenOperation(const MathExpressionsOperations operation, 
+                                                         double firstVal, double secondVal)
 {
     switch(operation)
     {
@@ -858,11 +870,161 @@ MathExpressionErrors MathExpressionReadVariables(MathExpressionType* expression)
     return MathExpressionErrors::NO_ERR;
 }
 
-static void MathExpressionNodeSetEdges(MathExpressionTokenType* node, MathExpressionTokenType* left, 
+MathExpressionType MathExpressionDifferentiate(const MathExpressionType* expression)
+{
+    assert(expression);
+    
+    MathExpressionTokenType* root = MathExpressionDifferentiate(expression->root);
+
+    MathExpressionType diffMathExpression = {};
+    MathExpressionCtor(&diffMathExpression);
+    diffMathExpression.root = root;
+
+    MathExpressionsCopyVariables(&diffMathExpression, expression);
+
+    return diffMathExpression;
+}
+
+static inline MathExpressionTokenValue MathExpressionCreateValue(
+                                                        MathExpressionsOperations operation)
+{
+    MathExpressionTokenValue value =
+    {
+        .operation = operation,
+    };
+
+    return value;
+}
+
+#define D(TOKEN) MathExpressionDifferentiate(TOKEN)
+#define C(TOKEN) MathExpressionCopy(TOKEN)
+
+#define TOKEN(OPERATION_NAME, LEFT_TOKEN, RIGHT_TOKEN)                                             \
+    MathExpressionTokenCtor(MathExpressionCreateValue(MathExpressionsOperations::OPERATION_NAME),  \
+                            MathExpressionTokenValueTypeof::OPERATION,                             \
+                            LEFT_TOKEN, RIGHT_TOKEN)                                               
+
+static inline MathExpressionTokenType* MathExpressionDifferentiateAdd(
+                                                            const MathExpressionTokenType* token)
+{
+    assert(token);
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    assert(token->value.operation == MathExpressionsOperations::ADD);
+
+    return TOKEN(ADD, D(token->left), D(token->right));
+}
+
+static inline MathExpressionTokenType* MathExpressionDifferentiateSub(
+                                                            const MathExpressionTokenType* token)
+{
+    assert(token);
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    assert(token->value.operation == MathExpressionsOperations::SUB);
+
+    return TOKEN(SUB, D(token->left), D(token->right));
+}
+
+static inline MathExpressionTokenType* MathExpressionDifferentiateMul(
+                                                            const MathExpressionTokenType* token)
+{
+    assert(token);
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    assert(token->value.operation == MathExpressionsOperations::MUL);
+
+
+    return TOKEN(ADD, TOKEN(MUL, D(token->left), C(token->right)), 
+                      TOKEN(MUL, C(token->left), D(token->right)));
+}
+
+static inline MathExpressionTokenType* MathExpressionDifferentiateDiv(
+                                                            const MathExpressionTokenType* token)
+{
+    assert(token);
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    assert(token->value.operation == MathExpressionsOperations::DIV);
+
+    return TOKEN(DIV, TOKEN(SUB, TOKEN(MUL, D(token->left), C(token->right)), 
+                                 TOKEN(MUL, C(token->left), D(token->right))),
+                      TOKEN(MUL, C(token->right), C(token->right)));
+}
+
+static MathExpressionTokenType* MathExpressionDifferentiate(const MathExpressionTokenType* token)
+{
+    assert(token);
+
+    switch(token->valueType)
+    {
+        case MathExpressionTokenValueTypeof::VALUE:
+        {
+            MathExpressionTokenValue val = {};
+            val.value = 0;
+
+            return MathExpressionTokenCtor(val, MathExpressionTokenValueTypeof::VALUE);
+        }
+        case MathExpressionTokenValueTypeof::VARIABLE:
+        {
+            MathExpressionTokenValue val = {};
+            val.value = 1;
+
+            return MathExpressionTokenCtor(val, MathExpressionTokenValueTypeof::VALUE);
+        }
+        
+        case MathExpressionTokenValueTypeof::OPERATION:
+        default:
+            break;
+
+    }
+
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    
+    switch(token->value.operation)
+    {
+        case MathExpressionsOperations::ADD:
+            return MathExpressionDifferentiateAdd(token);
+        case MathExpressionsOperations::SUB:
+            return MathExpressionDifferentiateSub(token);
+        case MathExpressionsOperations::MUL:
+            return MathExpressionDifferentiateMul(token);
+        case MathExpressionsOperations::DIV:
+            return MathExpressionDifferentiateDiv(token);
+    }
+
+    return nullptr;
+}
+
+static MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType* token)
+{
+    if (token == nullptr)
+        return nullptr;
+
+    MathExpressionTokenType* left  = MathExpressionCopy(token->left);
+    MathExpressionTokenType* right = MathExpressionCopy(token->right);
+
+    return MathExpressionTokenCtor(token->value, token->valueType, left, right);
+}
+
+static void MathExpressionsCopyVariables(      MathExpressionType* target, 
+                                         const MathExpressionType* source)
+{
+    assert(target);
+    assert(source);
+
+    assert(target->variables.capacity == source->variables.capacity);
+    assert(target->variables.size == 0);
+
+    //TODO: подумать над созданием функции копирования одной переменной, как будто не нужна
+    for (size_t i = 0; i < source->variables.size; ++i)
+    {
+        target->variables.data[i].variableName  = strdup(source->variables.data->variableName);
+        target->variables.data[i].variableValue = source->variables.data->variableValue;
+    }
+}
+
+static void MathExpressionTokenSetEdges(MathExpressionTokenType* token, MathExpressionTokenType* left, 
                                                      MathExpressionTokenType* right)
 {
-    assert(node);
+    assert(token);
 
-    node->left  = left;
-    node->right = right;
+    token->left  = left;
+    token->right = right;
 }

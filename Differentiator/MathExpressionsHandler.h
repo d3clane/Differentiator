@@ -91,13 +91,16 @@ void MathExpressionTextDump(const MathExpressionType* expression, const char* fi
 
 void MathExpressionGraphicDump(const MathExpressionType* expression, bool openImg = false);
 
-#define MATH_EXPRESSION_DUMP(tree) MathExpressionDump((tree), __FILE__, __func__, __LINE__)
+#define MATH_EXPRESSION_DUMP(expression) MathExpressionDump((expression), __FILE__,  \
+                                                                          __func__,  \
+                                                                          __LINE__)
+
 void MathExpressionDump(const MathExpressionType* expression, const char* fileName,
                                                               const char* funcName,
                                                               const int   line);
 
 double MathExpressionCalculate(const MathExpressionType* expression);
 
-MathExpressionErrors MathExpressionDifferentiate(const MathExpressionType* expression);
+MathExpressionType MathExpressionDifferentiate(const MathExpressionType* expression);
 
 #endif // MATH_EXPRESSIONS_HADNLER_H

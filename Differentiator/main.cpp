@@ -28,5 +28,12 @@ int main(const int argc, const char* argv[])
     //printf("\n\n");
     //MathExpressionPrintEquationFormat(&mathExpressionInfixInput);
 
-    printf("Calculation result: %lf", MathExpressionCalculate(&mathExpressionPrefixInput));
+    printf("Calculation result: %lf\n\n\n", MathExpressionCalculate(&mathExpressionPrefixInput));
+
+    MathExpressionType mathExpressionDiff =  MathExpressionDifferentiate(&mathExpressionPrefixInput);
+
+    MathExpressionPrintEquationFormatTex(&mathExpressionDiff);
+    MathExpressionGraphicDump(&mathExpressionDiff, true);
+    printf("Diff result in x: %lf\n\n\n", MathExpressionCalculate(&mathExpressionDiff));
+    //MATH_EXPRESSION_DUMP(&mathExpressionDiff);
 }
