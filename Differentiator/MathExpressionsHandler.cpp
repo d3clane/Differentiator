@@ -13,6 +13,23 @@
 
 const int POISON = 0xDEAD;
 
+static const char* const ADD_STR = "add";
+static const char* const SUB_STR = "sub";
+static const char* const MUL_STR = "mul";
+static const char* const DIV_STR = "div";
+
+static const char* const SIN_STR = "sin";
+static const char* const COS_STR = "cos";
+static const char* const TAN_STR = "tan";
+static const char* const COT_STR = "cot";
+
+static const char* const ARCSIN_STR = "arcsin";
+static const char* const ARCCOS_STR = "arccos";
+static const char* const ARCTAN_STR = "arctan";
+static const char* const ARCCOT_STR = "arccot";
+
+static const char* const POW_STR = "pow";
+static const char* const LOG_STR = "log";
 
 static void MathExpressionDtor    (MathExpressionTokenType* token);
 static void MathExpressionTokenDtor(MathExpressionTokenType* token);
@@ -92,6 +109,8 @@ static MathExpressionTokenType* MathExpressionDifferentiate(const MathExpression
 static MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType* token);
 static void MathExpressionsCopyVariables(      MathExpressionType* target, 
                                          const MathExpressionType* source);
+
+static bool IsPrefixFunction(const MathExpressionTokenType* token);
 
 MathExpressionErrors MathExpressionCtor(MathExpressionType* expression)
 {
@@ -234,6 +253,11 @@ static MathExpressionErrors MathExpressionPrintEquationFormat(
     }
 
     MathExpressionErrors err = MathExpressionErrors::NO_ERR;
+    bool isPrefixOperator = IsPrefixFunction(token);
+
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+
+    if (isPrefixOperator) MathExpressionTokenPrintValue(token, varsArr, outStream);
 
     bool haveToPutLeftBrackets = (token->left->valueType == MathExpressionTokenValueTypeof::OPERATION) &&
                                   HaveToPutBrackets(token, token->left);
@@ -242,7 +266,7 @@ static MathExpressionErrors MathExpressionPrintEquationFormat(
     err = MathExpressionPrintEquationFormat(token->left, varsArr, outStream);
     if (haveToPutLeftBrackets) PRINT(outStream, ")");
 
-    MathExpressionTokenPrintValue(token, varsArr, outStream);
+    if (!isPrefixOperator) MathExpressionTokenPrintValue(token, varsArr, outStream);
     
     bool haveToPutRightBrackets = (token->right->valueType == MathExpressionTokenValueTypeof::OPERATION) &&
                                    HaveToPutBrackets(token, token->right);
@@ -278,6 +302,24 @@ static bool HaveToPutBrackets(const MathExpressionTokenType* parent,
         return false;
 
     return true;
+}
+
+static bool IsPrefixFunction(const MathExpressionTokenType* token)
+{
+    assert(token);
+
+    return token->value.operation.operationType;
+        
+    if (token->valueType != MathExpressionTokenValueTypeof::OPERATION)
+        return false;
+
+    if ((token->value.operation == MathExpressionsOperations::ADD) ||
+        (token->value.operation == MathExpressionsOperations::SUB) ||
+        (token->value.operation == MathExpressionsOperations::MUL) ||
+        (token->value.operation == MathExpressionsOperations::DIV) ||
+        (token->value.operation == MathExpressionsOperations::))
+        return true;
+    
 }
 
 static void MathExpressionTokenPrintValue(const MathExpressionTokenType* token, 
@@ -566,14 +608,38 @@ static int GetOperation(const char* string)
 {
     assert(string);
 
-    if (strcasecmp(string, "/") == 0      || strcasecmp(string, "div") == 0)
+    if (     strcasecmp(string, "/") == 0 || strcasecmp(string, DIV_STR) == 0)
         return (int)MathExpressionsOperations::DIV;
-    else if (strcasecmp(string, "*") == 0 || strcasecmp(string, "mul") == 0)
+    else if (strcasecmp(string, "*") == 0 || strcasecmp(string, MUL_STR) == 0)
         return (int)MathExpressionsOperations::MUL;
-    else if (strcasecmp(string, "-") == 0 || strcasecmp(string, "sub") == 0)
+    else if (strcasecmp(string, "-") == 0 || strcasecmp(string, SUB_STR) == 0)
         return (int)MathExpressionsOperations::SUB;
-    else if (strcasecmp(string, "+") == 0 || strcasecmp(string, "add") == 0)
+    else if (strcasecmp(string, "+") == 0 || strcasecmp(string, ADD_STR) == 0)
         return (int)MathExpressionsOperations::ADD;
+
+    else if (strcasecmp(string, POW_STR) == 0)
+        return (int)MathExpressionsOperations::POW;
+
+    else if (strcasecmp(string, LOG_STR) == 0)
+        return (int)MathExpressionsOperations::LOG;
+
+    else if (strcasecmp(string, SIN_STR) == 0)
+        return (int)MathExpressionsOperations::SIN;
+    else if (strcasecmp(string, COS_STR) == 0)
+        return (int)MathExpressionsOperations::COS;
+    else if (strcasecmp(string, TAN_STR) == 0)
+        return (int)MathExpressionsOperations::TAN;
+    else if (strcasecmp(string, COT_STR) == 0)
+        return (int)MathExpressionsOperations::COT;
+    
+    else if (strcasecmp(string, ARCSIN_STR) == 0)
+        return (int)MathExpressionsOperations::ARCSIN;
+    else if (strcasecmp(string, ARCCOS_STR) == 0)
+        return (int)MathExpressionsOperations::ARCCOS;
+    else if (strcasecmp(string, ARCTAN_STR) == 0)
+        return (int)MathExpressionsOperations::ARCTAN;
+    else if (strcasecmp(string, ARCCOT_STR) == 0)
+        return (int)MathExpressionsOperations::ARCCOT;
     
     return -1;
 }
@@ -583,24 +649,50 @@ static const char* GetOperationLongName(const MathExpressionsOperations operatio
     switch (operation)
     {
         case MathExpressionsOperations::MUL:
-            return "mul";
+            return MUL_STR;
         case MathExpressionsOperations::DIV:
-            return "div";
+            return DIV_STR;
         case MathExpressionsOperations::SUB:
-            return "sub";
+            return SUB_STR;
         case MathExpressionsOperations::ADD:
-            return "add";
+            return ADD_STR;
+        
+        case MathExpressionsOperations::POW:
+            return POW_STR;
+        case MathExpressionsOperations::LOG:
+            return LOG_STR;
+        
+        case MathExpressionsOperations::SIN:
+            return SIN_STR;
+        case MathExpressionsOperations::COS:
+            return COS_STR;
+        case MathExpressionsOperations::TAN:
+            return TAN_STR;
+        case MathExpressionsOperations::COT:
+            return COT_STR;
+        
+        case MathExpressionsOperations::ARCSIN:
+            return ARCSIN_STR;
+        case MathExpressionsOperations::ARCCOS:
+            return ARCCOS_STR;
+        case MathExpressionsOperations::ARCTAN:
+            return ARCTAN_STR;
+        case MathExpressionsOperations::ARCCOT:
+            return ARCCOT_STR;
         
         default:
             return nullptr;
     }
 
-    return nullptr;;
+    return nullptr;
 }
 
 static const char* GetOperationShortName(const MathExpressionsOperations operation)
 {
-        switch (operation)
+
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+
+    switch (operation)
     {
         case MathExpressionsOperations::MUL:
             return "*";
@@ -612,10 +704,12 @@ static const char* GetOperationShortName(const MathExpressionsOperations operati
             return "+";
         
         default:
-            return nullptr;
+            break;
     }
+#pragma GCC diagnostic warning "-Wswitch-enum"
 
-    return nullptr;
+    //все остальные случаи уходят сюда
+    return GetOperationLongName(operation);
 }
 
 static MathExpressionTokenType* MathExpressionTokenCtor(MathExpressionTokenValue value, 
@@ -628,7 +722,7 @@ static MathExpressionTokenType* MathExpressionTokenCtor(MathExpressionTokenValue
     token->right     = right;
     token->value     = value;
     token->valueType = valueType;
-
+    
     return token;
 }
 
@@ -795,22 +889,75 @@ static double MathExpressionCalculate(const MathExpressionTokenType* token,
     return MathExpressionCalculateUsingTokenOperation(token->value.operation, firstVal, secondVal);
 }
 
-static double MathExpressionCalculateUsingTokenOperation(const MathExpressionsOperations operation, 
-                                                         double firstVal, double secondVal)
+static double CalculateLog(const double base, const double value)
 {
+    assert(DoubleLess(0, base));
+    assert(DoubleLess(0, value));
+
+    double log_Base = log(base);
+    
+    assert(!DoubleEqual(log_Base, 0));
+
+    return log(value) / log_Base;
+}
+
+static double CalculateCot(const double val)
+{
+    assert(isfinite(val));
+
+    double tan_val = tan(val);
+
+    assert(!DoubleEqual(tan_val, 0));
+
+    return 1 / tan_val;
+}
+
+static double MathExpressionCalculateUsingTokenOperation(const MathExpressionsOperations operation, 
+                                                         double firstVal, double secondVal = NAN)
+{
+    assert(isfinite(firstVal));
+
     switch(operation)
     {
         case MathExpressionsOperations::ADD:
+            assert(isfinite(secondVal));
             return firstVal + secondVal;
         case MathExpressionsOperations::SUB:
+            assert(isfinite(secondVal));
             return firstVal - secondVal;
         case MathExpressionsOperations::MUL:
+            assert(isfinite(secondVal));
             return firstVal * secondVal;
         case MathExpressionsOperations::DIV:
-        {
+            assert(isfinite(secondVal));
             assert(!DoubleEqual(secondVal, 0));
             return firstVal / secondVal;
-        }
+
+        case MathExpressionsOperations::POW:
+            assert(isfinite(secondVal));
+            return pow(firstVal, secondVal);
+        case MathExpressionsOperations::LOG:
+            assert(isfinite(secondVal));
+            return CalculateLog(firstVal, secondVal);
+        
+        case MathExpressionsOperations::SIN:
+            return sin(firstVal);
+        case MathExpressionsOperations::COS:
+            return cos(firstVal);
+        case MathExpressionsOperations::TAN:
+            return tan(firstVal);
+        case MathExpressionsOperations::COT:
+            return CalculateCot(firstVal);
+
+        case MathExpressionsOperations::ARCSIN:
+            return asin(firstVal);
+        case MathExpressionsOperations::ARCCOS:
+            return acos(firstVal);
+        case MathExpressionsOperations::ARCTAN:
+            return atan(firstVal);
+        case MathExpressionsOperations::ARCCOT:
+            return PI / 2 - atan(firstVal);
+        
         default:
             return NAN;
     }

@@ -17,12 +17,40 @@ struct MathExpressionVariablesArrayType
     size_t size;
 };
 
-enum class MathExpressionsOperations
+enum class MathExpressionsOperationsEnum
 {
     ADD,
     SUB,
     MUL,
     DIV,
+
+    POW,
+    LOG,
+
+    SIN,
+    COS,
+    TAN,
+    COT,
+    ARCSIN,
+    ARCCOS,
+    ARCTAN,
+    ARCCOT,
+};
+
+struct MathExpressionsOperations
+{
+    enum OperationType
+    {
+        PREFIX,
+        INFIX,
+        POSTFIX,
+    };
+
+    const MathExpressionsOperationsEnum operation;
+    const OperationType                 operationType;
+
+    const char* const longName;
+    const char* const shortName;
 };
 
 union MathExpressionTokenValue
