@@ -9,21 +9,44 @@
 #include "../FastInput/InputOutput.h"
 #include "../Common/DoubleFuncs.h"
 
+//TODO: подумать над всеми названиями, что не начинаются с MathExpression
 //TODO: накидать inline когда будет не лень, я их тут проебал
 
 const int POISON = 0xDEAD;
 
-static double CalculateAdd(const double val1, const double val2);
-static double CalculateSub(const double val1, const double val2);
-static double CalculateMul(const double val1, const double val2);
-static double CalculateDiv(const double val1, const double val2);
+static double CalculateADD(const double val1, const double val2);
+static double CalculateSUB(const double val1, const double val2);
+static double CalculateMUL(const double val1, const double val2);
+static double CalculateDIV(const double val1, const double val2);
+
+static double CalculatePOW(const double base, const double power);
+static double CalculateLOG(const double base, const double val);
+
+static double CalculateSIN(const double val, const double val2 = NAN);
+static double CalculateCOS(const double val, const double val2 = NAN);
+static double CalculateTAN(const double val, const double val2 = NAN);
+static double CalculateCOT(const double val, const double val2 = NAN);
+
+static double CalculateARCSIN(const double val, const double val2 = NAN);
+static double CalculateARCCOS(const double val, const double val2 = NAN);
+static double CalculateARCTAN(const double val, const double val2 = NAN);
+static double CalculateARCCOT(const double val, const double val2 = NAN);
 
 //Important - don't use for nothing else than construction of standard operations.
 static MathExpressionOperationType MathExpressionOperationTypeCtor(
                                                     MathExpressionsOperationsEnum operationId,
-                                                    MathExpressionOperationFormat operationFormat, 
+                                                    MathExpressionOperationFormat operationFormat,
+                                                    MathExpressionOperationFormat operationTexFormat, 
+
+                                                    bool isUnaryOperation,
+
                                                     const char* longName,
                                                     const char* shortName,
+
+                                                    const char* texName,
+                                                    bool needTexLeftBraces,
+                                                    bool needTexRightBraces,
+
                                                     CalculationFuncType* CalculationFunc);
 
 static const char* const ADD_STR = "add";
@@ -44,34 +67,41 @@ static const char* const ARCCOT_STR = "arccot";
 static const char* const POW_STR = "pow";
 static const char* const LOG_STR = "log";
 
-static const MathExpressionOperationType ADD_STRUCT = MathExpressionOperationTypeCtor(
-                                                        MathExpressionsOperationsEnum::ADD,
-                                                        MathExpressionOperationFormat::INFIX,
-                                                        ADD_STR,
-                                                        "+",
-                                                        CalculateAdd);
-static const MathExpressionOperationType SUB_STRUCT = MathExpressionOperationTypeCtor(
-                                                        MathExpressionsOperationsEnum::SUB,
-                                                        MathExpressionOperationFormat::INFIX,
-                                                        SUB_STR,
-                                                        "-",
-                                                        CalculateSub);
-static const MathExpressionOperationType MUL_STRUCT = MathExpressionOperationTypeCtor(
-                                                        MathExpressionsOperationsEnum::MUL,
-                                                        MathExpressionOperationFormat::INFIX,
-                                                        MUL_STR,
-                                                        "*",
-                                                        CalculateMul);
-static const MathExpressionOperationType DIV_STRUCT = MathExpressionOperationTypeCtor(
-                                                        MathExpressionsOperationsEnum::DIV,
-                                                        MathExpressionOperationFormat::INFIX,
-                                                        DIV_STR,
-                                                        "/",
-                                                        CalculateDiv);
+#define GENERATE_STRUCT(NAME, SHORT_CUT_STRING, FORMAT, TEX_FORMAT, IS_UNARY,                     \
+                        TEX_NAME, NEED_LEFT_TEX_BRACES, NEED_RIGHT_TEX_BRACES)                    \
+    static const MathExpressionOperationType NAME##_STRUCT =                                      \
+                                                    MathExpressionOperationTypeCtor(              \
+                                                        MathExpressionsOperationsEnum::NAME,      \
+                                                        MathExpressionOperationFormat::FORMAT,    \
+                                                        MathExpressionOperationFormat::TEX_FORMAT,\
+                                                        IS_UNARY,                                 \
+                                                        NAME##_STR, SHORT_CUT_STRING,             \
+                                                        TEX_NAME,                                 \
+                                                        NEED_LEFT_TEX_BRACES,                     \
+                                                        NEED_RIGHT_TEX_BRACES,                    \
+                                                        Calculate##NAME)
 
+GENERATE_STRUCT(ADD, "+", INFIX,  INFIX, false, "+",      false, false);
+GENERATE_STRUCT(SUB, "-", INFIX,  INFIX, false, "-",      false, false);
+GENERATE_STRUCT(MUL, "*", INFIX,  INFIX, false, "\\cdot", false, false);
+GENERATE_STRUCT(DIV, "/", INFIX, PREFIX, false, "\\frac", true,  true);
 
+GENERATE_STRUCT(POW, "^",     INFIX, INFIX, false, "^",      false, true);
+GENERATE_STRUCT(LOG, LOG_STR, INFIX, INFIX, false, "\\log_", true, false);
 
-static void MathExpressionDtor    (MathExpressionTokenType* token);
+GENERATE_STRUCT(SIN, SIN_STR, PREFIX, PREFIX, true, "\\sin", false, false);
+GENERATE_STRUCT(COS, COS_STR, PREFIX, PREFIX, true, "\\cos", false, false);
+GENERATE_STRUCT(TAN, TAN_STR, PREFIX, PREFIX, true, "\\tan", false, false);
+GENERATE_STRUCT(COT, COT_STR, PREFIX, PREFIX, true, "\\cot", false, false);
+
+GENERATE_STRUCT(ARCSIN, ARCSIN_STR, PREFIX, PREFIX, true, "\\arcsin", false, false);
+GENERATE_STRUCT(ARCCOS, ARCCOS_STR, PREFIX, PREFIX,  true, "\\arccos", false, false);
+GENERATE_STRUCT(ARCTAN, ARCTAN_STR, PREFIX, PREFIX,  true, "\\arctan", false, false);
+GENERATE_STRUCT(ARCCOT, ARCCOT_STR, PREFIX, PREFIX,  true, "\\arccot", false, false);
+
+#undef GENERATE_STRUCT
+
+static void MathExpressionDtor     (MathExpressionTokenType* token);
 static void MathExpressionTokenDtor(MathExpressionTokenType* token);
 
 static MathExpressionTokenType* MathExpressionTokenCtor(MathExpressionTokenValue value, 
@@ -119,7 +149,8 @@ static const char* MathExpressionReadTokenValue(MathExpressionTokenValue* value,
                                                const char* stringPtr);
 
 static bool HaveToPutBrackets(const MathExpressionTokenType* parent, 
-                              const MathExpressionTokenType* son);
+                              const MathExpressionTokenType* son,
+                              bool inTex = false);
 
 static int         GetOperationId(const char* operationId);
 
@@ -149,7 +180,8 @@ static void MathExpressionsCopyVariables(      MathExpressionType* target,
 static MathExpressionOperationType MathExpressionOperationTypeGet(
                                         MathExpressionsOperationsEnum operationId);
 
-static bool IsPrefixFunction(const MathExpressionTokenType* token);
+static bool IsPrefixOperation   (const MathExpressionOperationType* operation, bool inTex = false);
+static bool IsUnaryOperation    (const MathExpressionOperationType* operation);
 
 MathExpressionErrors MathExpressionCtor(MathExpressionType* expression)
 {
@@ -160,8 +192,8 @@ MathExpressionErrors MathExpressionCtor(MathExpressionType* expression)
     expression->variables.capacity = 100;
     expression->variables.size     =   0;
     expression->variables.data     = (MathExpressionVariableType*)
-                                      calloc(expression->variables.capacity, 
-                                             sizeof(*(expression->variables.data)));
+                                        calloc(expression->variables.capacity, 
+                                               sizeof(*(expression->variables.data)));
     
     return MathExpressionErrors::NO_ERR;
 }
@@ -253,6 +285,7 @@ static MathExpressionErrors MathExpressionPrintPrefixFormat(
     MathExpressionErrors err = MathExpressionErrors::NO_ERR;
 
     err = MathExpressionPrintPrefixFormat(token->left,  varsArr, outStream);
+    
     err = MathExpressionPrintPrefixFormat(token->right, varsArr, outStream);
 
     PRINT(outStream, ")");
@@ -271,7 +304,6 @@ MathExpressionErrors MathExpressionPrintEquationFormat(const MathExpressionType*
     MathExpressionErrors err = MathExpressionPrintEquationFormat(expression->root, 
                                                                  &expression->variables, 
                                                                  outStream);
-
     PRINT(outStream, "\n");
 
     LOG_END();
@@ -291,40 +323,50 @@ static MathExpressionErrors MathExpressionPrintEquationFormat(
         return MathExpressionErrors::NO_ERR;
     }
 
-    MathExpressionErrors err = MathExpressionErrors::NO_ERR;
-    bool isPrefixOperator = IsPrefixFunction(token);
-
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
 
-    if (isPrefixOperator) MathExpressionTokenPrintValue(token, varsArr, outStream);
+    bool isPrefixOperation = IsPrefixOperation(&token->value.operation);
+    if (isPrefixOperation) fprintf(outStream, token->value.operation.shortName);
 
-    bool haveToPutLeftBrackets = (token->left->valueType == MathExpressionTokenValueTypeof::OPERATION) &&
-                                  HaveToPutBrackets(token, token->left);
-    
-    if (haveToPutLeftBrackets) PRINT(outStream, "(");
+    bool needLeftBrackets = HaveToPutBrackets(token, token->left);
+    if (needLeftBrackets) PRINT(outStream, "(");
+
+    MathExpressionErrors err = MathExpressionErrors::NO_ERR;
     err = MathExpressionPrintEquationFormat(token->left, varsArr, outStream);
-    if (haveToPutLeftBrackets) PRINT(outStream, ")");
 
-    if (!isPrefixOperator) MathExpressionTokenPrintValue(token, varsArr, outStream);
-    
-    bool haveToPutRightBrackets = (token->right->valueType == MathExpressionTokenValueTypeof::OPERATION) &&
-                                   HaveToPutBrackets(token, token->right);
-    if (haveToPutRightBrackets) PRINT(outStream, "(");
+    if (needLeftBrackets) PRINT(outStream, ")");
+
+    if (!isPrefixOperation) fprintf(outStream, token->value.operation.shortName);
+
+    if (IsUnaryOperation(&token->value.operation))  
+        return err;
+
+    bool needRightBrackets = HaveToPutBrackets(token, token->right);
+    if (needRightBrackets) PRINT(outStream, "(");
+
     err = MathExpressionPrintEquationFormat(token->right, varsArr, outStream);
-    if (haveToPutRightBrackets) PRINT(outStream, ")");
+
+    if (needRightBrackets) PRINT(outStream, ")");
 
     return err;
 }
 
 static bool HaveToPutBrackets(const MathExpressionTokenType* parent, 
-                              const MathExpressionTokenType* son)
+                              const MathExpressionTokenType* son,
+                              bool inTex)
 {
     assert(parent);
+
     assert(parent->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(son->valueType    == MathExpressionTokenValueTypeof::OPERATION);
+
+    if (son->valueType != MathExpressionTokenValueTypeof::OPERATION)
+        return false;
 
     MathExpressionsOperationsEnum parentOperation = parent->value.operation.operationId;
     MathExpressionsOperationsEnum sonOperation    = son->value.operation.operationId;
+
+    if (IsPrefixOperation(&son->value.operation, inTex))
+        return false;
 
     if ((sonOperation    == MathExpressionsOperationsEnum::MUL  || 
          sonOperation    == MathExpressionsOperationsEnum::DIV) &&
@@ -343,23 +385,33 @@ static bool HaveToPutBrackets(const MathExpressionTokenType* parent,
     return true;
 }
 
-static bool IsPrefixFunction(const MathExpressionTokenType* token)
+static bool IsPrefixOperation(const MathExpressionOperationType* operation, bool inTex)
 {
-    assert(token);
+    assert(operation);
 
-    return (token->value.operation.operationFormat == MathExpressionOperationFormat::PREFIX);
+    if (inTex)
+        return operation->operationTexFormat == MathExpressionOperationFormat::PREFIX;
+
+    return operation->operationFormat == MathExpressionOperationFormat::PREFIX;
+}
+
+static bool IsUnaryOperation(const MathExpressionOperationType* operation)
+{
+    assert(operation);
+
+    return operation->isUnaryOperation;
 }
 
 static void MathExpressionTokenPrintValue(const MathExpressionTokenType* token, 
-                                         const MathExpressionVariablesArrayType* varsArr, 
-                                         FILE* outStream)
+                                          const MathExpressionVariablesArrayType* varsArr, 
+                                          FILE* outStream)
 {
+    assert(token->valueType != MathExpressionTokenValueTypeof::OPERATION);
+
     if (token->valueType == MathExpressionTokenValueTypeof::VALUE)
         PRINT(outStream, "%lf ", token->value.value);
     else if (token->valueType == MathExpressionTokenValueTypeof::VARIABLE)
         PRINT(outStream, "%s ", varsArr->data[token->value.varId].variableName);
-    else
-        PRINT(outStream, "%s ", token->value.operation.shortName);
 }
 
 #undef PRINT
@@ -429,28 +481,36 @@ static MathExpressionErrors MathExpressionPrintEquationFormatTex(
     }
 
     MathExpressionErrors err = MathExpressionErrors::NO_ERR;
+    assert((token->valueType == MathExpressionTokenValueTypeof::OPERATION));
 
-    bool isDivideOperation     = (token->valueType                 == MathExpressionTokenValueTypeof::OPERATION) &&
-                                 (token->value.operation.operationId == MathExpressionsOperationsEnum::DIV);
-    bool haveToPutLeftBrackets = (token->left->valueType == MathExpressionTokenValueTypeof::OPERATION) &&
-                                 (HaveToPutBrackets(token, token->left));
+    bool isPrefixOperation    = IsPrefixOperation(&token->value.operation, true);
 
-    if (isDivideOperation)                           fprintf(outStream, "\\frac{");
-    if (!isDivideOperation && haveToPutLeftBrackets) fprintf(outStream, "(");
+    if (isPrefixOperation) fprintf(outStream, "%s ", token->value.operation.texName);
+
+    bool needLeftBrackets  = HaveToPutBrackets(token, token->left);
+    bool needTexLeftBraces = token->value.operation.needTexLeftBraces;
+
+    if (needTexLeftBraces)                           fprintf(outStream, "{");
+    if (!needTexLeftBraces && needLeftBrackets) fprintf(outStream, "(");
+
     err = MathExpressionPrintEquationFormatTex(token->left, varsArr, outStream);
-    if (!isDivideOperation && haveToPutLeftBrackets) fprintf(outStream, ")");
-    if (isDivideOperation)                           fprintf(outStream, "}");
 
-    if (!isDivideOperation) MathExpressionTokenPrintValue(token, varsArr, outStream);
+    if (!needTexLeftBraces && needLeftBrackets) fprintf(outStream, ")");
+    if (needTexLeftBraces)                           fprintf(outStream, "}");
+
+    if (!isPrefixOperation) fprintf(outStream, "%s ", token->value.operation.texName);
+
+    if (IsUnaryOperation(&token->value.operation))
+        return err;
+
+    bool needTexRightBraces   = token->value.operation.needTexRightBraces;
+    bool needRightBrackets    = HaveToPutBrackets(token, token->right);
     
-    bool haveToPutRightBrackets = (token->right->valueType == MathExpressionTokenValueTypeof::OPERATION) &&
-                                   (HaveToPutBrackets(token, token->right));
-    
-    if (isDivideOperation)                            fprintf(outStream, "{");
-    if (!isDivideOperation && haveToPutRightBrackets) fprintf(outStream, "(");
+    if (needTexRightBraces)                            fprintf(outStream, "{");
+    if (!needTexRightBraces && needRightBrackets) fprintf(outStream, "(");
     err = MathExpressionPrintEquationFormatTex(token->right, varsArr, outStream);
-    if (!isDivideOperation && haveToPutRightBrackets) fprintf(outStream, ")");
-    if (isDivideOperation)                            fprintf(outStream, "}");
+    if (!needTexRightBraces && needRightBrackets) fprintf(outStream, ")");
+    if (needTexRightBraces)                            fprintf(outStream, "}");
 
     return err;   
 }
@@ -504,9 +564,12 @@ static MathExpressionTokenType* MathExpressionReadPrefixFormat(
 
     stringPtr = MathExpressionReadTokenValue(&value, &valueType, varsArr, stringPtr);
     MathExpressionTokenType* token = MathExpressionTokenCtor(value, valueType);
-
+    
     MathExpressionTokenType* left  = MathExpressionReadPrefixFormat(stringPtr, &stringPtr, varsArr);
-    MathExpressionTokenType* right = MathExpressionReadPrefixFormat(stringPtr, &stringPtr, varsArr);
+
+    MathExpressionTokenType* right = nullptr;
+    if (!IsUnaryOperation(&token->value.operation))
+        right = MathExpressionReadPrefixFormat(stringPtr, &stringPtr, varsArr);
 
     stringPtr = SkipSymbolsUntilStopChar(stringPtr, ')');
     ++stringPtr;
@@ -646,7 +709,30 @@ static MathExpressionOperationType MathExpressionOperationTypeGet(
             return MUL_STRUCT;
         case MathExpressionsOperationsEnum::DIV:
             return DIV_STRUCT;    
-    
+
+        case MathExpressionsOperationsEnum::POW:
+            return POW_STRUCT;
+        case MathExpressionsOperationsEnum::LOG:
+            return LOG_STRUCT;
+
+        case MathExpressionsOperationsEnum::SIN:
+            return SIN_STRUCT;
+        case MathExpressionsOperationsEnum::COS:
+            return COS_STRUCT;
+        case MathExpressionsOperationsEnum::TAN:
+            return TAN_STRUCT;
+        case MathExpressionsOperationsEnum::COT:
+            return COT_STRUCT;    
+
+        case MathExpressionsOperationsEnum::ARCSIN:
+            return ARCSIN_STRUCT;
+        case MathExpressionsOperationsEnum::ARCCOS:
+            return ARCCOS_STRUCT;
+        case MathExpressionsOperationsEnum::ARCTAN:
+            return ARCTAN_STRUCT;
+        case MathExpressionsOperationsEnum::ARCCOT:
+            return ARCCOT_STRUCT;    
+
         default:
             break;
     }
@@ -778,12 +864,15 @@ void MathExpressionGraphicDump(const MathExpressionType* expression, bool openIm
 static void DotFileCreateTokens(const MathExpressionTokenType* token,    
                                const MathExpressionVariablesArrayType* varsArr, FILE* outDotFile)
 {
+    assert(varsArr);
+    assert(outDotFile);
+
     if (token == nullptr)
         return;
     
     fprintf(outDotFile, "token%p"
                         "[shape=Mrecord, style=filled, ", token);
-    
+
     if (token->valueType == MathExpressionTokenValueTypeof::OPERATION)
         fprintf(outDotFile, "fillcolor=\"#89AC76\", label = \"%s\", ", 
                             token->value.operation.longName);
@@ -858,8 +947,6 @@ double MathExpressionCalculate(const MathExpressionType* expression)
 static double MathExpressionCalculate(const MathExpressionTokenType* token, 
                                       const MathExpressionVariablesArrayType* varsArr)
 {
-    assert(token);
-
     if (token == nullptr)
         return NAN;
     
@@ -875,7 +962,7 @@ static double MathExpressionCalculate(const MathExpressionTokenType* token,
     return token->value.operation.CalculationFunc(firstVal, secondVal);
 }
 
-static double CalculateAdd(const double val1, const double val2)
+static double CalculateADD(const double val1, const double val2)
 {
     assert(isfinite(val1));
     assert(isfinite(val2));
@@ -883,7 +970,7 @@ static double CalculateAdd(const double val1, const double val2)
     return val1 + val2;
 }
 
-static double CalculateSub(const double val1, const double val2)
+static double CalculateSUB(const double val1, const double val2)
 {
     assert(isfinite(val1));
     assert(isfinite(val2));
@@ -891,7 +978,7 @@ static double CalculateSub(const double val1, const double val2)
     return val1 - val2;
 }
 
-static double CalculateMul(const double val1, const double val2)
+static double CalculateMUL(const double val1, const double val2)
 {
     assert(isfinite(val1));
     assert(isfinite(val2));
@@ -899,7 +986,7 @@ static double CalculateMul(const double val1, const double val2)
     return val1 * val2;
 }
 
-static double CalculateDiv(const double val1, const double val2)
+static double CalculateDIV(const double val1, const double val2)
 {
     assert(isfinite(val1));
     assert(isfinite(val2));
@@ -908,34 +995,85 @@ static double CalculateDiv(const double val1, const double val2)
     return val1 / val2;
 }
 
-static double CalculateLog(const double base, const double value)
+static double CalculatePOW(const double base, const double power)
 {
-    assert(DoubleLess(0, base));
-    assert(DoubleLess(0, value));
+    assert(isfinite(base));
+    assert(isfinite(power));
 
-    double log_Base = log(base);
-    
-    assert(!DoubleEqual(log_Base, 0));
-
-    return log(value) / log_Base;
+    return pow(base, power);
 }
 
-static double CalculateTan(const double val1, const double val2 = NAN)
+static double CalculateLOG(const double base, const double val)
+{
+    assert(isfinite(base));
+    assert(isfinite(val));
+
+    double log_base = log(base);
+
+    assert(!DoubleEqual(log_base, 0));
+
+    return log(val) / log_base;
+}
+
+static double CalculateSIN(const double val1, const double val2)
 {
     assert(isfinite(val1));
-    
+
+    return sin(val1);
+}
+
+static double CalculateCOS(const double val1, const double val2)
+{
+    assert(isfinite(val1));
+
+    return cos(val1);
+}
+
+static double CalculateTAN(const double val1, const double val2)
+{
+    assert(isfinite(val1));
+
     return tan(val1);
 }
 
-static double CalculateCot(const double val1, const double val2 = NAN)
+static double CalculateCOT(const double val1, const double val2)
 {
     assert(isfinite(val1));
 
-    double tan_val = tan(val1);
+    double tan_val1 = tan(val1);
 
-    assert(!DoubleEqual(tan_val, 0));
+    assert(!DoubleEqual(tan_val1, 0));
+    assert(isfinite(tan_val1));
 
-    return 1 / tan_val;
+    return 1 / tan_val1;
+}
+
+static double CalculateARCSIN(const double val1, const double val2)
+{
+    assert(isfinite(val1));
+
+    return asin(val1);
+}
+
+static double CalculateARCCOS(const double val1, const double val2)
+{
+    assert(isfinite(val1));
+
+    return acos(val1);
+}
+
+static double CalculateARCTAN(const double val1, const double val2)
+{
+    assert(isfinite(val1));
+
+    return atan(val1);
+}
+
+static double CalculateARCCOT(const double val1, const double val2)
+{
+    assert(isfinite(val1));
+
+    return PI / 2 - atan(val1);
 }
 
 static inline int AddVariable(MathExpressionVariablesArrayType* varsArr,  
@@ -1152,23 +1290,36 @@ static void MathExpressionTokenSetEdges(MathExpressionTokenType* token, MathExpr
 
 static MathExpressionOperationType MathExpressionOperationTypeCtor(
                                                     MathExpressionsOperationsEnum operationId,
-                                                    MathExpressionOperationFormat operationFormat, 
+                                                    MathExpressionOperationFormat operationFormat,
+                                                    MathExpressionOperationFormat operationTexFormat,
+                                                    bool isUnaryOperation,
                                                     const char* longName,
                                                     const char* shortName,
+                                                    const char* texName,
+                                                    bool needTexLeftBraces,
+                                                    bool needTexRightBraces,
                                                     CalculationFuncType* CalculationFunc)
 {
     assert(longName);
     assert(shortName);
+    assert(texName);
 
     MathExpressionOperationType operation = 
     {
-        .operationId     = operationId,
-        .operationFormat = operationFormat,
+        .operationId            = operationId,
+        .operationFormat        = operationFormat,
+        .operationTexFormat     = operationTexFormat,
 
-        .longName        = longName, 
-        .shortName       = shortName,
+        .isUnaryOperation       = isUnaryOperation,
 
-        .CalculationFunc = CalculationFunc,
+        .longName               = longName, 
+        .shortName              = shortName,
+
+        .texName                = texName,
+        .needTexLeftBraces    = needTexLeftBraces,
+        .needTexRightBraces   = needTexRightBraces, 
+
+        .CalculationFunc        = CalculationFunc,
     };
 
     return operation;

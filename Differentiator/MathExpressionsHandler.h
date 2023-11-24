@@ -53,9 +53,16 @@ struct MathExpressionOperationType
 
     MathExpressionsOperationsEnum operationId;
     MathExpressionOperationFormat operationFormat;
+    MathExpressionOperationFormat operationTexFormat;
+    
+    bool isUnaryOperation;
 
     const char* longName;
     const char* shortName;
+
+    const char* texName;
+    bool needTexLeftBraces;
+    bool needTexRightBraces; //TODO: че лучше, два bool-a или битовая фигня, как будто битовая оверкилл для двух случаев
 
     CalculationFuncType* CalculationFunc;
 };
@@ -77,7 +84,7 @@ enum class MathExpressionTokenValueTypeof
 struct MathExpressionTokenType
 {
     MathExpressionTokenValue        value;
-    MathExpressionTokenValueTypeof valueType;
+    MathExpressionTokenValueTypeof  valueType;
     
     MathExpressionTokenType*  left;
     MathExpressionTokenType* right;
