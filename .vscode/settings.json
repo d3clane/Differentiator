@@ -20,5 +20,6 @@
         "ios": "cpp",
         "__locale": "cpp",
         "array": "cpp"
-    }
+    },
+    "C_Cpp.errorSquiggles": "enabled"
 }
