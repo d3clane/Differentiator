@@ -18,7 +18,7 @@ const int POISON = 0xDEAD;
 
 //Warning - don't use for nothing else than construction of standard operations.
 static MathExpressionOperationType MathExpressionOperationTypeCtor(
-                                                    MathExpressionsOperationsEnum operationId,
+                                                    MathExpressionOperationsIds operationId,
                                                     MathExpressionOperationFormat operationFormat,
                                                     MathExpressionOperationFormat operationTexFormat, 
                                                     bool isUnaryOperation,
@@ -53,46 +53,79 @@ static inline double CalculateARCCOT(const double val, const double val2 = NAN);
 
 //---------------------------------------------------------------------------------------
 
-static MathExpressionTokenType* MathExpressionDifferentiate(const MathExpressionTokenType* token);
+static MathExpressionTokenType* MathExpressionDifferentiate(
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateADD(
-                                                            const MathExpressionTokenType* token);
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 static inline MathExpressionTokenType* MathExpressionDifferentiateSUB(
-                                                            const MathExpressionTokenType* token);
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 static inline MathExpressionTokenType* MathExpressionDifferentiateMUL(
-                                                            const MathExpressionTokenType* token);
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 static inline MathExpressionTokenType* MathExpressionDifferentiateDIV(
-                                                            const MathExpressionTokenType* token);
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 static inline MathExpressionTokenType* MathExpressionDifferentiateSIN(
-                                                            const MathExpressionTokenType* token);
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 static inline MathExpressionTokenType* MathExpressionDifferentiateCOS(
-                                                            const MathExpressionTokenType* token);
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 static inline MathExpressionTokenType* MathExpressionDifferentiateTAN(
-                                                            const MathExpressionTokenType* token);
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 static inline MathExpressionTokenType* MathExpressionDifferentiateCOT(
-                                                            const MathExpressionTokenType* token);
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 static inline MathExpressionTokenType* MathExpressionDifferentiateARCSIN(
-                                                            const MathExpressionTokenType* token);
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 static inline MathExpressionTokenType* MathExpressionDifferentiateARCCOS(
-                                                            const MathExpressionTokenType* token);
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 static inline MathExpressionTokenType* MathExpressionDifferentiateARCTAN(
-                                                            const MathExpressionTokenType* token);
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 static inline MathExpressionTokenType* MathExpressionDifferentiateARCCOT(
-                                                            const MathExpressionTokenType* token);
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateLN(
-                                                            const MathExpressionTokenType* token);
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 static inline MathExpressionTokenType* MathExpressionDifferentiateLOG(
-                                                            const MathExpressionTokenType* token);
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 static inline MathExpressionTokenType* MathExpressionDifferentiatePOW(
-                                                            const MathExpressionTokenType* token);
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr = nullptr,
+                                        FILE* outTex = nullptr);
 
 //---------------------------------------------------------------------------------------
 
 #define GENERATE_OPERATION_CMD(NAME, FORMAT, TEX_FORMAT, IS_UNARY, SHORT_CUT_STRING, TEX_NAME,    \
                         NEED_LEFT_TEX_BRACES, NEED_RIGHT_TEX_BRACES, ...)                         \
                                                     MathExpressionOperationTypeCtor(              \
-                                                        MathExpressionsOperationsEnum::NAME,      \
+                                                        MathExpressionOperationsIds::NAME,      \
                                                         MathExpressionOperationFormat::FORMAT,    \
                                                         MathExpressionOperationFormat::TEX_FORMAT,\
                                                         IS_UNARY,                                 \
@@ -106,14 +139,14 @@ static const MathExpressionOperationType Operations[] =
 {
     #include "Operations.h"
 };
-
-#undef GENERATE_OPERATION_CMD
-
 static const size_t NumberOfOperations = sizeof(Operations) / sizeof(*Operations);
 
-typedef MathExpressionTokenType* (DiffFuncType)(const MathExpressionTokenType* token);
+#undef  GENERATE_OPERATION_CMD
 #define GENERATE_OPERATION_CMD(NAME, ...) MathExpressionDifferentiate##NAME,
 
+typedef MathExpressionTokenType* (DiffFuncType)(const MathExpressionTokenType* token,
+                                                const MathExpressionVariablesArrayType* varsArr,
+                                                FILE* outTex);
 static const DiffFuncType* const OperationsDiff[] =
 {
     #include "Operations.h"
@@ -121,10 +154,12 @@ static const DiffFuncType* const OperationsDiff[] =
 
 #undef GENERATE_OPERATION_CMD
 
+//---------------------------------------------------------------------------------------
+
 static inline MathExpressionOperationType GetOperationStruct(
-                                                MathExpressionsOperationsEnum operationId);
+                                                MathExpressionOperationsIds operationId);
                                                 
-static inline DiffFuncType* GetOperationDiffFunc(const MathExpressionsOperationsEnum operationId);
+static inline DiffFuncType* GetOperationDiffFunc(const MathExpressionOperationsIds operationId);
 
 //---------------------------------------------------------------------------------------
 
@@ -150,7 +185,12 @@ static MathExpressionErrors MathExpressionPrintEquationFormat   (
                                                 const MathExpressionVariablesArrayType* varsArr,
                                                 FILE* outStream);
 
-static MathExpressionErrors MathExpressionPrintEquationFormatTex(
+static MathExpressionErrors MathExpressionPrintTexTrollString(
+                                                const MathExpressionTokenType* rootToken,
+                                                const MathExpressionVariablesArrayType* varsArr,
+                                                FILE* outStream,
+                                                const char* string = nullptr);
+static MathExpressionErrors MathExpressionPrintTex(
                                                 const MathExpressionTokenType* token, 
                                                 const MathExpressionVariablesArrayType* varsArr, 
                                                 FILE* outStream);
@@ -215,9 +255,8 @@ static MathExpressionTokenType* MathExpressionSimplifyConstants (MathExpressionT
                                                                  int* simplifiesCount,
                                                                  bool* haveVariables = nullptr);
 
-static MathExpressionTokenType* MathExpressionSimplifyNeutralTokens(MathExpressionType* expression,
-                                                                  MathExpressionTokenType* token, 
-                                                                  int* simplifiesCount);
+static MathExpressionTokenType* MathExpressionSimplifyNeutralTokens(MathExpressionTokenType* token, 
+                                                                    int* simplifiesCount);
 
 static inline MathExpressionTokenType* MathExpressionSimplifyAdd(MathExpressionTokenType* token,   
                                                                  MathExpressionTokenType* left,
@@ -449,27 +488,27 @@ static bool HaveToPutBrackets(const MathExpressionTokenType* parent,
     if (son->valueType != MathExpressionTokenValueTypeof::OPERATION)
         return false;
 
-    MathExpressionsOperationsEnum parentOperation = parent->value.operation.operationId;
-    MathExpressionsOperationsEnum sonOperation    = son->value.operation.operationId;
+    MathExpressionOperationsIds parentOperation = parent->value.operation.operationId;
+    MathExpressionOperationsIds sonOperation    = son->value.operation.operationId;
 
     if (IsPrefixOperation(&son->value.operation, inTex))
         return false;
 
-    if (sonOperation == MathExpressionsOperationsEnum::POW)
+    if (sonOperation == MathExpressionOperationsIds::POW)
         return false;
 
-    if ((sonOperation    == MathExpressionsOperationsEnum::MUL  || 
-         sonOperation    == MathExpressionsOperationsEnum::DIV) &&
-        (parentOperation == MathExpressionsOperationsEnum::SUB  || 
-         parentOperation == MathExpressionsOperationsEnum::ADD))
+    if ((sonOperation    == MathExpressionOperationsIds::MUL  || 
+         sonOperation    == MathExpressionOperationsIds::DIV) &&
+        (parentOperation == MathExpressionOperationsIds::SUB  || 
+         parentOperation == MathExpressionOperationsIds::ADD))
         return false;
 
-    if (sonOperation    == MathExpressionsOperationsEnum::ADD && 
-        parentOperation == MathExpressionsOperationsEnum::ADD)
+    if (sonOperation    == MathExpressionOperationsIds::ADD && 
+        parentOperation == MathExpressionOperationsIds::ADD)
         return false;
     
-    if (sonOperation    == MathExpressionsOperationsEnum::MUL && 
-        parentOperation == MathExpressionsOperationsEnum::MUL)
+    if (sonOperation    == MathExpressionOperationsIds::MUL && 
+        parentOperation == MathExpressionOperationsIds::MUL)
         return false;
 
     return true;
@@ -514,11 +553,24 @@ static void MathExpressionTokenPrintValue(const MathExpressionTokenType* token,
 
 //---------------------------------------------------------------------------------------
 
-MathExpressionErrors MathExpressionPrintEquationFormatTex(const MathExpressionType* expression, 
+MathExpressionErrors MathExpressionPrintTex(const MathExpressionType* expression, 
                                                           FILE* outStream,
                                                           const char* string)
 {
     assert(expression);
+    assert(outStream);
+
+    return MathExpressionPrintTexTrollString(expression->root, 
+                                            &expression->variables, outStream, string);
+}
+
+static MathExpressionErrors MathExpressionPrintTexTrollString(
+                                                const MathExpressionTokenType* rootToken,
+                                                const MathExpressionVariablesArrayType* varsArr,
+                                                FILE* outStream,
+                                                const char* string)
+{
+    assert(rootToken);
     assert(outStream);
 
     static const size_t            numberOfRoflStrings  = 8;
@@ -552,20 +604,18 @@ MathExpressionErrors MathExpressionPrintEquationFormatTex(const MathExpressionTy
     else
         fprintf(outStream, "%s\n", string);
     
-    fprintf(outStream, "$");
+    fprintf(outStream, "\\begin{gather}\n\\end{gather}\n\\begin{math}\n");
 
-    MathExpressionErrors err = MathExpressionPrintEquationFormatTex(expression->root, 
-                                                                    &expression->variables,
-                                                                    outStream);
+    MathExpressionErrors err = MathExpressionPrintTex(rootToken, varsArr, outStream);
 
-    fprintf(outStream, "$\n");
+    fprintf(outStream, "\\\\\n\\end{math}\n");
 
     return err;
 }
 
 //---------------------------------------------------------------------------------------
 
-static MathExpressionErrors MathExpressionPrintEquationFormatTex(
+static MathExpressionErrors MathExpressionPrintTex(
                                              const MathExpressionTokenType* token, 
                                              const MathExpressionVariablesArrayType* varsArr, 
                                              FILE* outStream)
@@ -590,13 +640,13 @@ static MathExpressionErrors MathExpressionPrintEquationFormatTex(
     bool needLeftBrackets  = HaveToPutBrackets(token, token->left);
     bool needTexLeftBraces = token->value.operation.needTexLeftBraces;
 
-    if (needTexLeftBraces)                           fprintf(outStream, "{");
+    if (needTexLeftBraces)                      fprintf(outStream, "{");
     if (!needTexLeftBraces && needLeftBrackets) fprintf(outStream, "(");
 
-    err = MathExpressionPrintEquationFormatTex(token->left, varsArr, outStream);
+    err = MathExpressionPrintTex(token->left, varsArr, outStream);
 
     if (!needTexLeftBraces && needLeftBrackets) fprintf(outStream, ")");
-    if (needTexLeftBraces)                           fprintf(outStream, "}");
+    if (needTexLeftBraces)                      fprintf(outStream, "}");
 
     if (!isPrefixOperation) fprintf(outStream, "%s ", token->value.operation.texName);
 
@@ -606,11 +656,11 @@ static MathExpressionErrors MathExpressionPrintEquationFormatTex(
     bool needTexRightBraces   = token->value.operation.needTexRightBraces;
     bool needRightBrackets    = HaveToPutBrackets(token, token->right);
     
-    if (needTexRightBraces)                            fprintf(outStream, "{");
+    if (needTexRightBraces)                       fprintf(outStream, "{");
     if (!needTexRightBraces && needRightBrackets) fprintf(outStream, "(");
-    err = MathExpressionPrintEquationFormatTex(token->right, varsArr, outStream);
+    err = MathExpressionPrintTex(token->right, varsArr, outStream);
     if (!needTexRightBraces && needRightBrackets) fprintf(outStream, ")");
-    if (needTexRightBraces)                            fprintf(outStream, "}");
+    if (needTexRightBraces)                       fprintf(outStream, "}");
 
     return err;   
 }
@@ -788,7 +838,7 @@ static const char* MathExpressionReadTokenValue(MathExpressionTokenValue* value,
     if (operationId != -1)
     {
         //TODO: подумать над именем функции
-        value->operation = GetOperationStruct((MathExpressionsOperationsEnum) operationId);
+        value->operation = GetOperationStruct((MathExpressionOperationsIds) operationId);
         *valueType                   = MathExpressionTokenValueTypeof::OPERATION;
         return stringPtr;
     }
@@ -808,7 +858,7 @@ static const char* MathExpressionReadTokenValue(MathExpressionTokenValue* value,
 //---------------------------------------------------------------------------------------
 
 static inline MathExpressionOperationType GetOperationStruct(
-                                            MathExpressionsOperationsEnum operationId)
+                                            MathExpressionOperationsIds operationId)
 {
     assert((int)operationId >= 0);
     assert((size_t)operationId < NumberOfOperations);
@@ -816,7 +866,7 @@ static inline MathExpressionOperationType GetOperationStruct(
     return Operations[(size_t)operationId];
 }
 
-static inline DiffFuncType* GetOperationDiffFunc(const MathExpressionsOperationsEnum operationId)
+static inline DiffFuncType* GetOperationDiffFunc(const MathExpressionOperationsIds operationId)
 {
     assert((int)operationId >= 0);
     assert((size_t)operationId < NumberOfOperations);
@@ -1246,11 +1296,19 @@ MathExpressionErrors MathExpressionReadVariables(MathExpressionType* expression)
 
 //---------------------------------------------------------------------------------------
 
-MathExpressionType MathExpressionDifferentiate(const MathExpressionType* expression)
+#define PRINT_TEX(outTex, ...) if (outTex) fprintf(outTex, __VA_ARGS__)
+MathExpressionType MathExpressionDifferentiate(const MathExpressionType* expression,
+                                               FILE* outTex)
 {
     assert(expression);
     
-    MathExpressionTokenType* diffExpression = MathExpressionDifferentiate(expression->root);
+    if (outTex)
+        MathExpressionPrintTex(expression, outTex, 
+                                "Ящеры нападают, нужно срочно взять эту производную ради победы");
+
+    MathExpressionTokenType* diffExpression = MathExpressionDifferentiate(expression->root, 
+                                                                          &expression->variables,
+                                                                          outTex);
     MathExpressionType diffMathExpression = {};
     MathExpressionCtor(&diffMathExpression);
 
@@ -1258,41 +1316,53 @@ MathExpressionType MathExpressionDifferentiate(const MathExpressionType* express
 
     MathExpressionsCopyVariables(&diffMathExpression, expression);
 
-    MathExpressionSimplify(&diffMathExpression);
+    PRINT_TEX(outTex, "***** не понятно, но очень интересно. Сделаем выражение более понятным\n");
+
+    MathExpressionSimplify(&diffMathExpression, outTex);
 
     return diffMathExpression;
 }
 
 //---------------------------------------------------------------------------------------
 
-static MathExpressionTokenType* MathExpressionDifferentiate(const MathExpressionTokenType* token)
+static MathExpressionTokenType* MathExpressionDifferentiate(
+                                                    const MathExpressionTokenType* token,
+                                                    const MathExpressionVariablesArrayType* varsArr,
+                                                    FILE* outTex)
 {
     assert(token);
+
+    MathExpressionTokenValue val = {};
+    MathExpressionTokenType* diffToken = nullptr;
 
     switch(token->valueType)
     {
         case MathExpressionTokenValueTypeof::VALUE:
-        {
-            MathExpressionTokenValue val = {};
             val.value = 0;
-
-            return MathExpressionTokenCtor(val, MathExpressionTokenValueTypeof::VALUE);
-        }
+            diffToken =  MathExpressionTokenCtor(val, MathExpressionTokenValueTypeof::VALUE);
+            break;
         case MathExpressionTokenValueTypeof::VARIABLE:
-        {
-            MathExpressionTokenValue val = {};
             val.value = 1;
+            diffToken =  MathExpressionTokenCtor(val, MathExpressionTokenValueTypeof::VALUE);
+            break;
 
-            return MathExpressionTokenCtor(val, MathExpressionTokenValueTypeof::VALUE);
-        }
         case MathExpressionTokenValueTypeof::OPERATION:
+            diffToken = GetOperationDiffFunc(token->value.operation.operationId)(token,
+                                                                                 varsArr,
+                                                                                 outTex);
+            break;
+
         default:
             break;
     }
 
-    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    
-    return GetOperationDiffFunc(token->value.operation.operationId)(token);
+    if (outTex) 
+    {
+        MathExpressionPrintTexTrollString(token, varsArr, outTex, "Возьмем производную от:");
+        MathExpressionPrintTexTrollString(diffToken, varsArr, outTex);
+    }
+
+    return diffToken;  
 }
 
 //---------------------------------------------------------------------------------------
@@ -1310,7 +1380,7 @@ static inline MathExpressionTokenValue MathExpressionCreateTokenValue(double val
 //---------------------------------------------------------------------------------------
 
 static inline MathExpressionTokenValue MathExpressionCreateTokenValue(
-                                                        MathExpressionsOperationsEnum operationId)
+                                                        MathExpressionOperationsIds operationId)
 {
     MathExpressionTokenValue value =
     {
@@ -1331,56 +1401,64 @@ static inline MathExpressionTokenType* MathExpressionCreateNumericToken(double v
 
 //---------------------------------------------------------------------------------------
 
-#define D(TOKEN) MathExpressionDifferentiate(TOKEN)
+#define D(TOKEN) MathExpressionDifferentiate(TOKEN, varsArr, outTex)
 #define C(TOKEN) MathExpressionCopy(TOKEN)
 
 #define CONST_TOKEN(VALUE) MathExpressionCreateNumericToken(VALUE)
 
 #define TOKEN(OPERATION_NAME, LEFT_TOKEN, RIGHT_TOKEN)                                        \
     MathExpressionTokenCtor(MathExpressionCreateTokenValue(                                   \
-                                            MathExpressionsOperationsEnum::OPERATION_NAME),   \
+                                            MathExpressionOperationsIds::OPERATION_NAME),   \
                             MathExpressionTokenValueTypeof::OPERATION,                        \
                             LEFT_TOKEN, RIGHT_TOKEN)                                               
 
 #define UNARY_TOKEN(OPERATION_NAME, LEFT_TOKEN) TOKEN(OPERATION_NAME, LEFT_TOKEN, nullptr)
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateADD(
-                                                            const MathExpressionTokenType* token)
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr,
+                                        FILE* outTex)
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::ADD);
+    assert(token->value.operation.operationId == MathExpressionOperationsIds::ADD);
 
     return TOKEN(ADD, D(token->left), D(token->right));
 }
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateSUB(
-                                                            const MathExpressionTokenType* token)
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr,
+                                        FILE* outTex)
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::SUB);
+    assert(token->value.operation.operationId == MathExpressionOperationsIds::SUB);
 
     return TOKEN(SUB, D(token->left), D(token->right));
 }
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateMUL(
-                                                            const MathExpressionTokenType* token)
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr,
+                                        FILE* outTex)
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::MUL);
+    assert(token->value.operation.operationId == MathExpressionOperationsIds::MUL);
 
     return TOKEN(ADD, TOKEN(MUL, D(token->left), C(token->right)), 
                       TOKEN(MUL, C(token->left), D(token->right)));
 }
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateDIV(
-                                                            const MathExpressionTokenType* token)
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr,
+                                        FILE* outTex)
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::DIV);
+    assert(token->value.operation.operationId == MathExpressionOperationsIds::DIV);
 
     return TOKEN(DIV, TOKEN(SUB, TOKEN(MUL, D(token->left), C(token->right)), 
                                  TOKEN(MUL, C(token->left), D(token->right))),
@@ -1388,11 +1466,13 @@ static inline MathExpressionTokenType* MathExpressionDifferentiateDIV(
 }
 
 static inline MathExpressionTokenType* MathExpressionDifferentiatePOW(
-                                                            const MathExpressionTokenType* token)
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr,
+                                        FILE* outTex)
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::POW);
+    assert(token->value.operation.operationId == MathExpressionOperationsIds::POW);
 
     bool baseContainVar  = MathExpressionTokenContainVariable(token->left);
     bool powerContainVar = MathExpressionTokenContainVariable(token->right);
@@ -1417,64 +1497,76 @@ static inline MathExpressionTokenType* MathExpressionDifferentiatePOW(
 }
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateLN(
-                                                            const MathExpressionTokenType* token)
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr,
+                                        FILE* outTex)
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::LN);
+    assert(token->value.operation.operationId == MathExpressionOperationsIds::LN);
 
     return TOKEN(DIV, D(token->left), C(token->left));
 }
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateLOG(
-                                                            const MathExpressionTokenType* token)
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr,
+                                        FILE* outTex)
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::LN);
+    assert(token->value.operation.operationId == MathExpressionOperationsIds::LN);
 
 
     return TOKEN(DIV, D(token->left), C(token->left));
 }
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateSIN(
-                                                            const MathExpressionTokenType* token)
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr,
+                                        FILE* outTex)
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::SIN);
+    assert(token->value.operation.operationId == MathExpressionOperationsIds::SIN);
 
     return TOKEN(MUL, UNARY_TOKEN(COS, C(token->left)), D(token->left));
 }
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateCOS(
-                                                            const MathExpressionTokenType* token)
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr,
+                                        FILE* outTex)
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::COS);
+    assert(token->value.operation.operationId == MathExpressionOperationsIds::COS);
 
     return TOKEN(MUL, CONST_TOKEN(-1), 
                       TOKEN(MUL, UNARY_TOKEN(SIN, C(token->left)), D(token->left)));
 }
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateTAN(
-                                                            const MathExpressionTokenType* token)
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr,
+                                        FILE* outTex)
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::TAN);
+    assert(token->value.operation.operationId == MathExpressionOperationsIds::TAN);
 
     return TOKEN(DIV, D(token->left), 
                       TOKEN(POW, UNARY_TOKEN(COS, C(token->left)), CONST_TOKEN(2)));
 }
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateCOT(
-                                                            const MathExpressionTokenType* token)
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr,
+                                        FILE* outTex)
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::COT);
+    assert(token->value.operation.operationId == MathExpressionOperationsIds::COT);
 
     return TOKEN(MUL, CONST_TOKEN(-1), 
                       TOKEN(DIV, D(token->left), 
@@ -1482,11 +1574,13 @@ static inline MathExpressionTokenType* MathExpressionDifferentiateCOT(
 } 
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateARCSIN(
-                                                            const MathExpressionTokenType* token)
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr,
+                                        FILE* outTex)
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::ARCSIN);
+    assert(token->value.operation.operationId == MathExpressionOperationsIds::ARCSIN);
 
     return TOKEN(DIV, D(token->left),
                       TOKEN(POW, TOKEN(SUB, CONST_TOKEN(1), 
@@ -1495,11 +1589,13 @@ static inline MathExpressionTokenType* MathExpressionDifferentiateARCSIN(
 } 
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateARCCOS(
-                                                            const MathExpressionTokenType* token)
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr,
+                                        FILE* outTex)
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::ARCCOS);
+    assert(token->value.operation.operationId == MathExpressionOperationsIds::ARCCOS);
 
     return TOKEN(DIV, CONST_TOKEN(-1),
                       TOKEN(MUL, D(token->left),
@@ -1509,11 +1605,13 @@ static inline MathExpressionTokenType* MathExpressionDifferentiateARCCOS(
 }
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateARCTAN(
-                                                            const MathExpressionTokenType* token)
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr,
+                                        FILE* outTex)
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::ARCTAN);
+    assert(token->value.operation.operationId == MathExpressionOperationsIds::ARCTAN);
 
     return TOKEN(DIV, D(token->left), 
                       TOKEN(ADD, CONST_TOKEN(1),
@@ -1521,11 +1619,13 @@ static inline MathExpressionTokenType* MathExpressionDifferentiateARCTAN(
 }
 
 static inline MathExpressionTokenType* MathExpressionDifferentiateARCCOT(
-                                                            const MathExpressionTokenType* token)
+                                        const MathExpressionTokenType* token,
+                                        const MathExpressionVariablesArrayType* varsArr,
+                                        FILE* outTex)
 {
     assert(token);
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::ARCTAN);
+    assert(token->value.operation.operationId == MathExpressionOperationsIds::ARCTAN);
 
     return TOKEN(MUL, CONST_TOKEN(-1),
                       TOKEN(DIV, D(token->left),
@@ -1548,7 +1648,8 @@ MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType* token
 
 //---------------------------------------------------------------------------------------
 
-void MathExpressionSimplify(MathExpressionType* expression)
+void MathExpressionSimplify(MathExpressionType* expression,
+                            FILE* outTex)
 {
     assert(expression);
 
@@ -1557,7 +1658,8 @@ void MathExpressionSimplify(MathExpressionType* expression)
     {
         simplifiesCount = 0;
         expression->root = MathExpressionSimplifyConstants(expression->root, &simplifiesCount);
-        expression->root = MathExpressionSimplifyNeutralTokens(expression, expression->root, &simplifiesCount);
+        expression->root = MathExpressionSimplifyNeutralTokens(expression->root, 
+                                                               &simplifiesCount);
     } while (simplifiesCount != 0);
 
 }
@@ -1636,18 +1738,15 @@ static MathExpressionTokenType* MathExpressionSimplifyConstants (MathExpressionT
 
 //---------------------------------------------------------------------------------------
 
-static MathExpressionTokenType* MathExpressionSimplifyNeutralTokens(MathExpressionType* expression,
-                                                                  MathExpressionTokenType* token, 
-                                                                  int* simplifiesCount)
+static MathExpressionTokenType* MathExpressionSimplifyNeutralTokens(MathExpressionTokenType* token, 
+                                                                    int* simplifiesCount)
 {
     if (token == nullptr || token->valueType != MathExpressionTokenValueTypeof::OPERATION)
         return token;
     
-    MathExpressionTokenType* left  = MathExpressionSimplifyNeutralTokens(expression,
-                                                                        token->left,  
+    MathExpressionTokenType* left  = MathExpressionSimplifyNeutralTokens(token->left,  
                                                                         simplifiesCount);
-    MathExpressionTokenType* right = MathExpressionSimplifyNeutralTokens(expression,
-                                                                        token->right, 
+    MathExpressionTokenType* right = MathExpressionSimplifyNeutralTokens(token->right, 
                                                                         simplifiesCount);
     
     if (token->left != left)
@@ -1680,18 +1779,18 @@ static MathExpressionTokenType* MathExpressionSimplifyNeutralTokens(MathExpressi
 
     switch (token->value.operation.operationId)
     {
-        case MathExpressionsOperationsEnum::ADD:
+        case MathExpressionOperationsIds::ADD:
             return MathExpressionSimplifyAdd(token, left, right, simplifiesCount);
-        case MathExpressionsOperationsEnum::SUB:
+        case MathExpressionOperationsIds::SUB:
             return MathExpressionSimplifySub(token, left, right, simplifiesCount);
-        case MathExpressionsOperationsEnum::MUL:
+        case MathExpressionOperationsIds::MUL:
             return MathExpressionSimplifyMul(token, left, right, simplifiesCount);
-        case MathExpressionsOperationsEnum::DIV:
+        case MathExpressionOperationsIds::DIV:
             return MathExpressionSimplifyDiv(token, left, right, simplifiesCount);
         
-        case MathExpressionsOperationsEnum::POW:
+        case MathExpressionOperationsIds::POW:
             return MathExpressionSimplifyPow(token, left, right, simplifiesCount);
-        case MathExpressionsOperationsEnum::LOG:
+        case MathExpressionOperationsIds::LOG:
             return MathExpressionSimplifyLog(token, left, right, simplifiesCount);
         
         default:
@@ -1734,11 +1833,25 @@ static inline MathExpressionTokenType* MathExpressionSimplifySub(MathExpressionT
                                                           int* simplifiesCount)
 {
     bool rightIsValue = (right->valueType == MathExpressionTokenValueTypeof::VALUE);
+    bool leftIsValue  = (left->valueType  == MathExpressionTokenValueTypeof::VALUE);
 
     if (rightIsValue && DoubleEqual(right->value.value, 0))
     {    
         (*simplifiesCount)++;
         return MathExpressionSimplifyReturnLeftToken(token, left);
+    }
+
+    if (leftIsValue && DoubleEqual(left->value.value, 0))
+    {
+        (*simplifiesCount)++;
+
+        MathExpressionTokenDtor(token->left);
+        token->left = nullptr;
+
+        MathExpressionTokenType* simpledToken = TOKEN(MUL, CONST_TOKEN(-1), token->right);
+        token->right = nullptr;
+
+        return simpledToken;
     }
 
     return token;
@@ -1927,7 +2040,7 @@ static bool MathExpressionTokenContainVariable(const MathExpressionTokenType* to
 //---------------------------------------------------------------------------------------
 
 static MathExpressionOperationType MathExpressionOperationTypeCtor(
-                                                    MathExpressionsOperationsEnum operationId,
+                                                    MathExpressionOperationsIds operationId,
                                                     MathExpressionOperationFormat operationFormat,
                                                     MathExpressionOperationFormat operationTexFormat,
                                                     bool isUnaryOperation,

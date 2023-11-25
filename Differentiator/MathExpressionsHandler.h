@@ -18,11 +18,9 @@ struct MathExpressionVariablesArrayType
     size_t size;
 };
 
-//TODO: rename Enum -> id, Expressions->expression
-
 #define GENERATE_OPERATION_CMD(NAME, ...) NAME, 
 
-enum class MathExpressionsOperationsEnum
+enum class MathExpressionOperationsIds
 {
     #include "Operations.h"
 };
@@ -33,7 +31,6 @@ enum class MathExpressionOperationFormat
 {
     PREFIX,
     INFIX,
-    POSTFIX,
 };
 
 typedef double (CalculationFuncType)(double firstVal, double secondVal);
@@ -41,7 +38,7 @@ typedef double (CalculationFuncType)(double firstVal, double secondVal);
 struct MathExpressionOperationType
 {
 
-    MathExpressionsOperationsEnum operationId;
+    MathExpressionOperationsIds operationId;
     MathExpressionOperationFormat operationFormat;
     MathExpressionOperationFormat operationTexFormat;
     
@@ -103,7 +100,7 @@ MathExpressionErrors MathExpressionPrintPrefixFormat     (const MathExpressionTy
                                                           FILE* outStream = stdout);
 MathExpressionErrors MathExpressionPrintEquationFormat   (const MathExpressionType* expression, 
                                                           FILE* outStream = stdout);
-MathExpressionErrors MathExpressionPrintEquationFormatTex(const MathExpressionType* expression,
+MathExpressionErrors MathExpressionPrintTex(const MathExpressionType* expression,
                                                           FILE* outStream = stdout, 
                                                           const char* funnyString = nullptr);
 
@@ -135,8 +132,9 @@ double MathExpressionCalculate(const MathExpressionType* expression);
 
 MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType* token);
 
-void MathExpressionSimplify(MathExpressionType* expression);
+void MathExpressionSimplify(MathExpressionType* expression, FILE* outTex = nullptr);
 
-MathExpressionType MathExpressionDifferentiate(const MathExpressionType* expression);
+MathExpressionType MathExpressionDifferentiate(const MathExpressionType* expression,
+                                               FILE* outTex = nullptr);
 
 #endif // MATH_EXPRESSIONS_HADNLER_H
