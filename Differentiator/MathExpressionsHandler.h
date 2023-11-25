@@ -28,6 +28,7 @@ enum class MathExpressionsOperationsEnum
 
     POW,
     LOG,
+    LN,
 
     SIN,
     COS,
@@ -142,6 +143,10 @@ void MathExpressionDump(const MathExpressionType* expression, const char* fileNa
                                                               const int   line);
 
 double MathExpressionCalculate(const MathExpressionType* expression);
+
+MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType* token);
+
+void MathExpressionSimplify(MathExpressionType* expression);
 
 MathExpressionType MathExpressionDifferentiate(const MathExpressionType* expression);
 

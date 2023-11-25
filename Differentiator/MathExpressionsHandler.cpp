@@ -36,6 +36,7 @@ static inline double CalculateDIV(const double val1, const double val2);
 
 static inline double CalculatePOW(const double base, const double power);
 static inline double CalculateLOG(const double base, const double val);
+static inline double CalculateLN(const double val, const double val2);
 
 static inline double CalculateSIN(const double val, const double val2 = NAN);
 static inline double CalculateCOS(const double val, const double val2 = NAN);
@@ -64,6 +65,7 @@ static const char* const ARCCOT_STR = "arccot";
 
 static const char* const POW_STR = "pow";
 static const char* const LOG_STR = "log";
+static const char* const LN_STR  = "ln";
 
 #define GENERATE_STRUCT(NAME, FORMAT, TEX_FORMAT, IS_UNARY, SHORT_CUT_STRING, TEX_NAME,           \
                         NEED_LEFT_TEX_BRACES, NEED_RIGHT_TEX_BRACES)                              \
@@ -85,7 +87,8 @@ GENERATE_STRUCT(MUL, INFIX,  INFIX, false, "*", "\\cdot", false, false);
 GENERATE_STRUCT(DIV, INFIX, PREFIX, false, "/", "\\frac", true,  true);
 
 GENERATE_STRUCT(POW, INFIX, INFIX, false,     "^",     "^",  false, true);
-GENERATE_STRUCT(LOG, INFIX, INFIX, false, LOG_STR, "\\log_", true, false);
+GENERATE_STRUCT(LOG, PREFIX, PREFIX, false, LOG_STR, "\\log_", true, false);
+GENERATE_STRUCT(LN,  PREFIX, PREFIX, true,  LN_STR,  "\\ln",   false, false);
 
 GENERATE_STRUCT(SIN, PREFIX, PREFIX, true, SIN_STR, "\\sin", false, false);
 GENERATE_STRUCT(COS, PREFIX, PREFIX, true, COS_STR, "\\cos", false, false);
@@ -163,8 +166,7 @@ static inline void DotFileBegin(FILE* outDotFile);
 static inline void DotFileEnd(FILE* outDotFile);
 
 static double MathExpressionCalculate(const MathExpressionTokenType* token, 
-                                      const MathExpressionVariablesArrayType* varsArr,
-                                      bool useVariables = true);
+                                      const MathExpressionVariablesArrayType* varsArr);
 
 static inline int AddVariable(MathExpressionVariablesArrayType* varsArr,  
                               const char*  variableName, 
@@ -201,10 +203,13 @@ static inline MathExpressionTokenType* MathExpressionDifferentiateArctan(
                                                             const MathExpressionTokenType* token);
 static inline MathExpressionTokenType* MathExpressionDifferentiateArccot(
                                                             const MathExpressionTokenType* token);
+static inline MathExpressionTokenType* MathExpressionDifferentiateLn(
+                                                            const MathExpressionTokenType* token);
+static inline MathExpressionTokenType* MathExpressionDifferentiatePow(
+                                                            const MathExpressionTokenType* token);
 
 //---------------------------------------------------------------------------------------
 
-static MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType* token);
 static void MathExpressionsCopyVariables(      MathExpressionType* target, 
                                          const MathExpressionType* source);
 
@@ -214,9 +219,9 @@ static MathExpressionOperationType GetOperationStruct(
 static bool IsPrefixOperation   (const MathExpressionOperationType* operation, bool inTex = false);
 static bool IsUnaryOperation    (const MathExpressionOperationType* operation);
 
-//---------------------------------------------------------------------------------------
+static bool MathExpressionTokenContainVariable(const MathExpressionTokenType* token);
 
-static void MathExpressionSimplify(MathExpressionType* expression);
+//---------------------------------------------------------------------------------------
 
 static MathExpressionTokenType* MathExpressionSimplifyConstants (MathExpressionTokenType* token,
                                                                  int* simplifiesCount,
@@ -460,6 +465,9 @@ static bool HaveToPutBrackets(const MathExpressionTokenType* parent,
     MathExpressionsOperationsEnum sonOperation    = son->value.operation.operationId;
 
     if (IsPrefixOperation(&son->value.operation, inTex))
+        return false;
+
+    if (sonOperation == MathExpressionsOperationsEnum::POW)
         return false;
 
     if ((sonOperation    == MathExpressionsOperationsEnum::MUL  || 
@@ -829,6 +837,8 @@ static MathExpressionOperationType GetOperationStruct(
             return POW_STRUCT;
         case MathExpressionsOperationsEnum::LOG:
             return LOG_STRUCT;
+        case MathExpressionsOperationsEnum::LN:
+            return LN_STRUCT;
 
         case MathExpressionsOperationsEnum::SIN:
             return SIN_STRUCT;
@@ -873,9 +883,10 @@ static int GetOperationId(const char* string)
 
     else if (strcasecmp(string, POW_STR) == 0)
         return (int)MathExpressionsOperationsEnum::POW;
-
     else if (strcasecmp(string, LOG_STR) == 0)
         return (int)MathExpressionsOperationsEnum::LOG;
+    else if (strcasecmp(string, LN_STR)  == 0)
+        return (int)MathExpressionsOperationsEnum::LN;
 
     else if (strcasecmp(string, SIN_STR) == 0)
         return (int)MathExpressionsOperationsEnum::SIN;
@@ -1086,8 +1097,7 @@ double MathExpressionCalculate(const MathExpressionType* expression)
 //---------------------------------------------------------------------------------------
 
 static double MathExpressionCalculate(const MathExpressionTokenType* token, 
-                                      const MathExpressionVariablesArrayType* varsArr,
-                                      bool useVariables)
+                                      const MathExpressionVariablesArrayType* varsArr)
 {
     if (token == nullptr)
         return NAN;
@@ -1096,19 +1106,11 @@ static double MathExpressionCalculate(const MathExpressionTokenType* token,
         return token->value.value;
 
     if (token->valueType == MathExpressionTokenValueTypeof::VARIABLE)
-    {
-        if (!useVariables)
-            return NAN;
-        
         return varsArr->data[token->value.varId].variableValue;
-    }
 
     double firstVal  = MathExpressionCalculate(token->left,  varsArr);
     double secondVal = MathExpressionCalculate(token->right, varsArr);
     
-    if (isnan(firstVal))
-        return NAN;
-
     return token->value.operation.CalculationFunc(firstVal, secondVal);
 }
 
@@ -1165,6 +1167,13 @@ static double CalculateLOG(const double base, const double val)
     assert(!DoubleEqual(log_base, 0));
 
     return log(val) / log_base;
+}
+
+static inline double CalculateLN(const double val, const double val2)
+{
+    assert(isfinite(val));
+
+    return log(val);
 }
 
 static double CalculateSIN(const double val1, const double val2)
@@ -1365,9 +1374,9 @@ static MathExpressionTokenType* MathExpressionDifferentiate(const MathExpression
             return MathExpressionDifferentiateDiv(token);
 
         case MathExpressionsOperationsEnum::POW:
-            break; //TODO: самая большая, оставляю на потом
-        case MathExpressionsOperationsEnum::LOG:
-            break; //TODO: тоже большая, попозже
+            return MathExpressionDifferentiatePow(token);
+        case MathExpressionsOperationsEnum::LN:
+            return MathExpressionDifferentiateLn(token);
 
         case MathExpressionsOperationsEnum::SIN:
             return MathExpressionDifferentiateSin(token);
@@ -1486,6 +1495,56 @@ static inline MathExpressionTokenType* MathExpressionDifferentiateDiv(
                       TOKEN(MUL, C(token->right), C(token->right)));
 }
 
+static inline MathExpressionTokenType* MathExpressionDifferentiatePow(
+                                                            const MathExpressionTokenType* token)
+{
+    assert(token);
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::POW);
+
+    bool baseContainVar  = MathExpressionTokenContainVariable(token->left);
+    bool powerContainVar = MathExpressionTokenContainVariable(token->right);
+
+    if (!baseContainVar && !powerContainVar)
+        return CONST_TOKEN(0);
+
+    if (baseContainVar && !powerContainVar)
+        return TOKEN(MUL, TOKEN(MUL, C(token->right), D(token->left)), 
+                          TOKEN(POW, C(token->left), 
+                                     CONST_TOKEN(MathExpressionCalculate(token->right, nullptr) - 1)));
+                        
+    if (!baseContainVar && powerContainVar)
+        return TOKEN(MUL, TOKEN(POW, C(token->left), C(token->right)),
+                          TOKEN(MUL, CONST_TOKEN(log(MathExpressionCalculate(token->left, nullptr))),
+                                     D(token->right)));
+
+    return TOKEN(MUL, TOKEN(POW, C(token->left), C(token->right)),
+                      TOKEN(ADD, TOKEN(MUL, C(token->right),
+                                            TOKEN(DIV, D(token->left), C(token->left))),
+                                 TOKEN(MUL, UNARY_TOKEN(LN, C(token->left)), D(token->right))));
+}
+
+static inline MathExpressionTokenType* MathExpressionDifferentiateLn(
+                                                            const MathExpressionTokenType* token)
+{
+    assert(token);
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::LN);
+
+    return TOKEN(DIV, D(token->left), C(token->left));
+}
+
+static inline MathExpressionTokenType* MathExpressionDifferentiateLog(
+                                                            const MathExpressionTokenType* token)
+{
+    assert(token);
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    assert(token->value.operation.operationId == MathExpressionsOperationsEnum::LN);
+
+
+    return TOKEN(DIV, D(token->left), C(token->left));
+}
+
 static inline MathExpressionTokenType* MathExpressionDifferentiateSin(
                                                             const MathExpressionTokenType* token)
 {
@@ -1584,7 +1643,7 @@ static inline MathExpressionTokenType* MathExpressionDifferentiateArccot(
 
 //---------------------------------------------------------------------------------------
 
-static MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType* token)
+MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType* token)
 {
     if (token == nullptr)
         return nullptr;
@@ -1597,7 +1656,7 @@ static MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType
 
 //---------------------------------------------------------------------------------------
 
-static void MathExpressionSimplify(MathExpressionType* expression)
+void MathExpressionSimplify(MathExpressionType* expression)
 {
     assert(expression);
 
@@ -1715,6 +1774,11 @@ static MathExpressionTokenType* MathExpressionSimplifyNeutralTokens(MathExpressi
         return token;
     
     assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+
+    if (((right->valueType == MathExpressionTokenValueTypeof::VARIABLE)  &&
+         (left->valueType  == MathExpressionTokenValueTypeof::VARIABLE)) &&
+        (right->value.varId == left->value.varId))
+        return MathExpressionSimplifyReturnConstToken(token, 0);
 
     bool rightIsValue = (right->valueType == MathExpressionTokenValueTypeof::VALUE);
     bool leftIsValue  = (left->valueType  == MathExpressionTokenValueTypeof::VALUE);
@@ -1947,6 +2011,26 @@ static inline MathExpressionTokenType* MathExpressionSimplifyReturnConstToken(
 #undef TOKEN
 #undef CONST_TOKEN
 #undef UNARY_TOKEN
+
+//---------------------------------------------------------------------------------------
+
+static bool MathExpressionTokenContainVariable(const MathExpressionTokenType* token)
+{
+    if (token == nullptr)
+        return false;
+    
+    if (token->valueType == MathExpressionTokenValueTypeof::VARIABLE)
+        return true;
+
+    bool containVariable  = MathExpressionTokenContainVariable(token->left);
+
+    if (containVariable)
+        return containVariable;
+    
+    containVariable = MathExpressionTokenContainVariable(token->right);
+
+    return containVariable;
+}
 
 //---------------------------------------------------------------------------------------
 
