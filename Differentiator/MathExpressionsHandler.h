@@ -19,26 +19,15 @@ struct MathExpressionVariablesArrayType
 };
 
 //TODO: rename Enum -> id, Expressions->expression
+
+#define GENERATE_OPERATION_CMD(NAME, ...) NAME, 
+
 enum class MathExpressionsOperationsEnum
 {
-    ADD,
-    SUB,
-    MUL,
-    DIV,
-
-    POW,
-    LOG,
-    LN,
-
-    SIN,
-    COS,
-    TAN,
-    COT,
-    ARCSIN,
-    ARCCOS,
-    ARCTAN,
-    ARCCOT,
+    #include "Operations.h"
 };
+
+#undef GENERATE_OPERATION_CMD
 
 enum class MathExpressionOperationFormat
 {
