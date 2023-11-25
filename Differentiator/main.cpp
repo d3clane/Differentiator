@@ -37,4 +37,5 @@ int main(const int argc, const char* argv[])
 
 
     printf("Diff result in x: %lf\n\n\n", MathExpressionCalculate(&mathExpressionDiff));
+    
 }
