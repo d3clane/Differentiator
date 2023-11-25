@@ -14,40 +14,38 @@
 
 const int POISON = 0xDEAD;
 
-static double CalculateADD(const double val1, const double val2);
-static double CalculateSUB(const double val1, const double val2);
-static double CalculateMUL(const double val1, const double val2);
-static double CalculateDIV(const double val1, const double val2);
+//---------------------------------------------------------------------------------------
 
-static double CalculatePOW(const double base, const double power);
-static double CalculateLOG(const double base, const double val);
-
-static double CalculateSIN(const double val, const double val2 = NAN);
-static double CalculateCOS(const double val, const double val2 = NAN);
-static double CalculateTAN(const double val, const double val2 = NAN);
-static double CalculateCOT(const double val, const double val2 = NAN);
-
-static double CalculateARCSIN(const double val, const double val2 = NAN);
-static double CalculateARCCOS(const double val, const double val2 = NAN);
-static double CalculateARCTAN(const double val, const double val2 = NAN);
-static double CalculateARCCOT(const double val, const double val2 = NAN);
-
-//Important - don't use for nothing else than construction of standard operations.
+//Warning - don't use for nothing else than construction of standard operations.
 static MathExpressionOperationType MathExpressionOperationTypeCtor(
                                                     MathExpressionsOperationsEnum operationId,
                                                     MathExpressionOperationFormat operationFormat,
                                                     MathExpressionOperationFormat operationTexFormat, 
-
                                                     bool isUnaryOperation,
-
                                                     const char* longName,
                                                     const char* shortName,
-
                                                     const char* texName,
                                                     bool needTexLeftBraces,
                                                     bool needTexRightBraces,
-
                                                     CalculationFuncType* CalculationFunc);
+
+static inline double CalculateADD(const double val1, const double val2);
+static inline double CalculateSUB(const double val1, const double val2);
+static inline double CalculateMUL(const double val1, const double val2);
+static inline double CalculateDIV(const double val1, const double val2);
+
+static inline double CalculatePOW(const double base, const double power);
+static inline double CalculateLOG(const double base, const double val);
+
+static inline double CalculateSIN(const double val, const double val2 = NAN);
+static inline double CalculateCOS(const double val, const double val2 = NAN);
+static inline double CalculateTAN(const double val, const double val2 = NAN);
+static inline double CalculateCOT(const double val, const double val2 = NAN);
+
+static inline double CalculateARCSIN(const double val, const double val2 = NAN);
+static inline double CalculateARCCOS(const double val, const double val2 = NAN);
+static inline double CalculateARCTAN(const double val, const double val2 = NAN);
+static inline double CalculateARCCOT(const double val, const double val2 = NAN);
 
 static const char* const ADD_STR = "add";
 static const char* const SUB_STR = "sub";
@@ -67,8 +65,8 @@ static const char* const ARCCOT_STR = "arccot";
 static const char* const POW_STR = "pow";
 static const char* const LOG_STR = "log";
 
-#define GENERATE_STRUCT(NAME, SHORT_CUT_STRING, FORMAT, TEX_FORMAT, IS_UNARY,                     \
-                        TEX_NAME, NEED_LEFT_TEX_BRACES, NEED_RIGHT_TEX_BRACES)                    \
+#define GENERATE_STRUCT(NAME, FORMAT, TEX_FORMAT, IS_UNARY, SHORT_CUT_STRING, TEX_NAME,           \
+                        NEED_LEFT_TEX_BRACES, NEED_RIGHT_TEX_BRACES)                              \
     static const MathExpressionOperationType NAME##_STRUCT =                                      \
                                                     MathExpressionOperationTypeCtor(              \
                                                         MathExpressionsOperationsEnum::NAME,      \
@@ -81,25 +79,27 @@ static const char* const LOG_STR = "log";
                                                         NEED_RIGHT_TEX_BRACES,                    \
                                                         Calculate##NAME)
 
-GENERATE_STRUCT(ADD, "+", INFIX,  INFIX, false, "+",      false, false);
-GENERATE_STRUCT(SUB, "-", INFIX,  INFIX, false, "-",      false, false);
-GENERATE_STRUCT(MUL, "*", INFIX,  INFIX, false, "\\cdot", false, false);
-GENERATE_STRUCT(DIV, "/", INFIX, PREFIX, false, "\\frac", true,  true);
+GENERATE_STRUCT(ADD, INFIX,  INFIX, false, "+", "+",      false, false);
+GENERATE_STRUCT(SUB, INFIX,  INFIX, false, "-", "-",      false, false);
+GENERATE_STRUCT(MUL, INFIX,  INFIX, false, "*", "\\cdot", false, false);
+GENERATE_STRUCT(DIV, INFIX, PREFIX, false, "/", "\\frac", true,  true);
 
-GENERATE_STRUCT(POW, "^",     INFIX, INFIX, false, "^",      false, true);
-GENERATE_STRUCT(LOG, LOG_STR, INFIX, INFIX, false, "\\log_", true, false);
+GENERATE_STRUCT(POW, INFIX, INFIX, false,     "^",     "^",  false, true);
+GENERATE_STRUCT(LOG, INFIX, INFIX, false, LOG_STR, "\\log_", true, false);
 
-GENERATE_STRUCT(SIN, SIN_STR, PREFIX, PREFIX, true, "\\sin", false, false);
-GENERATE_STRUCT(COS, COS_STR, PREFIX, PREFIX, true, "\\cos", false, false);
-GENERATE_STRUCT(TAN, TAN_STR, PREFIX, PREFIX, true, "\\tan", false, false);
-GENERATE_STRUCT(COT, COT_STR, PREFIX, PREFIX, true, "\\cot", false, false);
+GENERATE_STRUCT(SIN, PREFIX, PREFIX, true, SIN_STR, "\\sin", false, false);
+GENERATE_STRUCT(COS, PREFIX, PREFIX, true, COS_STR, "\\cos", false, false);
+GENERATE_STRUCT(TAN, PREFIX, PREFIX, true, TAN_STR, "\\tan", false, false);
+GENERATE_STRUCT(COT, PREFIX, PREFIX, true, COT_STR, "\\cot", false, false);
 
-GENERATE_STRUCT(ARCSIN, ARCSIN_STR, PREFIX, PREFIX, true, "\\arcsin", false, false);
-GENERATE_STRUCT(ARCCOS, ARCCOS_STR, PREFIX, PREFIX,  true, "\\arccos", false, false);
-GENERATE_STRUCT(ARCTAN, ARCTAN_STR, PREFIX, PREFIX,  true, "\\arctan", false, false);
-GENERATE_STRUCT(ARCCOT, ARCCOT_STR, PREFIX, PREFIX,  true, "\\arccot", false, false);
+GENERATE_STRUCT(ARCSIN, PREFIX, PREFIX, true, ARCSIN_STR, "\\arcsin", false, false);
+GENERATE_STRUCT(ARCCOS, PREFIX, PREFIX, true, ARCCOS_STR, "\\arccos", false, false);
+GENERATE_STRUCT(ARCTAN, PREFIX, PREFIX, true, ARCTAN_STR, "\\arctan", false, false);
+GENERATE_STRUCT(ARCCOT, PREFIX, PREFIX, true, ARCCOT_STR, "\\arccot", false, false);
 
 #undef GENERATE_STRUCT
+
+//---------------------------------------------------------------------------------------
 
 static void MathExpressionDtor     (MathExpressionTokenType* token);
 static void MathExpressionTokenDtor(MathExpressionTokenType* token);
@@ -173,7 +173,37 @@ static inline int AddVariable(MathExpressionVariablesArrayType* varsArr,
 static int GetVariableIdByName(const MathExpressionVariablesArrayType* varsArr, 
                                const char* variableName);
 
+//---------------------------------------------------------------------------------------
+
 static MathExpressionTokenType* MathExpressionDifferentiate(const MathExpressionTokenType* token);
+
+static inline MathExpressionTokenType* MathExpressionDifferentiateAdd(
+                                                            const MathExpressionTokenType* token);
+static inline MathExpressionTokenType* MathExpressionDifferentiateSub(
+                                                            const MathExpressionTokenType* token);
+static inline MathExpressionTokenType* MathExpressionDifferentiateMul(
+                                                            const MathExpressionTokenType* token);
+static inline MathExpressionTokenType* MathExpressionDifferentiateDiv(
+                                                            const MathExpressionTokenType* token);
+static inline MathExpressionTokenType* MathExpressionDifferentiateSin(
+                                                            const MathExpressionTokenType* token);
+static inline MathExpressionTokenType* MathExpressionDifferentiateCos(
+                                                            const MathExpressionTokenType* token);
+static inline MathExpressionTokenType* MathExpressionDifferentiateTan(
+                                                            const MathExpressionTokenType* token);
+static inline MathExpressionTokenType* MathExpressionDifferentiateCot(
+                                                            const MathExpressionTokenType* token);
+static inline MathExpressionTokenType* MathExpressionDifferentiateArcsin(
+                                                            const MathExpressionTokenType* token);
+static inline MathExpressionTokenType* MathExpressionDifferentiateArccos(
+                                                            const MathExpressionTokenType* token);
+static inline MathExpressionTokenType* MathExpressionDifferentiateArctan(
+                                                            const MathExpressionTokenType* token);
+static inline MathExpressionTokenType* MathExpressionDifferentiateArccot(
+                                                            const MathExpressionTokenType* token);
+
+//---------------------------------------------------------------------------------------
+
 static MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType* token);
 static void MathExpressionsCopyVariables(      MathExpressionType* target, 
                                          const MathExpressionType* source);
@@ -184,15 +214,54 @@ static MathExpressionOperationType GetOperationStruct(
 static bool IsPrefixOperation   (const MathExpressionOperationType* operation, bool inTex = false);
 static bool IsUnaryOperation    (const MathExpressionOperationType* operation);
 
+//---------------------------------------------------------------------------------------
+
 static void MathExpressionSimplify(MathExpressionType* expression);
 
 static MathExpressionTokenType* MathExpressionSimplifyConstants (MathExpressionTokenType* token,
-                                                                 int* numberOfSimplifies,
+                                                                 int* simplifiesCount,
                                                                  bool* haveVariables = nullptr);
 
-static MathExpressionTokenType* MathExpressionDeleteNeutralTokens(MathExpressionType* expression,
+static MathExpressionTokenType* MathExpressionSimplifyNeutralTokens(MathExpressionType* expression,
                                                                   MathExpressionTokenType* token, 
-                                                                  int* numberOfSimplifies);
+                                                                  int* simplifiesCount);
+
+static inline MathExpressionTokenType* MathExpressionSimplifyAdd(MathExpressionTokenType* token,   
+                                                                 MathExpressionTokenType* left,
+                                                                 MathExpressionTokenType* right,
+                                                                 int* simplifiesCount);
+static inline MathExpressionTokenType* MathExpressionSimplifySub(MathExpressionTokenType* token,   
+                                                          MathExpressionTokenType* left,
+                                                          MathExpressionTokenType* right,
+                                                          int* simplifiesCount);
+static inline MathExpressionTokenType* MathExpressionSimplifyMul(MathExpressionTokenType* token,   
+                                                          MathExpressionTokenType* left,
+                                                          MathExpressionTokenType* right,
+                                                          int* simplifiesCount);
+static inline MathExpressionTokenType* MathExpressionSimplifyDiv(MathExpressionTokenType* token,   
+                                                          MathExpressionTokenType* left,
+                                                          MathExpressionTokenType* right,
+                                                          int* simplifiesCount);
+static inline MathExpressionTokenType* MathExpressionSimplifyPow(MathExpressionTokenType* token,   
+                                                          MathExpressionTokenType* left,
+                                                          MathExpressionTokenType* right,
+                                                          int* simplifiesCount);
+static inline MathExpressionTokenType* MathExpressionSimplifyLog(MathExpressionTokenType* token,   
+                                                          MathExpressionTokenType* left,
+                                                          MathExpressionTokenType* right,
+                                                          int* simplifiesCount);
+
+static inline MathExpressionTokenType* MathExpressionSimplifyReturnLeftToken(
+                                                                MathExpressionTokenType* token,
+                                                                MathExpressionTokenType* left);
+static inline MathExpressionTokenType* MathExpressionSimplifyReturnRightToken(
+                                                                MathExpressionTokenType* token,
+                                                                MathExpressionTokenType* right);
+static inline MathExpressionTokenType* MathExpressionSimplifyReturnConstToken(
+                                                                MathExpressionTokenType* token,
+                                                                double value);
+
+//---------------------------------------------------------------------------------------
 
 MathExpressionErrors MathExpressionCtor(MathExpressionType* expression)
 {
@@ -208,6 +277,8 @@ MathExpressionErrors MathExpressionCtor(MathExpressionType* expression)
     
     return MathExpressionErrors::NO_ERR;
 }
+
+//---------------------------------------------------------------------------------------
 
 MathExpressionErrors MathExpressionDtor(MathExpressionType* expression)
 {
@@ -234,6 +305,8 @@ MathExpressionErrors MathExpressionDtor(MathExpressionType* expression)
     return MathExpressionErrors::NO_ERR;
 }
 
+//---------------------------------------------------------------------------------------
+
 static void MathExpressionDtor(MathExpressionTokenType* token)
 {
     if (token == nullptr)
@@ -246,6 +319,8 @@ static void MathExpressionDtor(MathExpressionTokenType* token)
 
     MathExpressionTokenDtor(token);
 }
+
+//---------------------------------------------------------------------------------------
 
 #define PRINT(outStream, ...)                          \
 do                                                     \
@@ -272,6 +347,8 @@ MathExpressionErrors MathExpressionPrintPrefixFormat(const MathExpressionType* e
 
     return err;
 }
+
+//---------------------------------------------------------------------------------------
 
 static MathExpressionErrors MathExpressionPrintPrefixFormat(
                                                     const MathExpressionTokenType* token, 
@@ -304,6 +381,8 @@ static MathExpressionErrors MathExpressionPrintPrefixFormat(
     return err;
 }
 
+//---------------------------------------------------------------------------------------
+
 MathExpressionErrors MathExpressionPrintEquationFormat(const MathExpressionType* expression, 
                                                        FILE* outStream)
 {
@@ -321,6 +400,8 @@ MathExpressionErrors MathExpressionPrintEquationFormat(const MathExpressionType*
 
     return err; 
 }
+
+//---------------------------------------------------------------------------------------
 
 static MathExpressionErrors MathExpressionPrintEquationFormat(
                                           const MathExpressionTokenType* token, 
@@ -362,6 +443,8 @@ static MathExpressionErrors MathExpressionPrintEquationFormat(
     return err;
 }
 
+//---------------------------------------------------------------------------------------
+
 static bool HaveToPutBrackets(const MathExpressionTokenType* parent, 
                               const MathExpressionTokenType* son,
                               bool inTex)
@@ -396,6 +479,8 @@ static bool HaveToPutBrackets(const MathExpressionTokenType* parent,
     return true;
 }
 
+//---------------------------------------------------------------------------------------
+
 static bool IsPrefixOperation(const MathExpressionOperationType* operation, bool inTex)
 {
     assert(operation);
@@ -406,12 +491,16 @@ static bool IsPrefixOperation(const MathExpressionOperationType* operation, bool
     return operation->operationFormat == MathExpressionOperationFormat::PREFIX;
 }
 
+//---------------------------------------------------------------------------------------
+
 static bool IsUnaryOperation(const MathExpressionOperationType* operation)
 {
     assert(operation);
 
     return operation->isUnaryOperation;
 }
+
+//---------------------------------------------------------------------------------------
 
 static void MathExpressionTokenPrintValue(const MathExpressionTokenType* token, 
                                           const MathExpressionVariablesArrayType* varsArr, 
@@ -426,6 +515,8 @@ static void MathExpressionTokenPrintValue(const MathExpressionTokenType* token,
 }
 
 #undef PRINT
+
+//---------------------------------------------------------------------------------------
 
 MathExpressionErrors MathExpressionPrintEquationFormatTex(const MathExpressionType* expression, 
                                                           FILE* outStream,
@@ -475,6 +566,8 @@ MathExpressionErrors MathExpressionPrintEquationFormatTex(const MathExpressionTy
 
     return err;
 }
+
+//---------------------------------------------------------------------------------------
 
 static MathExpressionErrors MathExpressionPrintEquationFormatTex(
                                              const MathExpressionTokenType* token, 
@@ -526,6 +619,8 @@ static MathExpressionErrors MathExpressionPrintEquationFormatTex(
     return err;   
 }
 
+//---------------------------------------------------------------------------------------
+
 MathExpressionErrors MathExpressionReadPrefixFormat(MathExpressionType* expression, FILE* inStream)
 {
     assert(expression);
@@ -546,6 +641,8 @@ MathExpressionErrors MathExpressionReadPrefixFormat(MathExpressionType* expressi
 
     return MathExpressionErrors::NO_ERR;
 }
+
+//---------------------------------------------------------------------------------------
 
 static MathExpressionTokenType* MathExpressionReadPrefixFormat(
                                                         const char* const string, 
@@ -591,6 +688,8 @@ static MathExpressionTokenType* MathExpressionReadPrefixFormat(
     return token;
 }
 
+//---------------------------------------------------------------------------------------
+
 MathExpressionErrors MathExpressionReadInfixFormat (MathExpressionType* expression, FILE* inStream)
 {
     assert(expression);
@@ -611,6 +710,8 @@ MathExpressionErrors MathExpressionReadInfixFormat (MathExpressionType* expressi
 
     return MathExpressionErrors::NO_ERR;
 }
+
+//---------------------------------------------------------------------------------------
 
 static MathExpressionTokenType* MathExpressionReadInfixFormat(
                                             const char* const string, 
@@ -653,6 +754,8 @@ static MathExpressionTokenType* MathExpressionReadInfixFormat(
     *stringEndPtr = stringPtr;
     return token;
 }
+
+//---------------------------------------------------------------------------------------
 
 static const char* MathExpressionReadTokenValue(MathExpressionTokenValue* value, 
                                                MathExpressionTokenValueTypeof* valueType, 
@@ -706,6 +809,8 @@ static const char* MathExpressionReadTokenValue(MathExpressionTokenValue* value,
     return stringPtr;
 }
 
+//---------------------------------------------------------------------------------------
+
 static MathExpressionOperationType GetOperationStruct(
                                         MathExpressionsOperationsEnum operationId)
 {
@@ -750,6 +855,8 @@ static MathExpressionOperationType GetOperationStruct(
     return {};
 }
 
+//---------------------------------------------------------------------------------------
+
 static int GetOperationId(const char* string)
 {
     assert(string);
@@ -791,6 +898,8 @@ static int GetOperationId(const char* string)
     return -1;
 }
 
+//---------------------------------------------------------------------------------------
+
 static MathExpressionTokenType* MathExpressionTokenCtor(MathExpressionTokenValue value, 
                                                         MathExpressionTokenValueTypeof valueType,
                                                         MathExpressionTokenType* left,
@@ -805,6 +914,8 @@ static MathExpressionTokenType* MathExpressionTokenCtor(MathExpressionTokenValue
     return token;
 }
 
+//---------------------------------------------------------------------------------------
+
 static void MathExpressionTokenDtor(MathExpressionTokenType* token)
 {
     token->left        = nullptr;
@@ -813,6 +924,8 @@ static void MathExpressionTokenDtor(MathExpressionTokenType* token)
 
     free(token);
 }
+
+//---------------------------------------------------------------------------------------
 
 static inline void CreateImgInLogFile(const size_t imgIndex, bool openImg)
 {
@@ -835,16 +948,22 @@ static inline void CreateImgInLogFile(const size_t imgIndex, bool openImg)
     }
 }
 
+//---------------------------------------------------------------------------------------
+
 static inline void DotFileBegin(FILE* outDotFile)
 {
     fprintf(outDotFile, "digraph G{\nrankdir=TB;\ngraph [bgcolor=\"#31353b\"];\n"
                         "edge[color=\"#00D0D0\"];\n");
 }
 
+//---------------------------------------------------------------------------------------
+
 static inline void DotFileEnd(FILE* outDotFile)
 {
     fprintf(outDotFile, "\n}\n");
 }
+
+//---------------------------------------------------------------------------------------
 
 void MathExpressionGraphicDump(const MathExpressionType* expression, bool openImg)
 {
@@ -870,6 +989,8 @@ void MathExpressionGraphicDump(const MathExpressionType* expression, bool openIm
     CreateImgInLogFile(imgIndex, openImg);
     imgIndex++;
 }
+
+//---------------------------------------------------------------------------------------
 
 static void DotFileCreateTokens(const MathExpressionTokenType* token,    
                                const MathExpressionVariablesArrayType* varsArr, FILE* outDotFile)
@@ -900,6 +1021,8 @@ static void DotFileCreateTokens(const MathExpressionTokenType* token,
     DotFileCreateTokens(token->right, varsArr, outDotFile);
 }
 
+//---------------------------------------------------------------------------------------
+
 static void MathExpressionGraphicDump(const MathExpressionTokenType* token, FILE* outDotFile)
 {
     if (token == nullptr)
@@ -916,6 +1039,8 @@ static void MathExpressionGraphicDump(const MathExpressionTokenType* token, FILE
     if (token->right != nullptr) fprintf(outDotFile, "token%p->", token);
     MathExpressionGraphicDump(token->right, outDotFile);
 }
+
+//---------------------------------------------------------------------------------------
 
 void MathExpressionTextDump(const MathExpressionType* expression, const char* fileName, 
                                             const char* funcName,
@@ -934,6 +1059,8 @@ void MathExpressionTextDump(const MathExpressionType* expression, const char* fi
     LOG_END();
 }
 
+//---------------------------------------------------------------------------------------
+
 void MathExpressionDump(const MathExpressionType* expression, const char* fileName,
                                                               const char* funcName,
                                                               const int   line)
@@ -947,12 +1074,16 @@ void MathExpressionDump(const MathExpressionType* expression, const char* fileNa
     MathExpressionGraphicDump(expression);
 }
 
+//---------------------------------------------------------------------------------------
+
 double MathExpressionCalculate(const MathExpressionType* expression)
 {
     assert(expression);
 
     return MathExpressionCalculate(expression->root, &expression->variables);
 }
+
+//---------------------------------------------------------------------------------------
 
 static double MathExpressionCalculate(const MathExpressionTokenType* token, 
                                       const MathExpressionVariablesArrayType* varsArr,
@@ -980,6 +1111,8 @@ static double MathExpressionCalculate(const MathExpressionTokenType* token,
 
     return token->value.operation.CalculationFunc(firstVal, secondVal);
 }
+
+//---------------------------------------------------------------------------------------
 
 static double CalculateADD(const double val1, const double val2)
 {
@@ -1095,6 +1228,8 @@ static double CalculateARCCOT(const double val1, const double val2)
     return PI / 2 - atan(val1);
 }
 
+//---------------------------------------------------------------------------------------
+
 static inline int AddVariable(MathExpressionVariablesArrayType* varsArr,  
                               const char*  variableName, 
                               const double variableValue)
@@ -1115,6 +1250,8 @@ static inline int AddVariable(MathExpressionVariablesArrayType* varsArr,
     return (int)varsArr->size - 1;
 }
 
+//---------------------------------------------------------------------------------------
+
 static int GetVariableIdByName(const MathExpressionVariablesArrayType* varsArr, 
                                const char* variableName)
 {
@@ -1129,6 +1266,27 @@ static int GetVariableIdByName(const MathExpressionVariablesArrayType* varsArr,
     
     return -1;
 }
+
+//---------------------------------------------------------------------------------------
+
+static void MathExpressionsCopyVariables(      MathExpressionType* target, 
+                                         const MathExpressionType* source)
+{
+    assert(target);
+    assert(source);
+
+    assert(target->variables.capacity == source->variables.capacity);
+    assert(target->variables.size == 0);
+
+    //TODO: подумать над созданием функции копирования одной переменной, как будто не нужна
+    for (size_t i = 0; i < source->variables.size; ++i)
+    {
+        target->variables.data[i].variableName  = strdup(source->variables.data->variableName);
+        target->variables.data[i].variableValue = source->variables.data->variableValue;
+    }
+}
+
+//---------------------------------------------------------------------------------------
 
 MathExpressionErrors MathExpressionReadVariables(MathExpressionType* expression)
 {
@@ -1147,6 +1305,8 @@ MathExpressionErrors MathExpressionReadVariables(MathExpressionType* expression)
     return MathExpressionErrors::NO_ERR;
 }
 
+//---------------------------------------------------------------------------------------
+
 MathExpressionType MathExpressionDifferentiate(const MathExpressionType* expression)
 {
     assert(expression);
@@ -1164,6 +1324,78 @@ MathExpressionType MathExpressionDifferentiate(const MathExpressionType* express
     return diffMathExpression;
 }
 
+//---------------------------------------------------------------------------------------
+
+static MathExpressionTokenType* MathExpressionDifferentiate(const MathExpressionTokenType* token)
+{
+    assert(token);
+
+    switch(token->valueType)
+    {
+        case MathExpressionTokenValueTypeof::VALUE:
+        {
+            MathExpressionTokenValue val = {};
+            val.value = 0;
+
+            return MathExpressionTokenCtor(val, MathExpressionTokenValueTypeof::VALUE);
+        }
+        case MathExpressionTokenValueTypeof::VARIABLE:
+        {
+            MathExpressionTokenValue val = {};
+            val.value = 1;
+
+            return MathExpressionTokenCtor(val, MathExpressionTokenValueTypeof::VALUE);
+        }
+        case MathExpressionTokenValueTypeof::OPERATION:
+        default:
+            break;
+    }
+
+    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
+    
+    switch (token->value.operation.operationId)
+    {
+        case MathExpressionsOperationsEnum::ADD:
+            return MathExpressionDifferentiateAdd(token);    
+        case MathExpressionsOperationsEnum::SUB:
+            return MathExpressionDifferentiateSub(token);
+        case MathExpressionsOperationsEnum::MUL:
+            return MathExpressionDifferentiateMul(token);
+        case MathExpressionsOperationsEnum::DIV:
+            return MathExpressionDifferentiateDiv(token);
+
+        case MathExpressionsOperationsEnum::POW:
+            break; //TODO: самая большая, оставляю на потом
+        case MathExpressionsOperationsEnum::LOG:
+            break; //TODO: тоже большая, попозже
+
+        case MathExpressionsOperationsEnum::SIN:
+            return MathExpressionDifferentiateSin(token);
+        case MathExpressionsOperationsEnum::COS:
+            return MathExpressionDifferentiateCos(token);
+        case MathExpressionsOperationsEnum::TAN:
+            return MathExpressionDifferentiateTan(token);
+        case MathExpressionsOperationsEnum::COT:
+            return MathExpressionDifferentiateCot(token);
+
+        case MathExpressionsOperationsEnum::ARCSIN:
+            return MathExpressionDifferentiateArcsin(token);
+        case MathExpressionsOperationsEnum::ARCCOS:
+            return MathExpressionDifferentiateArccos(token);
+        case MathExpressionsOperationsEnum::ARCTAN:
+            return MathExpressionDifferentiateArctan(token);
+        case MathExpressionsOperationsEnum::ARCCOT:
+            return MathExpressionDifferentiateArccot(token);
+
+        default:
+            break;
+    }
+
+    return nullptr;
+}
+
+//---------------------------------------------------------------------------------------
+
 static inline MathExpressionTokenValue MathExpressionCreateTokenValue(double value)
 {
     MathExpressionTokenValue tokenValue =
@@ -1173,6 +1405,8 @@ static inline MathExpressionTokenValue MathExpressionCreateTokenValue(double val
 
     return tokenValue;
 }
+
+//---------------------------------------------------------------------------------------
 
 static inline MathExpressionTokenValue MathExpressionCreateTokenValue(
                                                         MathExpressionsOperationsEnum operationId)
@@ -1185,12 +1419,16 @@ static inline MathExpressionTokenValue MathExpressionCreateTokenValue(
     return value;
 }
 
+//---------------------------------------------------------------------------------------
+
 static inline MathExpressionTokenType* MathExpressionCreateNumericToken(double value)
 {
     MathExpressionTokenValue tokenVal = MathExpressionCreateTokenValue(value);
 
     return MathExpressionTokenCtor(tokenVal, MathExpressionTokenValueTypeof::VALUE);
 }
+
+//---------------------------------------------------------------------------------------
 
 #define D(TOKEN) MathExpressionDifferentiate(TOKEN)
 #define C(TOKEN) MathExpressionCopy(TOKEN)
@@ -1344,73 +1582,7 @@ static inline MathExpressionTokenType* MathExpressionDifferentiateArccot(
                                             TOKEN(POW, C(token->left), CONST_TOKEN(2)))));
 }
 
-static MathExpressionTokenType* MathExpressionDifferentiate(const MathExpressionTokenType* token)
-{
-    assert(token);
-
-    switch(token->valueType)
-    {
-        case MathExpressionTokenValueTypeof::VALUE:
-        {
-            MathExpressionTokenValue val = {};
-            val.value = 0;
-
-            return MathExpressionTokenCtor(val, MathExpressionTokenValueTypeof::VALUE);
-        }
-        case MathExpressionTokenValueTypeof::VARIABLE:
-        {
-            MathExpressionTokenValue val = {};
-            val.value = 1;
-
-            return MathExpressionTokenCtor(val, MathExpressionTokenValueTypeof::VALUE);
-        }
-        case MathExpressionTokenValueTypeof::OPERATION:
-        default:
-            break;
-    }
-
-    assert(token->valueType == MathExpressionTokenValueTypeof::OPERATION);
-    
-    switch (token->value.operation.operationId)
-    {
-        case MathExpressionsOperationsEnum::ADD:
-            return MathExpressionDifferentiateAdd(token);    
-        case MathExpressionsOperationsEnum::SUB:
-            return MathExpressionDifferentiateSub(token);
-        case MathExpressionsOperationsEnum::MUL:
-            return MathExpressionDifferentiateMul(token);
-        case MathExpressionsOperationsEnum::DIV:
-            return MathExpressionDifferentiateDiv(token);
-
-        case MathExpressionsOperationsEnum::POW:
-            break; //TODO: самая большая, оставляю на потом
-        case MathExpressionsOperationsEnum::LOG:
-            break; //TODO: тоже большая, попозже
-
-        case MathExpressionsOperationsEnum::SIN:
-            return MathExpressionDifferentiateSin(token);
-        case MathExpressionsOperationsEnum::COS:
-            return MathExpressionDifferentiateCos(token);
-        case MathExpressionsOperationsEnum::TAN:
-            return MathExpressionDifferentiateTan(token);
-        case MathExpressionsOperationsEnum::COT:
-            return MathExpressionDifferentiateCot(token);
-
-        case MathExpressionsOperationsEnum::ARCSIN:
-            return MathExpressionDifferentiateArcsin(token);
-        case MathExpressionsOperationsEnum::ARCCOS:
-            return MathExpressionDifferentiateArccos(token);
-        case MathExpressionsOperationsEnum::ARCTAN:
-            return MathExpressionDifferentiateArctan(token);
-        case MathExpressionsOperationsEnum::ARCCOT:
-            return MathExpressionDifferentiateArccot(token);
-
-        default:
-            break;
-    }
-
-    return nullptr;
-}
+//---------------------------------------------------------------------------------------
 
 static MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType* token)
 {
@@ -1423,51 +1595,27 @@ static MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType
     return MathExpressionTokenCtor(token->value, token->valueType, left, right);
 }
 
-static void MathExpressionsCopyVariables(      MathExpressionType* target, 
-                                         const MathExpressionType* source)
-{
-    assert(target);
-    assert(source);
-
-    assert(target->variables.capacity == source->variables.capacity);
-    assert(target->variables.size == 0);
-
-    //TODO: подумать над созданием функции копирования одной переменной, как будто не нужна
-    for (size_t i = 0; i < source->variables.size; ++i)
-    {
-        target->variables.data[i].variableName  = strdup(source->variables.data->variableName);
-        target->variables.data[i].variableValue = source->variables.data->variableValue;
-    }
-}
-
-static void MathExpressionTokenSetEdges(MathExpressionTokenType* token, MathExpressionTokenType* left, 
-                                                     MathExpressionTokenType* right)
-{
-    assert(token);
-
-    token->left  = left;
-    token->right = right;
-}
+//---------------------------------------------------------------------------------------
 
 static void MathExpressionSimplify(MathExpressionType* expression)
 {
     assert(expression);
 
-    int numberOfSimplifies = 0;
+    int simplifiesCount = 0;
     do
     {
-        numberOfSimplifies = 0;
-        expression->root = MathExpressionSimplifyConstants(expression->root, &numberOfSimplifies);
-        expression->root = MathExpressionDeleteNeutralTokens(expression, expression->root, &numberOfSimplifies);
-    } while (numberOfSimplifies != 0);
+        simplifiesCount = 0;
+        expression->root = MathExpressionSimplifyConstants(expression->root, &simplifiesCount);
+        expression->root = MathExpressionSimplifyNeutralTokens(expression, expression->root, &simplifiesCount);
+    } while (simplifiesCount != 0);
 
 }
 
 static MathExpressionTokenType* MathExpressionSimplifyConstants (MathExpressionTokenType* token,
-                                                                 int* numberOfSimplifies,
+                                                                 int* simplifiesCount,
                                                                  bool* haveVariables)
 {
-    assert(numberOfSimplifies);
+    assert(simplifiesCount);
     if (token == nullptr)
     {
         assert(haveVariables != nullptr);
@@ -1498,10 +1646,10 @@ static MathExpressionTokenType* MathExpressionSimplifyConstants (MathExpressionT
     bool haveLeftTokenVariables  = false;
     bool haveRightTokenVariables = false;
     MathExpressionTokenType* left  = MathExpressionSimplifyConstants(token->left,  
-                                                                     numberOfSimplifies,
+                                                                     simplifiesCount,
                                                                      &haveLeftTokenVariables);
     MathExpressionTokenType* right = MathExpressionSimplifyConstants(token->right, 
-                                                                     numberOfSimplifies,
+                                                                     simplifiesCount,
                                                                      &haveRightTokenVariables);
 
     if (token->left != left)
@@ -1522,7 +1670,7 @@ static MathExpressionTokenType* MathExpressionSimplifyConstants (MathExpressionT
 
     if (!haveTokenVariables)
     {
-        (*numberOfSimplifies)++;
+        (*simplifiesCount)++;
         
         double leftVal = NAN, rightVal = NAN;
         assert(token->left);
@@ -1535,228 +1683,30 @@ static MathExpressionTokenType* MathExpressionSimplifyConstants (MathExpressionT
     return token;
 }
 
-static inline MathExpressionTokenType* MathExpressionSimplifyReturnLeftToken(
-                                                                MathExpressionTokenType* token,
-                                                                MathExpressionTokenType* left,
-                                                                MathExpressionTokenType* right)
-{
-    MathExpressionTokenDtor(token->right);
+//---------------------------------------------------------------------------------------
 
-    assert(token->left == left);
-
-    token->left  = nullptr;
-    token->right = nullptr;
-
-    return left;
-}
-
-static inline MathExpressionTokenType* MathExpressionSimplifyReturnRightToken(
-                                                                MathExpressionTokenType* token,
-                                                                MathExpressionTokenType* left,
-                                                                MathExpressionTokenType* right)
-{
-    MathExpressionTokenDtor(token->left);
-
-    assert(token->right == right);
-    
-    token->left  = nullptr;
-    token->right = nullptr;
-
-    return right;
-}
-
-static inline MathExpressionTokenType* MathExpressionSimplifyReturnConstToken(
-                                                                MathExpressionTokenType* token,
-                                                                MathExpressionTokenType* left,
-                                                                MathExpressionTokenType* right,
-                                                                double value)
-{
-    MathExpressionTokenDtor(token->right);
-    MathExpressionTokenDtor(token->left);
-
-    token->left  = nullptr;
-    token->right = nullptr;
-
-    return CONST_TOKEN(value);
-}
-
-static inline MathExpressionTokenType* MathExpressionSimplifyAdd(MathExpressionTokenType* token,   
-                                                                 MathExpressionTokenType* left,
-                                                                 MathExpressionTokenType* right,
-                                                                 int* numberOfSimplifies)
-{
-    assert(numberOfSimplifies);
-
-    bool rightIsValue = (right->valueType == MathExpressionTokenValueTypeof::VALUE);
-    bool leftIsValue  = (left->valueType  == MathExpressionTokenValueTypeof::VALUE);
-
-    if (rightIsValue && DoubleEqual(right->value.value, 0))
-    {
-        (*numberOfSimplifies)++;
-        return MathExpressionSimplifyReturnLeftToken(token, left, right);
-    }
-
-    if (leftIsValue && DoubleEqual(left->value.value, 0))
-    {
-        (*numberOfSimplifies)++;
-        return MathExpressionSimplifyReturnRightToken(token, left, right);
-    }
-
-    return token;
-}
-
-static inline MathExpressionTokenType* MathExpressionSimplifySub(MathExpressionTokenType* token,   
-                                                          MathExpressionTokenType* left,
-                                                          MathExpressionTokenType* right,
-                                                          int* numberOfSimplifies)
-{
-    bool rightIsValue = (right->valueType == MathExpressionTokenValueTypeof::VALUE);
-    bool leftIsValue  = (left->valueType  == MathExpressionTokenValueTypeof::VALUE);
-
-    if (rightIsValue && DoubleEqual(right->value.value, 0))
-    {    
-        (*numberOfSimplifies)++;
-        return MathExpressionSimplifyReturnLeftToken(token, left, right);
-    }
-
-    return token;
-}
-
-static inline MathExpressionTokenType* MathExpressionSimplifyMul(MathExpressionTokenType* token,   
-                                                          MathExpressionTokenType* left,
-                                                          MathExpressionTokenType* right,
-                                                          int* numberOfSimplifies)
-{
-    bool rightIsValue = (right->valueType == MathExpressionTokenValueTypeof::VALUE);
-    bool leftIsValue  = (left->valueType  == MathExpressionTokenValueTypeof::VALUE);
-
-    if (rightIsValue && DoubleEqual(right->value.value, 0))
-    {
-        (*numberOfSimplifies)++;
-        return MathExpressionSimplifyReturnConstToken(token, left, right, 0);
-    }
-
-    if (leftIsValue && DoubleEqual(left->value.value, 0))
-    {
-        (*numberOfSimplifies)++;
-        return MathExpressionSimplifyReturnConstToken(token, left, right, 0);
-    }
-
-    if (rightIsValue && DoubleEqual(right->value.value, 1))
-    {
-        (*numberOfSimplifies)++;
-        return MathExpressionSimplifyReturnLeftToken(token, left, right);
-    }
-
-    if (leftIsValue && DoubleEqual(left->value.value, 1))
-    {
-        (*numberOfSimplifies)++;
-        return MathExpressionSimplifyReturnRightToken(token, left, right);
-    }
-
-    return token;
-}
-
-static inline MathExpressionTokenType* MathExpressionSimplifyDiv(MathExpressionTokenType* token,   
-                                                          MathExpressionTokenType* left,
-                                                          MathExpressionTokenType* right,
-                                                          int* numberOfSimplifies)
-{
-    bool rightIsValue = (right->valueType == MathExpressionTokenValueTypeof::VALUE);
-    bool leftIsValue  = (left->valueType  == MathExpressionTokenValueTypeof::VALUE);
-
-    if (leftIsValue && DoubleEqual(left->value.value, 0))
-    {
-        (*numberOfSimplifies)++;
-        return MathExpressionSimplifyReturnConstToken(token, left, right, 0);
-    }
-
-    if (rightIsValue && DoubleEqual(right->value.value, 1))
-    {
-        (*numberOfSimplifies)++;
-        return MathExpressionSimplifyReturnLeftToken(token, left, right);
-    }
-
-    return token;
-}
-
-static inline MathExpressionTokenType* MathExpressionSimplifyPow(MathExpressionTokenType* token,   
-                                                          MathExpressionTokenType* left,
-                                                          MathExpressionTokenType* right,
-                                                          int* numberOfSimplifies)
-{
-    bool rightIsValue = (right->valueType == MathExpressionTokenValueTypeof::VALUE);
-    bool leftIsValue  = (left->valueType  == MathExpressionTokenValueTypeof::VALUE);
-
-    if (rightIsValue && DoubleEqual(right->value.value, 0))
-    {
-        (*numberOfSimplifies)++;
-        return MathExpressionSimplifyReturnConstToken(token, left, right, 1);
-    }
-
-    if (leftIsValue && DoubleEqual(left->value.value, 0))
-    {
-        (*numberOfSimplifies)++;
-        return MathExpressionSimplifyReturnConstToken(token, left, right, 0);
-    }
-
-    if (rightIsValue && DoubleEqual(right->value.value, 1))
-    {
-        (*numberOfSimplifies)++;
-        return MathExpressionSimplifyReturnLeftToken(token, left, right);
-    }
-
-    if (leftIsValue && DoubleEqual(left->value.value, 1))
-    {
-        (*numberOfSimplifies)++;
-        return MathExpressionSimplifyReturnConstToken(token, left, right, 1);
-    }
-
-    return token;
-}
-
-static inline MathExpressionTokenType* MathExpressionSimplifyLog(MathExpressionTokenType* token,   
-                                                          MathExpressionTokenType* left,
-                                                          MathExpressionTokenType* right,
-                                                          int* numberOfSimplifies)
-{
-    bool rightIsValue = (right->valueType == MathExpressionTokenValueTypeof::VALUE);
-    bool leftIsValue  = (left->valueType  == MathExpressionTokenValueTypeof::VALUE);
-
-    if (rightIsValue && DoubleEqual(right->value.value, 1))
-    {
-        (*numberOfSimplifies)++;
-        return MathExpressionSimplifyReturnConstToken(token, left, right, 0);
-    }
-
-    return token;
-}
-
-static MathExpressionTokenType* MathExpressionDeleteNeutralTokens(MathExpressionType* expression,
+static MathExpressionTokenType* MathExpressionSimplifyNeutralTokens(MathExpressionType* expression,
                                                                   MathExpressionTokenType* token, 
-                                                                  int* numberOfSimplifies)
+                                                                  int* simplifiesCount)
 {
     if (token == nullptr || token->valueType != MathExpressionTokenValueTypeof::OPERATION)
         return token;
     
-    MathExpressionTokenType* left  = MathExpressionDeleteNeutralTokens(expression,
+    MathExpressionTokenType* left  = MathExpressionSimplifyNeutralTokens(expression,
                                                                         token->left,  
-                                                                        numberOfSimplifies);
-    MathExpressionTokenType* right = MathExpressionDeleteNeutralTokens(expression,
+                                                                        simplifiesCount);
+    MathExpressionTokenType* right = MathExpressionSimplifyNeutralTokens(expression,
                                                                         token->right, 
-                                                                        numberOfSimplifies);
+                                                                        simplifiesCount);
     
     if (token->left != left)
     {
-        assert(left);
-
         MathExpressionTokenDtor(token->left);
         token->left = left;
     }
 
     if (token->right != right)
     {
-        assert(right);
         MathExpressionTokenDtor(token->right);
         token->right = right;
     }
@@ -1775,18 +1725,18 @@ static MathExpressionTokenType* MathExpressionDeleteNeutralTokens(MathExpression
     switch (token->value.operation.operationId)
     {
         case MathExpressionsOperationsEnum::ADD:
-            return MathExpressionSimplifyAdd(token, left, right, numberOfSimplifies);
+            return MathExpressionSimplifyAdd(token, left, right, simplifiesCount);
         case MathExpressionsOperationsEnum::SUB:
-            return MathExpressionSimplifySub(token, left, right, numberOfSimplifies);
+            return MathExpressionSimplifySub(token, left, right, simplifiesCount);
         case MathExpressionsOperationsEnum::MUL:
-            return MathExpressionSimplifyMul(token, left, right, numberOfSimplifies);
+            return MathExpressionSimplifyMul(token, left, right, simplifiesCount);
         case MathExpressionsOperationsEnum::DIV:
-            return MathExpressionSimplifyDiv(token, left, right, numberOfSimplifies);
+            return MathExpressionSimplifyDiv(token, left, right, simplifiesCount);
         
         case MathExpressionsOperationsEnum::POW:
-            return MathExpressionSimplifyPow(token, left, right, numberOfSimplifies);
+            return MathExpressionSimplifyPow(token, left, right, simplifiesCount);
         case MathExpressionsOperationsEnum::LOG:
-            return MathExpressionSimplifyLog(token, left, right, numberOfSimplifies);
+            return MathExpressionSimplifyLog(token, left, right, simplifiesCount);
         
         default:
             break;
@@ -1794,6 +1744,211 @@ static MathExpressionTokenType* MathExpressionDeleteNeutralTokens(MathExpression
 
     return token;
 }
+
+//---------------------------------------------------------------------------------------
+
+static inline MathExpressionTokenType* MathExpressionSimplifyAdd(MathExpressionTokenType* token,   
+                                                                 MathExpressionTokenType* left,
+                                                                 MathExpressionTokenType* right,
+                                                                 int* simplifiesCount)
+{
+    assert(simplifiesCount);
+
+    bool rightIsValue = (right->valueType == MathExpressionTokenValueTypeof::VALUE);
+    bool leftIsValue  = (left->valueType  == MathExpressionTokenValueTypeof::VALUE);
+
+    if (rightIsValue && DoubleEqual(right->value.value, 0))
+    {
+        (*simplifiesCount)++;
+        return MathExpressionSimplifyReturnLeftToken(token, left);
+    }
+
+    if (leftIsValue && DoubleEqual(left->value.value, 0))
+    {
+        (*simplifiesCount)++;
+        return MathExpressionSimplifyReturnRightToken(token, right);
+    }
+
+    return token;
+}
+
+static inline MathExpressionTokenType* MathExpressionSimplifySub(MathExpressionTokenType* token,   
+                                                          MathExpressionTokenType* left,
+                                                          MathExpressionTokenType* right,
+                                                          int* simplifiesCount)
+{
+    bool rightIsValue = (right->valueType == MathExpressionTokenValueTypeof::VALUE);
+
+    if (rightIsValue && DoubleEqual(right->value.value, 0))
+    {    
+        (*simplifiesCount)++;
+        return MathExpressionSimplifyReturnLeftToken(token, left);
+    }
+
+    return token;
+}
+
+static inline MathExpressionTokenType* MathExpressionSimplifyMul(MathExpressionTokenType* token,   
+                                                          MathExpressionTokenType* left,
+                                                          MathExpressionTokenType* right,
+                                                          int* simplifiesCount)
+{
+    bool rightIsValue = (right->valueType == MathExpressionTokenValueTypeof::VALUE);
+    bool leftIsValue  = (left->valueType  == MathExpressionTokenValueTypeof::VALUE);
+
+    if (rightIsValue && DoubleEqual(right->value.value, 0))
+    {
+        (*simplifiesCount)++;
+        return MathExpressionSimplifyReturnConstToken(token, 0);
+    }
+
+    if (leftIsValue && DoubleEqual(left->value.value, 0))
+    {
+        (*simplifiesCount)++;
+        return MathExpressionSimplifyReturnConstToken(token, 0);
+    }
+
+    if (rightIsValue && DoubleEqual(right->value.value, 1))
+    {
+        (*simplifiesCount)++;
+        return MathExpressionSimplifyReturnLeftToken(token, left);
+    }
+
+    if (leftIsValue && DoubleEqual(left->value.value, 1))
+    {
+        (*simplifiesCount)++;
+        return MathExpressionSimplifyReturnRightToken(token, right);
+    }
+
+    return token;
+}
+
+static inline MathExpressionTokenType* MathExpressionSimplifyDiv(MathExpressionTokenType* token,   
+                                                          MathExpressionTokenType* left,
+                                                          MathExpressionTokenType* right,
+                                                          int* simplifiesCount)
+{
+    bool rightIsValue = (right->valueType == MathExpressionTokenValueTypeof::VALUE);
+    bool leftIsValue  = (left->valueType  == MathExpressionTokenValueTypeof::VALUE);
+
+    if (leftIsValue && DoubleEqual(left->value.value, 0))
+    {
+        (*simplifiesCount)++;
+        return MathExpressionSimplifyReturnConstToken(token, 0);
+    }
+
+    if (rightIsValue && DoubleEqual(right->value.value, 1))
+    {
+        (*simplifiesCount)++;
+        return MathExpressionSimplifyReturnLeftToken(token, left);
+    }
+
+    return token;
+}
+
+static inline MathExpressionTokenType* MathExpressionSimplifyPow(MathExpressionTokenType* token,   
+                                                          MathExpressionTokenType* left,
+                                                          MathExpressionTokenType* right,
+                                                          int* simplifiesCount)
+{
+    bool rightIsValue = (right->valueType == MathExpressionTokenValueTypeof::VALUE);
+    bool leftIsValue  = (left->valueType  == MathExpressionTokenValueTypeof::VALUE);
+
+    if (rightIsValue && DoubleEqual(right->value.value, 0))
+    {
+        (*simplifiesCount)++;
+        return MathExpressionSimplifyReturnConstToken(token, 1);
+    }
+
+    if (leftIsValue && DoubleEqual(left->value.value, 0))
+    {
+        (*simplifiesCount)++;
+        return MathExpressionSimplifyReturnConstToken(token, 0);
+    }
+
+    if (rightIsValue && DoubleEqual(right->value.value, 1))
+    {
+        (*simplifiesCount)++;
+        return MathExpressionSimplifyReturnLeftToken(token, left);
+    }
+
+    if (leftIsValue && DoubleEqual(left->value.value, 1))
+    {
+        (*simplifiesCount)++;
+        return MathExpressionSimplifyReturnConstToken(token, 1);
+    }
+
+    return token;
+}
+
+static inline MathExpressionTokenType* MathExpressionSimplifyLog(MathExpressionTokenType* token,   
+                                                          MathExpressionTokenType* left,
+                                                          MathExpressionTokenType* right,
+                                                          int* simplifiesCount)
+{
+    bool rightIsValue = (right->valueType == MathExpressionTokenValueTypeof::VALUE);
+
+    if (rightIsValue && DoubleEqual(right->value.value, 1))
+    {
+        (*simplifiesCount)++;
+        return MathExpressionSimplifyReturnConstToken(token, 0);
+    }
+
+    return token;
+}
+
+//---------------------------------------------------------------------------------------
+
+static inline MathExpressionTokenType* MathExpressionSimplifyReturnLeftToken(
+                                                                MathExpressionTokenType* token,
+                                                                MathExpressionTokenType* left)
+{
+    MathExpressionTokenDtor(token->right);
+
+    assert(token->left == left);
+
+    token->left  = nullptr;
+    token->right = nullptr;
+
+    return left;
+}
+
+static inline MathExpressionTokenType* MathExpressionSimplifyReturnRightToken(
+                                                                MathExpressionTokenType* token,
+                                                                MathExpressionTokenType* right)
+{
+    MathExpressionTokenDtor(token->left);
+
+    assert(token->right == right);
+    
+    token->left  = nullptr;
+    token->right = nullptr;
+
+    return right;
+}
+
+static inline MathExpressionTokenType* MathExpressionSimplifyReturnConstToken(
+                                                                MathExpressionTokenType* token,
+                                                                double value)
+{
+    MathExpressionTokenDtor(token->right);
+    MathExpressionTokenDtor(token->left);
+
+    token->left  = nullptr;
+    token->right = nullptr;
+
+    return CONST_TOKEN(value);
+}
+
+//---------------------------------------------------------------------------------------
+
+#undef C
+#undef D
+#undef TOKEN
+#undef CONST_TOKEN
+#undef UNARY_TOKEN
+
+//---------------------------------------------------------------------------------------
 
 static MathExpressionOperationType MathExpressionOperationTypeCtor(
                                                     MathExpressionsOperationsEnum operationId,
@@ -1830,4 +1985,15 @@ static MathExpressionOperationType MathExpressionOperationTypeCtor(
     };
 
     return operation;
+}
+
+//---------------------------------------------------------------------------------------
+
+static void MathExpressionTokenSetEdges(MathExpressionTokenType* token, MathExpressionTokenType* left, 
+                                                     MathExpressionTokenType* right)
+{
+    assert(token);
+
+    token->left  = left;
+    token->right = right;
 }
