@@ -15,17 +15,24 @@ static double CalculateUsingOperation(const ExpressionOperationId operation,
 //--------------------DSL-----------------------------
 
 #define D(TOKEN) ExpressionDifferentiate(TOKEN, outTex)
-#define C(TOKEN) ExpressionTokenCopy(TOKEN)
+#define C(TOKEN) ExpressionTokenCopy(TOKEN)                                     
+
 
 #define CONST_TOKEN(VALUE) ExpressionNumericTokenCreate(VALUE)
 
-#define TOKEN(OPERATION_NAME, LEFT_TOKEN, RIGHT_TOKEN)                                        \
-    ExpressionTokenCtor(ExpressionTokenValueСreate(                                           \
-                                            ExpressionOperationId::OPERATION_NAME),         \
-                            ExpressionTokenValueTypeof::OPERATION,                            \
-                            LEFT_TOKEN, RIGHT_TOKEN)                                               
+#define GENERATE_OPERATION_CMD(NAME, ...)                                                   \
+    static inline ExpressionTokenType* _##NAME(ExpressionTokenType* left,                   \
+                                               ExpressionTokenType* right = nullptr)        \
+    {                                                                                       \
+        return ExpressionTokenCtor(ExpressionTokenValueСreate(ExpressionOperationId::NAME), \
+                                   ExpressionTokenValueTypeof::OPERATION,                   \
+                                   left, right);                                            \
+    }
 
-#define UNARY_TOKEN(OPERATION_NAME, LEFT_TOKEN) TOKEN(OPERATION_NAME, LEFT_TOKEN, nullptr)
+//GENERATING DSL _ADD, _MUL, _SUB, ...
+#include "Operations.h"
+
+#undef GENERATE_OPERATION_CMD
 
 //-------------------Differentiate---------------
 
@@ -249,21 +256,13 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
                                                                  bool* haveVariables)
 {
     assert(simplifiesCount);
-    if (token == nullptr)
+
+    if (token == nullptr || token->valueType == ExpressionTokenValueTypeof::VALUE)
     {
         assert(haveVariables != nullptr);
         
         *haveVariables = false;
         
-        return nullptr;
-    }
-
-    if (token->valueType == ExpressionTokenValueTypeof::VALUE)
-    {
-        assert(haveVariables != nullptr);
-
-        *haveVariables = false;
-
         return token;
     }
 
@@ -276,14 +275,15 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
         return token;
     }
 
-    bool haveLeftTokenVariables  = false;
-    bool haveRightTokenVariables = false;
+    bool leftTokenHaveVariables  = false;
+    bool rightTokenHaveVariables = false;
     ExpressionTokenType* left  = ExpressionSimplifyConstants(token->left,  
                                                                      simplifiesCount,
-                                                                     &haveLeftTokenVariables);
+                                                                     &leftTokenHaveVariables);
     ExpressionTokenType* right = ExpressionSimplifyConstants(token->right, 
                                                                      simplifiesCount,
-                                                                     &haveRightTokenVariables);
+                                                                     &rightTokenHaveVariables);
+
 
     if (token->left != left)
     {
@@ -297,15 +297,16 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
         token->right = right;
     }
 
-    bool haveTokenVariables = haveLeftTokenVariables | haveRightTokenVariables;
+    bool tokenHaveVariables = leftTokenHaveVariables | rightTokenHaveVariables;
 
-    if (haveVariables != nullptr) *haveVariables = haveTokenVariables;
+    if (haveVariables != nullptr) *haveVariables = tokenHaveVariables;
 
-    if (!haveTokenVariables)
+    if (!tokenHaveVariables)
     {
         (*simplifiesCount)++;
         
         double leftVal = NAN, rightVal = NAN;
+
         assert(token->left);
 
         leftVal = token->left->value.value;
@@ -357,7 +358,6 @@ static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType*
     if (!leftIsValue && !rightIsValue)
         return token;
 
-    //Здесь никакой генерации(((( не все можно упрощать, не вижу способов авгенерить
     switch (token->value.operation)
     {
         case ExpressionOperationId::ADD:
@@ -429,7 +429,7 @@ static inline ExpressionTokenType* ExpressionSimplifySub(ExpressionTokenType* to
         ExpressionTokenDtor(token->left);
         token->left = nullptr;
 
-        ExpressionTokenType* simpledToken = TOKEN(MUL, CONST_TOKEN(-1), token->right);
+        ExpressionTokenType* simpledToken = _MUL(CONST_TOKEN(-1), token->right);
         token->right = nullptr;
 
         return simpledToken;
