@@ -27,7 +27,7 @@ HEADERS  = Differentiator/MathExpressionsHandler.h 	Differentiator/MathExpressio
 		   FastInput/InputOutput.h 	FastInput/StringFuncs.h
 
 FILESCPP = Differentiator/MathExpressionsHandler.cpp 	Differentiator/main.cpp \
-		   Differentiator/MathExpressionCalculations.cpp	Differentiator/MathExpressionInOut.cpp \
+		   Differentiator/MathExpressionCalculations.cpp Differentiator/MathExpressionInOut.cpp \
 		   Common/Log.cpp Common/Errors.cpp Common/StringFuncs.cpp Common/DoubleFuncs.cpp 	\
 		   FastInput/InputOutput.cpp	FastInput/StringFuncs.cpp
 
@@ -48,6 +48,9 @@ docs:
 
 clean:
 	rm -rf *.o
+	rm -rf FastInput/*.o
+	rm -rf Differentiator/*.o
+	rm -rf Common/*.o
 
 
 buildDirs:

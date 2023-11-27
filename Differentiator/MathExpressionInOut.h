@@ -13,16 +13,18 @@ ExpressionErrors ExpressionPrintTex(const ExpressionType* expression,
                                                           FILE* outStream = stdout, 
                                                           const char* funnyString = nullptr);
 
-ExpressionErrors ExpressionPrintTexTrollString(
+ExpressionErrors ExpressionTokenPrintTexTrollString(
                                                 const ExpressionTokenType* rootToken,
-                                                const ExpressionVariablesArrayType* varsArr,
                                                 FILE* outStream,
                                                 const char* string = nullptr);
                                                 
+ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token, 
+                                         FILE* outStream);
+
 ExpressionErrors ExpressionReadPrefixFormat(ExpressionType* expression, 
-                                                    FILE* inStream = stdin);
+                                            FILE* inStream = stdin);
 ExpressionErrors ExpressionReadInfixFormat (ExpressionType* expression, 
-                                                    FILE* inStream = stdin);
+                                            FILE* inStream = stdin);
 ExpressionErrors ExpressionReadVariables(ExpressionType* expression);
 
 #endif 

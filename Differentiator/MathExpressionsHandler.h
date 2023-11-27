@@ -56,8 +56,8 @@ struct ExpressionOperationType
 
 union ExpressionTokenValue
 {
-    double             value;
-    int                varId;
+    double                  value;
+    ExpressionVariableType* varPtr;
     ExpressionOperationType operation;
 }; 
 
@@ -91,8 +91,6 @@ enum class ExpressionErrors
     MEM_ERR,
 
     READING_ERR,
-
-
 };
 
 ExpressionErrors ExpressionCtor(ExpressionType* expression);

@@ -9,22 +9,14 @@
 
 static ExpressionErrors ExpressionPrintPrefixFormat     (
                                                 const ExpressionTokenType* token, 
-                                                const ExpressionVariablesArrayType* varsArr, 
                                                 FILE* outStream);
 
 static ExpressionErrors ExpressionPrintEquationFormat   (
                                                 const ExpressionTokenType* token, 
-                                                const ExpressionVariablesArrayType* varsArr,
-                                                FILE* outStream);
-
-static ExpressionErrors ExpressionPrintTex(
-                                                const ExpressionTokenType* token, 
-                                                const ExpressionVariablesArrayType* varsArr, 
                                                 FILE* outStream);
 
 static void ExpressionTokenPrintValue                       (
                                                 const ExpressionTokenType* token, 
-                                                const ExpressionVariablesArrayType* varsArr, 
                                                 FILE* outStream);
 
 static ExpressionTokenType* ExpressionReadPrefixFormat(
@@ -46,10 +38,12 @@ static bool HaveToPutBrackets(const ExpressionTokenType* parent,
                               const ExpressionTokenType* son,
                               bool inTex = false);
 
-static int AddVariable(ExpressionVariablesArrayType* varsArr, const char*  variableName, 
-                                                              const double variableValue = 0);
-static int GetVariableIdByName(const ExpressionVariablesArrayType* varsArr, 
-                               const char* variableName);
+static ExpressionVariableType* AddVariable(ExpressionVariablesArrayType* varsArr, 
+                                           const char*  variableName, 
+                                           const double variableValue = 0);
+
+static ExpressionVariableType* GetVariablePtrByName(const ExpressionVariablesArrayType* varsArr, 
+                                                    const char* variableName);
 
 static bool IsPrefixOperation(const ExpressionOperationType* operation, bool inTex = false);
 static bool IsUnaryOperation(const ExpressionOperationType* operation);
@@ -69,9 +63,7 @@ ExpressionErrors ExpressionPrintPrefixFormat(const ExpressionType* expression,
 
     LOG_BEGIN();
 
-    ExpressionErrors err = ExpressionPrintPrefixFormat(expression->root, 
-                                                               &expression->variables, 
-                                                               outStream);
+    ExpressionErrors err = ExpressionPrintPrefixFormat(expression->root, outStream);
 
     PRINT(outStream, "\n");
 
@@ -84,7 +76,6 @@ ExpressionErrors ExpressionPrintPrefixFormat(const ExpressionType* expression,
 
 static ExpressionErrors ExpressionPrintPrefixFormat(
                                                     const ExpressionTokenType* token, 
-                                                    const ExpressionVariablesArrayType* varsArr, 
                                                     FILE* outStream)
 {
     if (token == nullptr)
@@ -98,15 +89,15 @@ static ExpressionErrors ExpressionPrintPrefixFormat(
     if (token->valueType == ExpressionTokenValueTypeof::VALUE)
         PRINT(outStream, "%.2lf ", token->value.value);
     else if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
-        PRINT(outStream, "%s ", varsArr->data[token->value.varId].variableName);
+        PRINT(outStream, "%s ", token->value.varPtr->variableName);
     else
         PRINT(outStream, "%s ", token->value.operation.longName);
 
     ExpressionErrors err = ExpressionErrors::NO_ERR;
 
-    err = ExpressionPrintPrefixFormat(token->left,  varsArr, outStream);
+    err = ExpressionPrintPrefixFormat(token->left, outStream);
     
-    err = ExpressionPrintPrefixFormat(token->right, varsArr, outStream);
+    err = ExpressionPrintPrefixFormat(token->right, outStream);
 
     PRINT(outStream, ")");
     
@@ -123,9 +114,7 @@ ExpressionErrors ExpressionPrintEquationFormat(const ExpressionType* expression,
 
     LOG_BEGIN();
 
-    ExpressionErrors err = ExpressionPrintEquationFormat(expression->root, 
-                                                                 &expression->variables, 
-                                                                 outStream);
+    ExpressionErrors err = ExpressionPrintEquationFormat(expression->root, outStream);
     PRINT(outStream, "\n");
 
     LOG_END();
@@ -137,12 +126,11 @@ ExpressionErrors ExpressionPrintEquationFormat(const ExpressionType* expression,
 
 static ExpressionErrors ExpressionPrintEquationFormat(
                                           const ExpressionTokenType* token, 
-                                          const ExpressionVariablesArrayType* varsArr,
                                           FILE* outStream)
 {
     if (token->left == nullptr && token->right == nullptr)
     {
-        ExpressionTokenPrintValue(token, varsArr, outStream);
+        ExpressionTokenPrintValue(token, outStream);
 
         return ExpressionErrors::NO_ERR;
     }
@@ -156,7 +144,7 @@ static ExpressionErrors ExpressionPrintEquationFormat(
     if (needLeftBrackets) PRINT(outStream, "(");
 
     ExpressionErrors err = ExpressionErrors::NO_ERR;
-    err = ExpressionPrintEquationFormat(token->left, varsArr, outStream);
+    err = ExpressionPrintEquationFormat(token->left, outStream);
 
     if (needLeftBrackets) PRINT(outStream, ")");
 
@@ -168,7 +156,7 @@ static ExpressionErrors ExpressionPrintEquationFormat(
     bool needRightBrackets = HaveToPutBrackets(token, token->right);
     if (needRightBrackets) PRINT(outStream, "(");
 
-    err = ExpressionPrintEquationFormat(token->right, varsArr, outStream);
+    err = ExpressionPrintEquationFormat(token->right, outStream);
 
     if (needRightBrackets) PRINT(outStream, ")");
 
@@ -393,11 +381,11 @@ static const char* ExpressionReadTokenValue(ExpressionTokenValue* value,
         return stringPtr;
     }
 
-    int varId = AddVariable(varsArr, inputString);
+    ExpressionVariableType* varPtr = AddVariable(varsArr, inputString);
 
-    assert(varId != -1);
+    assert(varPtr != nullptr);
 
-    value->varId = varId;
+    value->varPtr = varPtr;
     *valueType   = ExpressionTokenValueTypeof::VARIABLE;
 
     return stringPtr;
@@ -426,15 +414,16 @@ static bool IsUnaryOperation(const ExpressionOperationType* operation)
 //---------------------------------------------------------------------------------------
 
 static void ExpressionTokenPrintValue(const ExpressionTokenType* token, 
-                                          const ExpressionVariablesArrayType* varsArr, 
-                                          FILE* outStream)
+                                      FILE* outStream)
 {
     assert(token->valueType != ExpressionTokenValueTypeof::OPERATION);
 
     if (token->valueType == ExpressionTokenValueTypeof::VALUE)
         PRINT(outStream, "%.2lf ", token->value.value);
     else if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
-        PRINT(outStream, "%s ", varsArr->data[token->value.varId].variableName);
+        PRINT(outStream, "%s ", token->value.varPtr->variableName);
+    else if (token->valueType == ExpressionTokenValueTypeof::OPERATION) 
+        PRINT(outStream, "%s ", token->value.operation.longName);
 }
 
 #undef PRINT
@@ -448,15 +437,12 @@ ExpressionErrors ExpressionPrintTex(const ExpressionType* expression,
     assert(expression);
     assert(outStream);
 
-    return ExpressionPrintTexTrollString(expression->root, 
-                                         &expression->variables, outStream, string);
+    return ExpressionTokenPrintTexTrollString(expression->root, outStream, string);
 }
 
-//TODO: подумать над тем, куда запихать, потому что явно статическая
-ExpressionErrors ExpressionPrintTexTrollString( const ExpressionTokenType* rootToken,
-                                                const ExpressionVariablesArrayType* varsArr,
-                                                FILE* outStream,
-                                                const char* string)
+ExpressionErrors ExpressionTokenPrintTexTrollString(const ExpressionTokenType* rootToken,
+                                                    FILE* outStream,
+                                                    const char* string)
 {
     assert(rootToken);
     assert(outStream);
@@ -494,24 +480,22 @@ ExpressionErrors ExpressionPrintTexTrollString( const ExpressionTokenType* rootT
     
     fprintf(outStream, "\\begin{gather}\n\\end{gather}\n\\begin{}\n");
 
-    ExpressionErrors err = ExpressionPrintTex(rootToken, varsArr, outStream);
+    ExpressionErrors err = ExpressionTokenPrintTex(rootToken, outStream);
 
     fprintf(outStream, "\\\\\n\\end{}\n");
 
     return err;
 }
 
-static ExpressionErrors ExpressionPrintTex(
-                                             const ExpressionTokenType* token, 
-                                             const ExpressionVariablesArrayType* varsArr, 
-                                             FILE* outStream)
+ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token, 
+                                         FILE* outStream)
 {
     assert(token);
     assert(outStream);
 
     if (token->left == nullptr && token->right == nullptr)
     {
-        ExpressionTokenPrintValue(token, varsArr, outStream);
+        ExpressionTokenPrintValue(token, outStream);
 
         return ExpressionErrors::NO_ERR;
     }
@@ -529,7 +513,7 @@ static ExpressionErrors ExpressionPrintTex(
     if (needTexLeftBraces)                      fprintf(outStream, "{");
     if (!needTexLeftBraces && needLeftBrackets) fprintf(outStream, "(");
 
-    err = ExpressionPrintTex(token->left, varsArr, outStream);
+    err = ExpressionTokenPrintTex(token->left, outStream);
 
     if (!needTexLeftBraces && needLeftBrackets) fprintf(outStream, ")");
     if (needTexLeftBraces)                      fprintf(outStream, "}");
@@ -544,26 +528,26 @@ static ExpressionErrors ExpressionPrintTex(
     
     if (needTexRightBraces)                       fprintf(outStream, "{");
     if (!needTexRightBraces && needRightBrackets) fprintf(outStream, "(");
-    err = ExpressionPrintTex(token->right, varsArr, outStream);
+    err = ExpressionTokenPrintTex(token->right, outStream);
     if (!needTexRightBraces && needRightBrackets) fprintf(outStream, ")");
     if (needTexRightBraces)                       fprintf(outStream, "}");
 
     return err;   
 }
-//---------------------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------------------
 
-static int AddVariable(ExpressionVariablesArrayType* varsArr, const char*  variableName, 
-                                                              const double variableValue)
+static ExpressionVariableType* AddVariable(ExpressionVariablesArrayType* varsArr, 
+                                           const char*  variableName, 
+                                           const double variableValue)
 {
     assert(varsArr);
     assert(variableName);
 
-    int varId = GetVariableIdByName(varsArr, variableName);
+    ExpressionVariableType* varPtr = GetVariablePtrByName(varsArr, variableName);
 
-    if (varId != -1)
-        return varId;
+    if (varPtr != nullptr)
+        return varPtr;
         
     assert(varsArr->size < varsArr->capacity);
 
@@ -571,18 +555,18 @@ static int AddVariable(ExpressionVariablesArrayType* varsArr, const char*  varia
 
     assert(varsArr->data[varsArr->size].variableName);
     if (varsArr->data[varsArr->size].variableName == nullptr)
-        return -1;
+        return nullptr;
     
     varsArr->data[varsArr->size].variableValue = variableValue;
     varsArr->size++;
 
-    return (int)varsArr->size - 1;
+    return varsArr->data + (int)varsArr->size - 1;
 }
 
 //---------------------------------------------------------------------------------------
 
-static int GetVariableIdByName(const ExpressionVariablesArrayType* varsArr, 
-                               const char* variableName)
+static ExpressionVariableType* GetVariablePtrByName(const ExpressionVariablesArrayType* varsArr, 
+                                                    const char* variableName)
 {
     assert(varsArr);
     assert(variableName);
@@ -590,8 +574,8 @@ static int GetVariableIdByName(const ExpressionVariablesArrayType* varsArr,
     for (size_t i = 0; i < varsArr->size; ++i)
     {
         if (strcmp(varsArr->data[i].variableName, variableName) == 0)
-            return (int)i;
+            return varsArr->data + i;
     }
     
-    return -1;
+    return nullptr;
 }

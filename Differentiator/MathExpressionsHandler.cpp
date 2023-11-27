@@ -10,9 +10,6 @@
 #include "Common/DoubleFuncs.h"
 #include "MathExpressionInOut.h"
 
-//TODO: подумать над всеми названиями, что не начинаются с Expression
-//TODO: накидать inline когда будет не лень, я их тут проебал
-
 const double POISON = NAN;
 
 //---------------------------------------------------------------------------------------
@@ -94,8 +91,6 @@ static void DotFileCreateTokens(const ExpressionTokenType* token,
 static inline void CreateImgInLogFile(const size_t imgIndex, bool openImg);
 static inline void DotFileBegin(FILE* outDotFile);
 static inline void DotFileEnd(FILE* outDotFile);
-
-void ExpressionsCopyVariables(      ExpressionType* target,  const ExpressionType* source);
 static bool ExpressionTokenContainVariable(const ExpressionTokenType* token);
 
 //---------------------------------------------------------------------------------------
@@ -188,9 +183,9 @@ ExpressionTokenType* ExpressionTokenCtor(ExpressionTokenValue value,
 
 void ExpressionTokenDtor(ExpressionTokenType* token)
 {
-    token->left        = nullptr;
-    token->right       = nullptr;
-    token->value.varId =  POISON;
+    token->left         = nullptr;
+    token->right        = nullptr;
+    token->value.varPtr = nullptr;
 
     free(token);
 }
@@ -280,8 +275,8 @@ static void DotFileCreateTokens(const ExpressionTokenType* token,
     else if (token->valueType == ExpressionTokenValueTypeof::VALUE)
         fprintf(outDotFile, "fillcolor=\"#7293ba\", label = \"%.2lf\", ", token->value.value);
     else if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
-        fprintf(outDotFile, "fillcolor=\"#78DBE2\", label = \"%s\", ", 
-                            varsArr->data[token->value.varId].variableName);
+        fprintf(outDotFile, "fillcolor=\"#78DBE2\", label = \"%s\", ",
+                            token->value.varPtr->variableName);
     else 
         fprintf(outDotFile, "fillcolor=\"#FF0000\", label = \"ERROR\", ");
 
@@ -610,7 +605,6 @@ void ExpressionTokenSetEdges(ExpressionTokenType* token, ExpressionTokenType* le
     token->left  = left;
     token->right = right;
 }
-
 
 //TODO: подумать над созданием файла, где будет все, связанное с операциями
 int GetOperationId(const char* string)

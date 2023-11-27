@@ -166,7 +166,7 @@ static double ExpressionCalculate(const ExpressionTokenType* token,
         return token->value.value;
 
     if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
-        return varsArr->data[token->value.varId].variableValue;
+        return token->value.varPtr->variableValue;
 
     double firstVal  = ExpressionCalculate(token->left,  varsArr);
     double secondVal = ExpressionCalculate(token->right, varsArr);
@@ -235,8 +235,8 @@ static ExpressionTokenType* ExpressionDifferentiate(
 
     if (outTex) 
     {
-        ExpressionPrintTexTrollString(token, varsArr, outTex, "Возьмем производную от:");
-        ExpressionPrintTexTrollString(diffToken, varsArr, outTex);
+        ExpressionTokenPrintTexTrollString(token, outTex, "Возьмем производную от:");
+        ExpressionTokenPrintTexTrollString(diffToken, outTex);
     }
 
     return diffToken;  
@@ -606,7 +606,7 @@ static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType*
 
     if (((right->valueType == ExpressionTokenValueTypeof::VARIABLE)  &&
          (left->valueType  == ExpressionTokenValueTypeof::VARIABLE)) &&
-        (right->value.varId == left->value.varId))
+        (right->value.varPtr == left->value.varPtr))
         return ExpressionSimplifyReturnConstToken(token, 0);
 
     bool rightIsValue = (right->valueType == ExpressionTokenValueTypeof::VALUE);
