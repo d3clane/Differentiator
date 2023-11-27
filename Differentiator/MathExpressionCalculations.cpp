@@ -7,91 +7,57 @@
 
 //---------------------------------------------------------------------------------------
 
+#define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, v4, v5, v6, v7, CALCULATION_CODE, ...)
+    
+//--------------------DSL-----------------------------
+
+#define D(TOKEN) ExpressionDifferentiate(TOKEN, outTex)
+#define C(TOKEN) ExpressionTokenCopy(TOKEN)
+
+#define CONST_TOKEN(VALUE) ExpressionNumericTokenCreate(VALUE)
+
+#define TOKEN(OPERATION_NAME, LEFT_TOKEN, RIGHT_TOKEN)                                        \
+    ExpressionTokenCtor(ExpressionTokenValueСreate(                                           \
+                                            ExpressionOperationsIds::OPERATION_NAME),         \
+                            ExpressionTokenValueTypeof::OPERATION,                            \
+                            LEFT_TOKEN, RIGHT_TOKEN)                                               
+
+#define UNARY_TOKEN(OPERATION_NAME, LEFT_TOKEN) TOKEN(OPERATION_NAME, LEFT_TOKEN, nullptr)
+
+//-------------------Differentiate---------------
 static ExpressionTokenType* ExpressionDifferentiate(
                                         const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
                                         FILE* outTex = nullptr);
 
-static inline ExpressionTokenType* ExpressionDifferentiateADD(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
-                                        FILE* outTex = nullptr);
-static inline ExpressionTokenType* ExpressionDifferentiateSUB(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
-                                        FILE* outTex = nullptr);
-static inline ExpressionTokenType* ExpressionDifferentiateMUL(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
-                                        FILE* outTex = nullptr);
-static inline ExpressionTokenType* ExpressionDifferentiateDIV(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
-                                        FILE* outTex = nullptr);
-static inline ExpressionTokenType* ExpressionDifferentiateSIN(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
-                                        FILE* outTex = nullptr);
-static inline ExpressionTokenType* ExpressionDifferentiateCOS(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
-                                        FILE* outTex = nullptr);
-static inline ExpressionTokenType* ExpressionDifferentiateTAN(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
-                                        FILE* outTex = nullptr);
-static inline ExpressionTokenType* ExpressionDifferentiateCOT(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
-                                        FILE* outTex = nullptr);
-static inline ExpressionTokenType* ExpressionDifferentiateARCSIN(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
-                                        FILE* outTex = nullptr);
-static inline ExpressionTokenType* ExpressionDifferentiateARCCOS(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
-                                        FILE* outTex = nullptr);
-static inline ExpressionTokenType* ExpressionDifferentiateARCTAN(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
-                                        FILE* outTex = nullptr);
-static inline ExpressionTokenType* ExpressionDifferentiateARCCOT(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
-                                        FILE* outTex = nullptr);
+#define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, v4, v5, v6, v7, v8, DIFF_CODE, ...)      \
+    static inline ExpressionTokenType* ExpressionDifferentiate##NAME(                    \
+                                                const ExpressionTokenType* token,       \
+                                                FILE* outTex = nullptr)                 \
+    {                                                                                   \
+        DIFF_CODE                                                                       \
+    }
 
-static inline ExpressionTokenType* ExpressionDifferentiateLN(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
-                                        FILE* outTex = nullptr);
-static inline ExpressionTokenType* ExpressionDifferentiateLOG(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
-                                        FILE* outTex = nullptr);
-static inline ExpressionTokenType* ExpressionDifferentiatePOW(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr = nullptr,
-                                        FILE* outTex = nullptr);
+//Creating funcs ExpressionDifferentiateADD, ...
+#include "Operations.h"
 
+#undef  GENERATE_OPERATION_CMD
 #define GENERATE_OPERATION_CMD(NAME, ...) ExpressionDifferentiate##NAME,
 
 typedef ExpressionTokenType* (DiffFuncType)(const ExpressionTokenType* token,
-                                                const ExpressionVariablesArrayType* varsArr,
-                                                FILE* outTex);
+                                            FILE* outTex);
 
-static const DiffFuncType* const OperationsDiff[] =
+static const DiffFuncType* const OperationsDiffFuncs[] =
 {
     #include "Operations.h"
 };
 
-static const size_t NumberOfOperations = sizeof(OperationsDiff) / sizeof(*OperationsDiff);
+static const size_t NumberOfOperations = sizeof(OperationsDiffFuncs) / sizeof(*OperationsDiffFuncs);
 
 #undef GENERATE_OPERATION_CMD
 
 static inline DiffFuncType* ExpressionOperationGetDiffFunc(const ExpressionOperationsIds operationId);
 
-//---------------------------------------------------------------------------------------
+//--------------------------------Simplify-------------------------------------------
 
 static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* token,
                                                                  int* simplifiesCount,
@@ -151,7 +117,6 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
                                 "Ящеры нападают, нужно срочно взять эту производную ради победы");
 
     ExpressionTokenType* diffRootToken = ExpressionDifferentiate(expression->root, 
-                                                                 &expression->variables,
                                                                  outTex);
     ExpressionType diffExpression = {};
     ExpressionCtor(&diffExpression);
@@ -169,7 +134,6 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
 
 static ExpressionTokenType* ExpressionDifferentiate(
                                                     const ExpressionTokenType* token,
-                                                    const ExpressionVariablesArrayType* varsArr,
                                                     FILE* outTex)
 {
     assert(token);
@@ -191,7 +155,6 @@ static ExpressionTokenType* ExpressionDifferentiate(
         case ExpressionTokenValueTypeof::OPERATION:
             //TODO: отдельно создать функцию будет гораздо читабельнее
             diffToken = ExpressionOperationGetDiffFunc(token->value.operation.operationId)(token,
-                                                                                           varsArr,
                                                                                            outTex);
             break;
 
@@ -210,244 +173,12 @@ static ExpressionTokenType* ExpressionDifferentiate(
 
 //---------------------------------------------------------------------------------------
 
-#define D(TOKEN) ExpressionDifferentiate(TOKEN, varsArr, outTex)
-#define C(TOKEN) ExpressionTokenCopy(TOKEN)
-
-#define CONST_TOKEN(VALUE) ExpressionNumericTokenCreate(VALUE)
-
-#define TOKEN(OPERATION_NAME, LEFT_TOKEN, RIGHT_TOKEN)                                        \
-    ExpressionTokenCtor(ExpressionTokenValueСreate(                                   \
-                                            ExpressionOperationsIds::OPERATION_NAME),   \
-                            ExpressionTokenValueTypeof::OPERATION,                        \
-                            LEFT_TOKEN, RIGHT_TOKEN)                                               
-
-#define UNARY_TOKEN(OPERATION_NAME, LEFT_TOKEN) TOKEN(OPERATION_NAME, LEFT_TOKEN, nullptr)
-
-static inline ExpressionTokenType* ExpressionDifferentiateADD(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr,
-                                        FILE* outTex)
-{
-    assert(token);
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == ExpressionOperationsIds::ADD);
-
-    return TOKEN(ADD, D(token->left), D(token->right));
-}
-
-static inline ExpressionTokenType* ExpressionDifferentiateSUB(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr,
-                                        FILE* outTex)
-{
-    assert(token);
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == ExpressionOperationsIds::SUB);
-
-    return TOKEN(SUB, D(token->left), D(token->right));
-}
-
-static inline ExpressionTokenType* ExpressionDifferentiateMUL(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr,
-                                        FILE* outTex)
-{
-    assert(token);
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == ExpressionOperationsIds::MUL);
-
-    return TOKEN(ADD, TOKEN(MUL, D(token->left), C(token->right)), 
-                      TOKEN(MUL, C(token->left), D(token->right)));
-}
-
-static inline ExpressionTokenType* ExpressionDifferentiateDIV(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr,
-                                        FILE* outTex)
-{
-    assert(token);
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == ExpressionOperationsIds::DIV);
-
-    return TOKEN(DIV, TOKEN(SUB, TOKEN(MUL, D(token->left), C(token->right)), 
-                                 TOKEN(MUL, C(token->left), D(token->right))),
-                      TOKEN(POW, C(token->right), CONST_TOKEN(2)));
-}
-
-static inline ExpressionTokenType* ExpressionDifferentiatePOW(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr,
-                                        FILE* outTex)
-{
-    assert(token);
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == ExpressionOperationsIds::POW);
-
-    bool baseContainVar  = ExpressionTokenContainVariable(token->left);
-    bool powerContainVar = ExpressionTokenContainVariable(token->right);
-
-    if (!baseContainVar && !powerContainVar)
-        return CONST_TOKEN(0);
-
-    if (baseContainVar && !powerContainVar)
-        return TOKEN(MUL, TOKEN(MUL, C(token->right), D(token->left)), 
-                          TOKEN(POW, C(token->left), 
-                                     TOKEN(SUB, C(token->right), CONST_TOKEN(1))));
-                        
-    if (!baseContainVar && powerContainVar)
-        return TOKEN(MUL, TOKEN(POW, C(token->left), C(token->right)),
-                          TOKEN(MUL, UNARY_TOKEN(LN, C(token->left)),
-                                     D(token->right)));
-
-    return TOKEN(MUL, TOKEN(POW, C(token->left), C(token->right)),
-                      TOKEN(ADD, TOKEN(MUL, C(token->right),
-                                            TOKEN(DIV, D(token->left), C(token->left))),
-                                 TOKEN(MUL, UNARY_TOKEN(LN, C(token->left)), D(token->right))));
-}
-
-static inline ExpressionTokenType* ExpressionDifferentiateLN(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr,
-                                        FILE* outTex)
-{
-    assert(token);
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == ExpressionOperationsIds::LN);
-
-    return TOKEN(DIV, D(token->left), C(token->left));
-}
-
-static inline ExpressionTokenType* ExpressionDifferentiateLOG(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr,
-                                        FILE* outTex)
-{
-    assert(token);
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == ExpressionOperationsIds::LN);
-
-
-    return TOKEN(DIV, D(token->left), C(token->left));
-}
-
-static inline ExpressionTokenType* ExpressionDifferentiateSIN(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr,
-                                        FILE* outTex)
-{
-    assert(token);
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == ExpressionOperationsIds::SIN);
-
-    return TOKEN(MUL, UNARY_TOKEN(COS, C(token->left)), D(token->left));
-}
-
-static inline ExpressionTokenType* ExpressionDifferentiateCOS(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr,
-                                        FILE* outTex)
-{
-    assert(token);
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == ExpressionOperationsIds::COS);
-
-    return TOKEN(MUL, CONST_TOKEN(-1), 
-                      TOKEN(MUL, UNARY_TOKEN(SIN, C(token->left)), D(token->left)));
-}
-
-static inline ExpressionTokenType* ExpressionDifferentiateTAN(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr,
-                                        FILE* outTex)
-{
-    assert(token);
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == ExpressionOperationsIds::TAN);
-
-    return TOKEN(DIV, D(token->left), 
-                      TOKEN(POW, UNARY_TOKEN(COS, C(token->left)), CONST_TOKEN(2)));
-}
-
-static inline ExpressionTokenType* ExpressionDifferentiateCOT(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr,
-                                        FILE* outTex)
-{
-    assert(token);
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == ExpressionOperationsIds::COT);
-
-    return TOKEN(MUL, CONST_TOKEN(-1), 
-                      TOKEN(DIV, D(token->left), 
-                                 TOKEN(POW, UNARY_TOKEN(SIN, C(token->left)), CONST_TOKEN(2))));
-} 
-
-static inline ExpressionTokenType* ExpressionDifferentiateARCSIN(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr,
-                                        FILE* outTex)
-{
-    assert(token);
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == ExpressionOperationsIds::ARCSIN);
-
-    return TOKEN(DIV, D(token->left),
-                      TOKEN(POW, TOKEN(SUB, CONST_TOKEN(1), 
-                                            TOKEN(POW, C(token->left), CONST_TOKEN(2))),
-                                 CONST_TOKEN(0.5)));
-} 
-
-static inline ExpressionTokenType* ExpressionDifferentiateARCCOS(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr,
-                                        FILE* outTex)
-{
-    assert(token);
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == ExpressionOperationsIds::ARCCOS);
-
-    return TOKEN(DIV, CONST_TOKEN(-1),
-                      TOKEN(MUL, D(token->left),
-                                 TOKEN(POW, TOKEN(SUB, CONST_TOKEN(1), 
-                                                       TOKEN(POW, C(token->left), CONST_TOKEN(2))),
-                                            CONST_TOKEN(0.5))));
-}
-
-static inline ExpressionTokenType* ExpressionDifferentiateARCTAN(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr,
-                                        FILE* outTex)
-{
-    assert(token);
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == ExpressionOperationsIds::ARCTAN);
-
-    return TOKEN(DIV, D(token->left), 
-                      TOKEN(ADD, CONST_TOKEN(1),
-                                 TOKEN(POW, C(token->left), CONST_TOKEN(2))));
-}
-
-static inline ExpressionTokenType* ExpressionDifferentiateARCCOT(
-                                        const ExpressionTokenType* token,
-                                        const ExpressionVariablesArrayType* varsArr,
-                                        FILE* outTex)
-{
-    assert(token);
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
-    assert(token->value.operation.operationId == ExpressionOperationsIds::ARCTAN);
-
-    return TOKEN(MUL, CONST_TOKEN(-1),
-                      TOKEN(DIV, D(token->left),
-                                 TOKEN(ADD, CONST_TOKEN(1),
-                                            TOKEN(POW, C(token->left), CONST_TOKEN(2)))));
-}
-
 static inline DiffFuncType* ExpressionOperationGetDiffFunc(const ExpressionOperationsIds operationId)
 {
     assert((int)operationId >= 0);
     assert((size_t)operationId < NumberOfOperations);
 
-    return OperationsDiff[(size_t)operationId];
+    return OperationsDiffFuncs[(size_t)operationId];
 }
 
 //---------------------------------------------------------------------------------------

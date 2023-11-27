@@ -10,8 +10,6 @@
 #include "Common/DoubleFuncs.h"
 #include "MathExpressionInOut.h"
 
-const double POISON = NAN;
-
 //---------------------------------------------------------------------------------------
 
 //Warning - don't use for nothing else than construction of standard operations.
@@ -27,16 +25,7 @@ static ExpressionOperationType ExpressionOperationTypeCtor(
                                                     bool needTexRightBraces,
                                                     CalculationFuncType* CalculationFunc);
 
-static double ExpressionCalculate(const ExpressionTokenType* token, 
-                                  const ExpressionVariablesArrayType* varsArr);
-
-#define GENERATE_OPERATION_CMD(NAME, FORMAT, TEX_FORMAT, IS_UNARY, SHORT_CUT_STRING, TEX_NAME,  \
-                               NEED_LEFT_TEX_BRACES, NEED_RIGHT_TEX_BRACES,                     \
-                               OPERATION_CALCULATION_CODE, ...)                                 \
-    static inline double Calculate##NAME(const double val1, const double val2)                  \
-    {                                                                                           \
-        OPERATION_CALCULATION_CODE                                                              \
-    }                                                                                           \
+static double ExpressionCalculate(const ExpressionTokenType* token);
 
 //Creating functions CalculateADD, CalculateSUB, ...
 #include "Operations.h"
@@ -74,6 +63,7 @@ static inline ExpressionOperationType GetOperationStruct(
 
 static int GetVariableIdByName(const ExpressionVariablesArrayType* varsArr, 
                                const char* variableName);
+static bool ExpressionTokenContainVariable(const ExpressionTokenType* token);
 
 //---------------------------------------------------------------------------------------
 
@@ -88,7 +78,6 @@ static void DotFileCreateTokens(const ExpressionTokenType* token,
 static inline void CreateImgInLogFile(const size_t imgIndex, bool openImg);
 static inline void DotFileBegin(FILE* outDotFile);
 static inline void DotFileEnd(FILE* outDotFile);
-static bool ExpressionTokenContainVariable(const ExpressionTokenType* token);
 
 //---------------------------------------------------------------------------------------
 
@@ -121,8 +110,8 @@ ExpressionErrors ExpressionDtor(ExpressionType* expression)
         if      (expression->variables.data->variableName)
             free(expression->variables.data->variableName);
 
-        expression->variables.data->variableName = nullptr;
-        expression->variables.data->variableValue = POISON;
+        expression->variables.data->variableName  = nullptr;
+        expression->variables.data->variableValue = NAN;
     }
 
     free(expression->variables.data);
@@ -517,11 +506,10 @@ double ExpressionCalculate(const ExpressionType* expression)
 {
     assert(expression);
 
-    return ExpressionCalculate(expression->root, &expression->variables);
+    return ExpressionCalculate(expression->root);
 }
 
-static double ExpressionCalculate(const ExpressionTokenType* token, 
-                                  const ExpressionVariablesArrayType* varsArr)
+static double ExpressionCalculate(const ExpressionTokenType* token)
 {
     if (token == nullptr)
         return NAN;
@@ -532,8 +520,8 @@ static double ExpressionCalculate(const ExpressionTokenType* token,
     if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
         return token->value.varPtr->variableValue;
 
-    double firstVal  = ExpressionCalculate(token->left,  varsArr);
-    double secondVal = ExpressionCalculate(token->right, varsArr);
+    double firstVal  = ExpressionCalculate(token->left);
+    double secondVal = ExpressionCalculate(token->right);
     
     return token->value.operation.CalculationFunc(firstVal, secondVal);
 }

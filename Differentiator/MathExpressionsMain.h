@@ -31,6 +31,7 @@ enum class ExpressionOperationFormat
 {
     PREFIX,
     INFIX,
+    POSTFIX
 };
 
 typedef double (CalculationFuncType)(double firstVal, double secondVal);
@@ -93,6 +94,8 @@ enum class ExpressionErrors
     READING_ERR,
 };
 
+//-------------Expression main funcs----------
+
 ExpressionErrors ExpressionCtor(ExpressionType* expression);
 ExpressionErrors ExpressionDtor(ExpressionType* expression);
 
@@ -129,9 +132,12 @@ void ExpressionTokenSetEdges(ExpressionTokenType* token, ExpressionTokenType* le
 
 ExpressionType       ExpressionCopy(const ExpressionType* expression);
 ExpressionTokenType* ExpressionTokenCopy(const ExpressionTokenType* token);
+
 void ExpressionsCopyVariables(ExpressionType* target, const ExpressionType* source);
 
 double ExpressionCalculate(const ExpressionType* expression);
+
+//-------------Operations funcs-----------
 
 int  ExpressionOperationGetId(const char* string);
 bool ExpressionOperationIsPrefix(const ExpressionOperationType* operation, bool inTex = false);
