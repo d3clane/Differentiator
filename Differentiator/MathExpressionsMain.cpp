@@ -12,64 +12,7 @@
 
 //---------------------------------------------------------------------------------------
 
-//Warning - don't use for nothing else than construction of standard operations.
-static ExpressionOperationType ExpressionOperationTypeCtor(
-                                                    ExpressionOperationsIds operationId,
-                                                    ExpressionOperationFormat operationFormat,
-                                                    ExpressionOperationFormat operationTexFormat, 
-                                                    bool isUnaryOperation,
-                                                    const char* longName,
-                                                    const char* shortName,
-                                                    const char* texName,
-                                                    bool needTexLeftBraces,
-                                                    bool needTexRightBraces,
-                                                    CalculationFuncType* CalculationFunc);
-
-static double ExpressionCalculate(const ExpressionTokenType* token);
-
-//Creating functions CalculateADD, CalculateSUB, ...
-#include "Operations.h"
-
-#undef GENERATE_OPERATION_CMD
-
-//---------------------------------------------------------------------------------------
-
-#define GENERATE_OPERATION_CMD(NAME, FORMAT, TEX_FORMAT, IS_UNARY, SHORT_CUT_STRING, TEX_NAME,    \
-                        NEED_LEFT_TEX_BRACES, NEED_RIGHT_TEX_BRACES, ...)                         \
-                                                    ExpressionOperationTypeCtor(              \
-                                                        ExpressionOperationsIds::NAME,      \
-                                                        ExpressionOperationFormat::FORMAT,    \
-                                                        ExpressionOperationFormat::TEX_FORMAT,\
-                                                        IS_UNARY,                                 \
-                                                        #NAME, SHORT_CUT_STRING,                  \
-                                                        TEX_NAME,                                 \
-                                                        NEED_LEFT_TEX_BRACES,                     \
-                                                        NEED_RIGHT_TEX_BRACES,                    \
-                                                        Calculate##NAME),
-
-static const ExpressionOperationType Operations[] = 
-{
-    #include "Operations.h"
-};
-
-static const size_t NumberOfOperations = sizeof(Operations) / sizeof(*Operations);
-
-#undef GENERATE_OPERATION_CMD
-
-//---------------------------------------------------------------------------------------
-
-static inline ExpressionOperationType GetOperationStruct(
-                                                ExpressionOperationsIds operationId);
-
-static int GetVariableIdByName(const ExpressionVariablesArrayType* varsArr, 
-                               const char* variableName);
-static bool ExpressionTokenContainVariable(const ExpressionTokenType* token);
-
-//---------------------------------------------------------------------------------------
-
 static void ExpressionDtor     (ExpressionTokenType* token);
-
-//---------------------------------------------------------------------------------------
 
 static void ExpressionGraphicDump(const ExpressionTokenType* token, FILE* outDotFile);
 static void DotFileCreateTokens(const ExpressionTokenType* token, 
@@ -136,17 +79,6 @@ static void ExpressionDtor(ExpressionTokenType* token)
     ExpressionDtor(token->right);
 
     ExpressionTokenDtor(token);
-}
-
-//---------------------------------------------------------------------------------------
-
-static inline ExpressionOperationType GetOperationStruct(
-                                            ExpressionOperationsIds operationId)
-{
-    assert((int)operationId >= 0);
-    assert((size_t)operationId < NumberOfOperations);
-
-    return Operations[(size_t)operationId];
 }
 
 //---------------------------------------------------------------------------------------
@@ -257,7 +189,7 @@ static void DotFileCreateTokens(const ExpressionTokenType* token,
 
     if (token->valueType == ExpressionTokenValueTypeof::OPERATION)
         fprintf(outDotFile, "fillcolor=\"#89AC76\", label = \"%s\", ", 
-                            token->value.operation.longName);
+                            ExpressionOperationGetLongName(token->value.operation));
     else if (token->valueType == ExpressionTokenValueTypeof::VALUE)
         fprintf(outDotFile, "fillcolor=\"#7293ba\", label = \"%.2lf\", ", token->value.value);
     else if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
@@ -370,6 +302,9 @@ ExpressionType ExpressionCopy(const ExpressionType* expression)
     ExpressionTokenType* copyExprRoot = ExpressionTokenCopy(expression->root);
     ExpressionType copyExpr = {};
     ExpressionCtor(&copyExpr);
+
+    copyExpr.root = copyExprRoot;
+
     ExpressionsCopyVariables(&copyExpr, expression);
 
     return copyExpr;
@@ -400,11 +335,11 @@ ExpressionTokenValue ExpressionTokenValueСreate(double value)
 
 //---------------------------------------------------------------------------------------
 
-ExpressionTokenValue ExpressionTokenValueСreate(ExpressionOperationsIds operationId)
+ExpressionTokenValue ExpressionTokenValueСreate(ExpressionOperationId operation)
 {
     ExpressionTokenValue value =
     {
-        .operation = GetOperationStruct(operationId),
+        .operation = operation,
     };
 
     return value;
@@ -421,45 +356,6 @@ ExpressionTokenType* ExpressionNumericTokenCreate(double value)
 
 //---------------------------------------------------------------------------------------
 
-static ExpressionOperationType ExpressionOperationTypeCtor(
-                                                    ExpressionOperationsIds operationId,
-                                                    ExpressionOperationFormat operationFormat,
-                                                    ExpressionOperationFormat operationTexFormat,
-                                                    bool isUnaryOperation,
-                                                    const char* longName,
-                                                    const char* shortName,
-                                                    const char* texName,
-                                                    bool needTexLeftBraces,
-                                                    bool needTexRightBraces,
-                                                    CalculationFuncType* CalculationFunc)
-{
-    assert(longName);
-    assert(shortName);
-    assert(texName);
-
-    ExpressionOperationType operation = 
-    {
-        .operationId            = operationId,
-        .operationFormat        = operationFormat,
-        .operationTexFormat     = operationTexFormat,
-
-        .isUnaryOperation       = isUnaryOperation,
-
-        .longName               = longName, 
-        .shortName              = shortName,
-
-        .texName                = texName,
-        .needTexLeftBraces    = needTexLeftBraces,
-        .needTexRightBraces   = needTexRightBraces, 
-
-        .CalculationFunc        = CalculationFunc,
-    };
-
-    return operation;
-}
-
-//---------------------------------------------------------------------------------------
-
 void ExpressionTokenSetEdges(ExpressionTokenType* token, ExpressionTokenType* left, 
                                                      ExpressionTokenType* right)
 {
@@ -469,59 +365,131 @@ void ExpressionTokenSetEdges(ExpressionTokenType* token, ExpressionTokenType* le
     token->right = right;
 }
 
-//TODO: подумать над созданием файла, где будет все, связанное с операциями
 int ExpressionOperationGetId(const char* string)
 {
     assert(string);
 
+    #define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, SHORT_NAME, ...) SHORT_NAME,
+
+    static const char* shortNamesArr[] = 
+    {
+        #include "Operations.h"
+    };
+
+    #undef  GENERATE_OPERATION_CMD
+    #define GENERATE_OPERATION_CMD(NAME, ...) #NAME, 
+
+    static const char* longNamesArr[] = 
+    {
+        #include "Operations.h"
+    };
+
+    #undef GENERATE_OPERATION_CMD
+
+    static const size_t NumberOfOperations = sizeof(shortNamesArr) / sizeof(*shortNamesArr);
+
     for (size_t i = 0; i < NumberOfOperations; ++i)
     {
-        if (strcasecmp(string, Operations[i].shortName) == 0 || 
-            strcasecmp(string, Operations[i].longName)  == 0)
+        if (strcasecmp(string, shortNamesArr[i]) == 0 || 
+            strcasecmp(string, longNamesArr[i])  == 0)
             return (int)i;
     }
+
     return -1;
 }
 
-bool ExpressionOperationIsPrefix(const ExpressionOperationType* operation, bool inTex)
+bool ExpressionOperationIsPrefix(const ExpressionOperationId operation, bool inTex)
 {
-    assert(operation);
+
+    #define GENERATE_OPERATION_CMD(NAME, FORMAT, TEX_FORMAT, ...)                               \
+        case ExpressionOperationId::NAME:                                                       \
+            return ExpressionOperationFormat::TEX_FORMAT == ExpressionOperationFormat::PREFIX;
 
     if (inTex)
-        return operation->operationTexFormat == ExpressionOperationFormat::PREFIX;
+    {
+        switch (operation)
+        {
+            #include "Operations.h"
 
-    return operation->operationFormat == ExpressionOperationFormat::PREFIX;
+            default:
+                break;
+        }
+
+        return false;
+    }
+
+    #undef  GENERATE_OPERATION_CMD
+    #define GENERATE_OPERATION_CMD(NAME, FORMAT, ...)                                           \
+        case ExpressionOperationId::NAME:                                                       \
+            return ExpressionOperationFormat::FORMAT == ExpressionOperationFormat::PREFIX;
+
+    switch(operation)
+    {
+        #include "Operations.h"
+
+        default:
+            break;
+    }
+
+    #undef  GENERATE_OPERATION_CMD
+
+    return false;
 }
 
-bool ExpressionOperationIsUnary(const ExpressionOperationType* operation)
+bool ExpressionOperationIsUnary(const ExpressionOperationId operation)
 {
-    assert(operation);
 
-    return operation->isUnaryOperation;
+    #define GENERATE_OPERATION_CMD(NAME, v1, v2, IS_UNARY, ...)                         \
+        case ExpressionOperationId::NAME:                                               \
+            return IS_UNARY;
+        
+    switch (operation)
+    {
+        #include "Operations.h"
+
+        default:
+            break;
+    }
+
+    #undef GENERATE_OPERATION_CMD
+
+    return false;
 }
 
-//---------------------------------------------------------------------------------------
-
-double ExpressionCalculate(const ExpressionType* expression)
+const char* ExpressionOperationGetLongName(const  ExpressionOperationId operation)
 {
-    assert(expression);
+    #define GENERATE_OPERATION_CMD(NAME, ...)           \
+        case ExpressionOperationId::NAME:               \
+            return #NAME;
 
-    return ExpressionCalculate(expression->root);
+    switch (operation)
+    {
+        #include "Operations.h"
+
+        default:
+            break;
+    }
+
+    #undef GENERATE_OPERATION_CMD
+
+    return nullptr;
 }
 
-static double ExpressionCalculate(const ExpressionTokenType* token)
+const char* ExpressionOperationGetShortName(const ExpressionOperationId operation)
 {
-    if (token == nullptr)
-        return NAN;
-    
-    if (token->valueType == ExpressionTokenValueTypeof::VALUE)
-        return token->value.value;
+    #define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, SHORT_NAME, ...)   \
+        case ExpressionOperationId::NAME:                               \
+            return SHORT_NAME;
+        
+    switch(operation)
+    {
+        #include "Operations.h"
 
-    if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
-        return token->value.varPtr->variableValue;
+        default:
+            break;
+    }
 
-    double firstVal  = ExpressionCalculate(token->left);
-    double secondVal = ExpressionCalculate(token->right);
-    
-    return token->value.operation.CalculationFunc(firstVal, secondVal);
+    #undef GENERATE_OPERATION_CMD
+
+    return nullptr;
 }

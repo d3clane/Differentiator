@@ -7,6 +7,10 @@
 #include "FastInput/InputOutput.h"
 #include "Common/StringFuncs.h"
 
+static const char* ExpressionOperationGetTexName (const ExpressionOperationId operation);
+static bool ExpressionOperationNeedTexRightBraces(const ExpressionOperationId operation);
+static bool ExpressionOperationNeedTexLeftBraces (const ExpressionOperationId operation);
+
 static ExpressionErrors ExpressionPrintPrefixFormat     (
                                                 const ExpressionTokenType* token, 
                                                 FILE* outStream);
@@ -88,7 +92,7 @@ static ExpressionErrors ExpressionPrintPrefixFormat(
     else if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
         PRINT(outStream, "%s ", token->value.varPtr->variableName);
     else
-        PRINT(outStream, "%s ", token->value.operation.longName);
+        PRINT(outStream, "%s ", ExpressionOperationGetLongName(token->value.operation));
 
     ExpressionErrors err = ExpressionErrors::NO_ERR;
 
@@ -134,8 +138,9 @@ static ExpressionErrors ExpressionPrintEquationFormat(
 
     assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
 
-    bool isPrefixOperation = ExpressionOperationIsPrefix(&token->value.operation);
-    if (isPrefixOperation) fprintf(outStream, "%s ", token->value.operation.shortName);
+    bool isPrefixOperation = ExpressionOperationIsPrefix(token->value.operation);
+    if (isPrefixOperation) fprintf(outStream, "%s ", 
+                                    ExpressionOperationGetShortName(token->value.operation));
 
     bool needLeftBrackets = HaveToPutBrackets(token, token->left);
     if (needLeftBrackets) PRINT(outStream, "(");
@@ -145,9 +150,10 @@ static ExpressionErrors ExpressionPrintEquationFormat(
 
     if (needLeftBrackets) PRINT(outStream, ")");
 
-    if (!isPrefixOperation) fprintf(outStream, "%s ", token->value.operation.shortName);
+    if (!isPrefixOperation) fprintf(outStream, "%s ", 
+                                     ExpressionOperationGetShortName(token->value.operation));
 
-    if (ExpressionOperationIsUnary(&token->value.operation))  
+    if (ExpressionOperationIsUnary(token->value.operation))  
         return err;
 
     bool needRightBrackets = HaveToPutBrackets(token, token->right);
@@ -173,27 +179,27 @@ static bool HaveToPutBrackets(const ExpressionTokenType* parent,
     if (son->valueType != ExpressionTokenValueTypeof::OPERATION)
         return false;
 
-    ExpressionOperationsIds parentOperation = parent->value.operation.operationId;
-    ExpressionOperationsIds sonOperation    = son->value.operation.operationId;
+    ExpressionOperationId parentOperation = parent->value.operation;
+    ExpressionOperationId sonOperation    = son->value.operation;
 
-    if (ExpressionOperationIsPrefix(&son->value.operation, inTex))
+    if (ExpressionOperationIsPrefix(sonOperation, inTex))
         return false;
 
-    if (sonOperation == ExpressionOperationsIds::POW)
+    if (sonOperation == ExpressionOperationId::POW)
         return false;
 
-    if ((sonOperation    == ExpressionOperationsIds::MUL  || 
-         sonOperation    == ExpressionOperationsIds::DIV) &&
-        (parentOperation == ExpressionOperationsIds::SUB  || 
-         parentOperation == ExpressionOperationsIds::ADD))
+    if ((sonOperation    == ExpressionOperationId::MUL  || 
+         sonOperation    == ExpressionOperationId::DIV) &&
+        (parentOperation == ExpressionOperationId::SUB  || 
+         parentOperation == ExpressionOperationId::ADD))
         return false;
 
-    if (sonOperation    == ExpressionOperationsIds::ADD && 
-        parentOperation == ExpressionOperationsIds::ADD)
+    if (sonOperation    == ExpressionOperationId::ADD && 
+        parentOperation == ExpressionOperationId::ADD)
         return false;
     
-    if (sonOperation    == ExpressionOperationsIds::MUL && 
-        parentOperation == ExpressionOperationsIds::MUL)
+    if (sonOperation    == ExpressionOperationId::MUL && 
+        parentOperation == ExpressionOperationId::MUL)
         return false;
 
     return true;
@@ -258,7 +264,7 @@ static ExpressionTokenType* ExpressionReadPrefixFormat(
     ExpressionTokenType* left  = ExpressionReadPrefixFormat(stringPtr, &stringPtr, varsArr);
 
     ExpressionTokenType* right = nullptr;
-    if (!ExpressionOperationIsUnary(&token->value.operation))
+    if (!ExpressionOperationIsUnary(token->value.operation))
         right = ExpressionReadPrefixFormat(stringPtr, &stringPtr, varsArr);
 
     stringPtr = SkipSymbolsUntilStopChar(stringPtr, ')');
@@ -373,7 +379,7 @@ static const char* ExpressionReadTokenValue(ExpressionTokenValue* value,
     int operationId = ExpressionOperationGetId(inputString);
     if (operationId != -1)
     {
-        *value     = ExpressionTokenValueСreate((ExpressionOperationsIds) operationId);
+        *value     = ExpressionTokenValueСreate((ExpressionOperationId) operationId);
         *valueType = ExpressionTokenValueTypeof::OPERATION;
         return stringPtr;
     }
@@ -400,7 +406,7 @@ static void ExpressionTokenPrintValue(const ExpressionTokenType* token,
     else if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
         PRINT(outStream, "%s ", token->value.varPtr->variableName);
     else if (token->valueType == ExpressionTokenValueTypeof::OPERATION) 
-        PRINT(outStream, "%s ", token->value.operation.longName);
+        PRINT(outStream, "%s ", ExpressionOperationGetLongName(token->value.operation));
 }
 
 #undef PRINT
@@ -427,12 +433,12 @@ ExpressionErrors ExpressionTokenPrintTexTrollString(const ExpressionTokenType* r
     static const size_t            numberOfRoflStrings  = 8;
     static const char* roflStrings[numberOfRoflStrings] = 
     {
-        "Очевидно, что",
-        "Несложно заметить, что", 
-        "Любопытный читатель может показать, что",
+        "Очевидно, что это преобразование верно",
+        "Несложно заметить это преобразование", 
+        "Любопытный читатель может показать этот переход самостоятельно, ",
         "Не буду утруждать себя доказательством, что",
         "Я нашел удивительное решение, но здесь маловато места, чтобы его поместить, ",
-        "Без комментариев, ",
+        "Оставим переход без комментариев, ",
         "Это же не рокет саенс, поэтому легко видеть, что",
 
         "Ребят, вы че издеваетесь?"
@@ -480,12 +486,13 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
     ExpressionErrors err = ExpressionErrors::NO_ERR;
     assert((token->valueType == ExpressionTokenValueTypeof::OPERATION));
 
-    bool isPrefixOperation    = ExpressionOperationIsPrefix(&token->value.operation, true);
+    bool isPrefixOperation    = ExpressionOperationIsPrefix(token->value.operation, true);
 
-    if (isPrefixOperation) fprintf(outStream, "%s ", token->value.operation.texName);
+    if (isPrefixOperation) fprintf(outStream, "%s ", 
+                                    ExpressionOperationGetTexName(token->value.operation));
 
     bool needLeftBrackets  = HaveToPutBrackets(token, token->left);
-    bool needTexLeftBraces = token->value.operation.needTexLeftBraces;
+    bool needTexLeftBraces = ExpressionOperationNeedTexLeftBraces(token->value.operation);
 
     if (needTexLeftBraces)                      fprintf(outStream, "{");
     if (!needTexLeftBraces && needLeftBrackets) fprintf(outStream, "(");
@@ -495,12 +502,13 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
     if (!needTexLeftBraces && needLeftBrackets) fprintf(outStream, ")");
     if (needTexLeftBraces)                      fprintf(outStream, "}");
 
-    if (!isPrefixOperation) fprintf(outStream, "%s ", token->value.operation.texName);
+    if (!isPrefixOperation) fprintf(outStream, "%s ", 
+                                    ExpressionOperationGetTexName(token->value.operation));
 
-    if (ExpressionOperationIsUnary(&token->value.operation))
+    if (ExpressionOperationIsUnary(token->value.operation))
         return err;
 
-    bool needTexRightBraces   = token->value.operation.needTexRightBraces;
+    bool needTexRightBraces   = ExpressionOperationNeedTexRightBraces(token->value.operation);
     bool needRightBrackets    = HaveToPutBrackets(token, token->right);
     
     if (needTexRightBraces)                       fprintf(outStream, "{");
@@ -555,4 +563,61 @@ static ExpressionVariableType* GetVariablePtrByName(const ExpressionVariablesArr
     }
     
     return nullptr;
+}
+
+static const char* ExpressionOperationGetTexName(const ExpressionOperationId operation)
+{
+    #define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, TEX_NAME, ...) \
+        case ExpressionOperationId::NAME:                           \
+            return TEX_NAME;
+
+    switch(operation)
+    {
+        #include "Operations.h"
+
+        default:
+            break;
+    }
+
+    #undef GENERATE_OPERATION_CMD
+
+    return nullptr;
+}
+
+static bool ExpressionOperationNeedTexRightBraces(const ExpressionOperationId operation)
+{
+    #define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, v4, v5, v6, NEED_RIGHT_BRACES, ...)    \
+        case ExpressionOperationId::NAME:                                                   \
+            return NEED_RIGHT_BRACES;
+    
+    switch(operation)
+    {
+        #include "Operations.h"
+
+        default:
+            break;
+    }
+
+    #undef GENERATE_OPERATION_CMD
+
+    return false;
+}
+
+static bool ExpressionOperationNeedTexLeftBraces(const ExpressionOperationId operation)
+{
+    #define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, v4, v5, NEED_LEFT_BRACES, ...) \
+        case ExpressionOperationId::NAME:                                           \
+            return NEED_LEFT_BRACES;
+
+    switch(operation)
+    {
+        #include "Operations.h"
+
+        default:
+            break;
+    }
+
+    #undef GENERATE_OPERATION_CMD
+
+    return false;
 }

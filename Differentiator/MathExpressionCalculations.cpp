@@ -5,10 +5,13 @@
 #include "MathExpressionInOut.h"
 #include "Common/DoubleFuncs.h"
 
-//---------------------------------------------------------------------------------------
+//---------------Calculation-------------------
 
-#define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, v4, v5, v6, v7, CALCULATION_CODE, ...)
-    
+static double ExpressionCalculate(const ExpressionTokenType* token);
+
+static double CalculateUsingOperation(const ExpressionOperationId operation, 
+                                      const double val1, const double val2 = NAN);
+
 //--------------------DSL-----------------------------
 
 #define D(TOKEN) ExpressionDifferentiate(TOKEN, outTex)
@@ -18,44 +21,20 @@
 
 #define TOKEN(OPERATION_NAME, LEFT_TOKEN, RIGHT_TOKEN)                                        \
     ExpressionTokenCtor(ExpressionTokenValueСreate(                                           \
-                                            ExpressionOperationsIds::OPERATION_NAME),         \
+                                            ExpressionOperationId::OPERATION_NAME),         \
                             ExpressionTokenValueTypeof::OPERATION,                            \
                             LEFT_TOKEN, RIGHT_TOKEN)                                               
 
 #define UNARY_TOKEN(OPERATION_NAME, LEFT_TOKEN) TOKEN(OPERATION_NAME, LEFT_TOKEN, nullptr)
 
 //-------------------Differentiate---------------
+
 static ExpressionTokenType* ExpressionDifferentiate(
                                         const ExpressionTokenType* token,
                                         FILE* outTex = nullptr);
 
-#define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, v4, v5, v6, v7, v8, DIFF_CODE, ...)      \
-    static inline ExpressionTokenType* ExpressionDifferentiate##NAME(                    \
-                                                const ExpressionTokenType* token,       \
-                                                FILE* outTex = nullptr)                 \
-    {                                                                                   \
-        DIFF_CODE                                                                       \
-    }
-
-//Creating funcs ExpressionDifferentiateADD, ...
-#include "Operations.h"
-
-#undef  GENERATE_OPERATION_CMD
-#define GENERATE_OPERATION_CMD(NAME, ...) ExpressionDifferentiate##NAME,
-
-typedef ExpressionTokenType* (DiffFuncType)(const ExpressionTokenType* token,
-                                            FILE* outTex);
-
-static const DiffFuncType* const OperationsDiffFuncs[] =
-{
-    #include "Operations.h"
-};
-
-static const size_t NumberOfOperations = sizeof(OperationsDiffFuncs) / sizeof(*OperationsDiffFuncs);
-
-#undef GENERATE_OPERATION_CMD
-
-static inline DiffFuncType* ExpressionOperationGetDiffFunc(const ExpressionOperationsIds operationId);
+static ExpressionTokenType* ExpressionDiffOperation(const ExpressionTokenType* token,
+                                                    FILE* outTex = nullptr);
 
 //--------------------------------Simplify-------------------------------------------
 
@@ -107,6 +86,55 @@ static bool ExpressionTokenContainVariable(const ExpressionTokenType* token);
 
 //---------------------------------------------------------------------------------------
 
+double ExpressionCalculate(const ExpressionType* expression)
+{
+    assert(expression);
+
+    return ExpressionCalculate(expression->root);
+}
+
+static double ExpressionCalculate(const ExpressionTokenType* token)
+{
+    if (token == nullptr)
+        return NAN;
+    
+    if (token->valueType == ExpressionTokenValueTypeof::VALUE)
+        return token->value.value;
+
+    if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
+        return token->value.varPtr->variableValue;
+
+    double firstVal  = ExpressionCalculate(token->left);
+    double secondVal = ExpressionCalculate(token->right);
+    
+    return CalculateUsingOperation(token->value.operation, firstVal, secondVal);
+}
+
+static double CalculateUsingOperation(const ExpressionOperationId operation, 
+                                      const double val1, const double val2)
+{
+    #define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, v4, v5, v6, v7, CALCULATE_CODE, ...)   \
+        case ExpressionOperationId::NAME:                                                   \
+        {                                                                                   \
+            CALCULATE_CODE;                                                                 \
+            break;                                                                          \
+        }                                                                               
+
+    switch(operation)
+    {
+        #include "Operations.h"
+
+        default:
+            break;
+    }
+
+    #undef GENERATE_OPERATION_CMD
+
+    return NAN;
+}
+
+//---------------------------------------------------------------------------------------
+
 ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
                                        FILE* outTex)
 {
@@ -118,6 +146,7 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
 
     ExpressionTokenType* diffRootToken = ExpressionDifferentiate(expression->root, 
                                                                  outTex);
+
     ExpressionType diffExpression = {};
     ExpressionCtor(&diffExpression);
 
@@ -125,7 +154,8 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
 
     ExpressionsCopyVariables(&diffExpression, expression);
 
-    fprintf(outTex, "***** не понятно, но очень интересно. Сделаем выражение более понятным\n");
+    if (outTex)
+        fprintf(outTex, "***** не понятно, но очень интересно. Сделаем выражение более понятным\n");
 
     ExpressionSimplify(&diffExpression, outTex);
 
@@ -153,9 +183,7 @@ static ExpressionTokenType* ExpressionDifferentiate(
             break;
 
         case ExpressionTokenValueTypeof::OPERATION:
-            //TODO: отдельно создать функцию будет гораздо читабельнее
-            diffToken = ExpressionOperationGetDiffFunc(token->value.operation.operationId)(token,
-                                                                                           outTex);
+            diffToken = ExpressionDiffOperation(token, outTex);
             break;
 
         default:
@@ -173,12 +201,30 @@ static ExpressionTokenType* ExpressionDifferentiate(
 
 //---------------------------------------------------------------------------------------
 
-static inline DiffFuncType* ExpressionOperationGetDiffFunc(const ExpressionOperationsIds operationId)
+static ExpressionTokenType* ExpressionDiffOperation(const ExpressionTokenType* token,
+                                                    FILE* outTex)
 {
-    assert((int)operationId >= 0);
-    assert((size_t)operationId < NumberOfOperations);
+    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
 
-    return OperationsDiffFuncs[(size_t)operationId];
+    #define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, v4, v5, v6, v7, v8, DIFF_CODE)     \
+        case ExpressionOperationId::NAME:                                               \
+        {                                                                               \
+            DIFF_CODE;                                                                  \
+            break;                                                                      \
+        }
+
+    switch(token->value.operation)
+    {
+        #include "Operations.h"
+
+        //THERE IS RECURSION TO ExpressionDifferentiate inside include
+        default:
+            break;
+    }
+    
+    #undef GENERATE_OPERATION_CMD
+
+    return nullptr;
 }
 
 //---------------------------------------------------------------------------------------
@@ -194,9 +240,8 @@ void ExpressionSimplify(ExpressionType* expression,
         simplifiesCount = 0;
         expression->root = ExpressionSimplifyConstants(expression->root, &simplifiesCount);
         expression->root = ExpressionSimplifyNeutralTokens(expression->root, 
-                                                               &simplifiesCount);
+                                                           &simplifiesCount);
     } while (simplifiesCount != 0);
-
 }
 
 static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* token,
@@ -266,7 +311,7 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
         leftVal = token->left->value.value;
         if (token->right) rightVal = token->right->value.value;
 
-        return CONST_TOKEN(token->value.operation.CalculationFunc(leftVal, rightVal));
+        return CONST_TOKEN(CalculateUsingOperation(token->value.operation, leftVal, rightVal));
     }
     return token;
 }
@@ -312,20 +357,21 @@ static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType*
     if (!leftIsValue && !rightIsValue)
         return token;
 
-    switch (token->value.operation.operationId)
+    //Здесь никакой генерации(((( не все можно упрощать, не вижу способов авгенерить
+    switch (token->value.operation)
     {
-        case ExpressionOperationsIds::ADD:
+        case ExpressionOperationId::ADD:
             return ExpressionSimplifyAdd(token, left, right, simplifiesCount);
-        case ExpressionOperationsIds::SUB:
+        case ExpressionOperationId::SUB:
             return ExpressionSimplifySub(token, left, right, simplifiesCount);
-        case ExpressionOperationsIds::MUL:
+        case ExpressionOperationId::MUL:
             return ExpressionSimplifyMul(token, left, right, simplifiesCount);
-        case ExpressionOperationsIds::DIV:
+        case ExpressionOperationId::DIV:
             return ExpressionSimplifyDiv(token, left, right, simplifiesCount);
         
-        case ExpressionOperationsIds::POW:
+        case ExpressionOperationId::POW:
             return ExpressionSimplifyPow(token, left, right, simplifiesCount);
-        case ExpressionOperationsIds::LOG:
+        case ExpressionOperationId::LOG:
             return ExpressionSimplifyLog(token, left, right, simplifiesCount);
         
         default:

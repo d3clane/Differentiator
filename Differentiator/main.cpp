@@ -10,7 +10,7 @@ int main(const int argc, const char* argv[])
     LogOpen(argv[0]);
 
     ExpressionType ExpressionPrefixInput;
-    ExpressionType ExpressionInfixInput;
+    //ExpressionType ExpressionInfixInput;
     ExpressionCtor(&ExpressionPrefixInput);
     //ExpressionCtor(&ExpressionPrefixInput);
     //ExpressionCtor(&ExpressionInfixInput);
@@ -26,6 +26,7 @@ int main(const int argc, const char* argv[])
     ExpressionReadVariables(&ExpressionPrefixInput);
 
     ExpressionPrintPrefixFormat     (&ExpressionPrefixInput, output);
+
     ExpressionGraphicDump(&ExpressionPrefixInput);
     ExpressionPrintEquationFormat   (&ExpressionPrefixInput);
     ExpressionPrintTex(&ExpressionPrefixInput, outputTex);
@@ -35,10 +36,9 @@ int main(const int argc, const char* argv[])
 
     ExpressionType ExpressionDiff =  ExpressionDifferentiate(&ExpressionPrefixInput, outputTex);
 
-    ExpressionPrintTex(&ExpressionDiff, outputTex);
+    //ExpressionPrintTex(&ExpressionDiff);
     ExpressionGraphicDump(&ExpressionDiff);
 
 
     printf("Diff result in x: %lf\n\n\n", ExpressionCalculate(&ExpressionDiff));
-    
 }

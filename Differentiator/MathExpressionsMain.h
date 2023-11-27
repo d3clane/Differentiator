@@ -20,7 +20,7 @@ struct ExpressionVariablesArrayType
 
 #define GENERATE_OPERATION_CMD(NAME, ...) NAME, 
 
-enum class ExpressionOperationsIds
+enum class ExpressionOperationId
 {
     #include "Operations.h"
 };
@@ -36,30 +36,11 @@ enum class ExpressionOperationFormat
 
 typedef double (CalculationFuncType)(double firstVal, double secondVal);
 
-struct ExpressionOperationType
-{
-
-    ExpressionOperationsIds   operationId;
-    ExpressionOperationFormat operationFormat;
-    ExpressionOperationFormat operationTexFormat;
-    
-    bool isUnaryOperation;
-
-    const char* longName;
-    const char* shortName;
-
-    const char* texName;
-    bool needTexLeftBraces;
-    bool needTexRightBraces;
-
-    CalculationFuncType* CalculationFunc;
-};
-
 union ExpressionTokenValue
 {
     double                  value;
     ExpressionVariableType* varPtr;
-    ExpressionOperationType operation;
+    ExpressionOperationId operation;
 }; 
 
 enum class ExpressionTokenValueTypeof
@@ -106,7 +87,7 @@ ExpressionTokenType* ExpressionTokenCtor(ExpressionTokenValue value,
 void ExpressionTokenDtor(ExpressionTokenType* token);
 
 ExpressionTokenValue ExpressionTokenValueСreate(double value);
-ExpressionTokenValue ExpressionTokenValueСreate(ExpressionOperationsIds operationId);
+ExpressionTokenValue ExpressionTokenValueСreate(ExpressionOperationId operationId);
 ExpressionTokenType* ExpressionNumericTokenCreate(double value);
 
 #define _EXPRESSION_TEXT_DUMP(expression) ExpressionTextDump((expression), __FILE__, \
@@ -140,7 +121,11 @@ double ExpressionCalculate(const ExpressionType* expression);
 //-------------Operations funcs-----------
 
 int  ExpressionOperationGetId(const char* string);
-bool ExpressionOperationIsPrefix(const ExpressionOperationType* operation, bool inTex = false);
-bool ExpressionOperationIsUnary(const ExpressionOperationType* operation);
+
+const char* ExpressionOperationGetLongName(const  ExpressionOperationId operation);
+const char* ExpressionOperationGetShortName(const ExpressionOperationId operation);
+//TODO: вот теперь можно переносить в InOut
+bool ExpressionOperationIsPrefix(const ExpressionOperationId operation, bool inTex = false);
+bool ExpressionOperationIsUnary(const ExpressionOperationId operation);
 
 #endif // _EXPRESSIONS_HADNLER_H
