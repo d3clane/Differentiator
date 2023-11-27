@@ -373,7 +373,7 @@ static const char* ExpressionReadTokenValue(ExpressionTokenValue* value,
     int operationId = ExpressionOperationGetId(inputString);
     if (operationId != -1)
     {
-        *value     = ExpressionCreateTokenValue((ExpressionOperationsIds) operationId);
+        *value     = ExpressionTokenValueСreate((ExpressionOperationsIds) operationId);
         *valueType = ExpressionTokenValueTypeof::OPERATION;
         return stringPtr;
     }

@@ -102,9 +102,9 @@ ExpressionTokenType* ExpressionTokenCtor(ExpressionTokenValue value,
                                                         ExpressionTokenType* right = nullptr);
 void ExpressionTokenDtor(ExpressionTokenType* token);
 
-ExpressionTokenValue ExpressionCreateTokenValue(double value);
-ExpressionTokenValue ExpressionCreateTokenValue(ExpressionOperationsIds operationId);
-ExpressionTokenType* ExpressionCreateNumericToken(double value);
+ExpressionTokenValue ExpressionTokenValueСreate(double value);
+ExpressionTokenValue ExpressionTokenValueСreate(ExpressionOperationsIds operationId);
+ExpressionTokenType* ExpressionNumericTokenCreate(double value);
 
 #define _EXPRESSION_TEXT_DUMP(expression) ExpressionTextDump((expression), __FILE__, \
                                                                                    __func__, \

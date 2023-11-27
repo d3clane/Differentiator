@@ -27,28 +27,21 @@ static ExpressionOperationType ExpressionOperationTypeCtor(
                                                     bool needTexRightBraces,
                                                     CalculationFuncType* CalculationFunc);
 
-
 static double ExpressionCalculate(const ExpressionTokenType* token, 
                                   const ExpressionVariablesArrayType* varsArr);
 
-static inline double CalculateADD(const double val1, const double val2);
-static inline double CalculateSUB(const double val1, const double val2);
-static inline double CalculateMUL(const double val1, const double val2);
-static inline double CalculateDIV(const double val1, const double val2);
+#define GENERATE_OPERATION_CMD(NAME, FORMAT, TEX_FORMAT, IS_UNARY, SHORT_CUT_STRING, TEX_NAME,  \
+                               NEED_LEFT_TEX_BRACES, NEED_RIGHT_TEX_BRACES,                     \
+                               OPERATION_CALCULATION_CODE, ...)                                 \
+    static inline double Calculate##NAME(const double val1, const double val2)                  \
+    {                                                                                           \
+        OPERATION_CALCULATION_CODE                                                              \
+    }                                                                                           \
 
-static inline double CalculatePOW(const double base, const double power);
-static inline double CalculateLOG(const double base, const double val);
-static inline double CalculateLN(const double val,   const double val2);
+//Creating functions CalculateADD, CalculateSUB, ...
+#include "Operations.h"
 
-static inline double CalculateSIN(const double val, const double val2 = NAN);
-static inline double CalculateCOS(const double val, const double val2 = NAN);
-static inline double CalculateTAN(const double val, const double val2 = NAN);
-static inline double CalculateCOT(const double val, const double val2 = NAN);
-
-static inline double CalculateARCSIN(const double val, const double val2 = NAN);
-static inline double CalculateARCCOS(const double val, const double val2 = NAN);
-static inline double CalculateARCTAN(const double val, const double val2 = NAN);
-static inline double CalculateARCCOT(const double val, const double val2 = NAN);
+#undef GENERATE_OPERATION_CMD
 
 //---------------------------------------------------------------------------------------
 
@@ -345,129 +338,6 @@ void ExpressionDump(const ExpressionType* expression, const char* fileName,
 
 //---------------------------------------------------------------------------------------
 
-static double CalculateADD(const double val1, const double val2)
-{
-    assert(isfinite(val1));
-    assert(isfinite(val2));
-
-    return val1 + val2;
-}
-
-static double CalculateSUB(const double val1, const double val2)
-{
-    assert(isfinite(val1));
-    assert(isfinite(val2));
-
-    return val1 - val2;
-}
-
-static double CalculateMUL(const double val1, const double val2)
-{
-    assert(isfinite(val1));
-    assert(isfinite(val2));
-
-    return val1 * val2;
-}
-
-static double CalculateDIV(const double val1, const double val2)
-{
-    assert(isfinite(val1));
-    assert(isfinite(val2));
-    assert(!DoubleEqual(val2, 0));
-
-    return val1 / val2;
-}
-
-static double CalculatePOW(const double base, const double power)
-{
-    assert(isfinite(base));
-    assert(isfinite(power));
-
-    return pow(base, power);
-}
-
-static double CalculateLOG(const double base, const double val)
-{
-    assert(isfinite(base));
-    assert(isfinite(val));
-
-    double log_base = log(base);
-
-    assert(!DoubleEqual(log_base, 0));
-
-    return log(val) / log_base;
-}
-
-static inline double CalculateLN(const double val, const double val2)
-{
-    assert(isfinite(val));
-
-    return log(val);
-}
-
-static double CalculateSIN(const double val1, const double val2)
-{
-    assert(isfinite(val1));
-
-    return sin(val1);
-}
-
-static double CalculateCOS(const double val1, const double val2)
-{
-    assert(isfinite(val1));
-
-    return cos(val1);
-}
-
-static double CalculateTAN(const double val1, const double val2)
-{
-    assert(isfinite(val1));
-
-    return tan(val1);
-}
-
-static double CalculateCOT(const double val1, const double val2)
-{
-    assert(isfinite(val1));
-
-    double tan_val1 = tan(val1);
-
-    assert(!DoubleEqual(tan_val1, 0));
-    assert(isfinite(tan_val1));
-
-    return 1 / tan_val1;
-}
-
-static double CalculateARCSIN(const double val1, const double val2)
-{
-    assert(isfinite(val1));
-
-    return asin(val1);
-}
-
-static double CalculateARCCOS(const double val1, const double val2)
-{
-    assert(isfinite(val1));
-
-    return acos(val1);
-}
-
-static double CalculateARCTAN(const double val1, const double val2)
-{
-    assert(isfinite(val1));
-
-    return atan(val1);
-}
-
-static double CalculateARCCOT(const double val1, const double val2)
-{
-    assert(isfinite(val1));
-
-    return PI / 2 - atan(val1);
-}
-
-//---------------------------------------------------------------------------------------
-
 void ExpressionsCopyVariables(      ExpressionType* target, 
                               const ExpressionType* source)
 {
@@ -529,7 +399,7 @@ ExpressionTokenType* ExpressionTokenCopy(const ExpressionTokenType* token)
 
 //---------------------------------------------------------------------------------------
 
-ExpressionTokenValue ExpressionCreateTokenValue(double value)
+ExpressionTokenValue ExpressionTokenValueСreate(double value)
 {
     ExpressionTokenValue tokenValue =
     {
@@ -541,7 +411,7 @@ ExpressionTokenValue ExpressionCreateTokenValue(double value)
 
 //---------------------------------------------------------------------------------------
 
-ExpressionTokenValue ExpressionCreateTokenValue(ExpressionOperationsIds operationId)
+ExpressionTokenValue ExpressionTokenValueСreate(ExpressionOperationsIds operationId)
 {
     ExpressionTokenValue value =
     {
@@ -553,9 +423,9 @@ ExpressionTokenValue ExpressionCreateTokenValue(ExpressionOperationsIds operatio
 
 //---------------------------------------------------------------------------------------
 
-ExpressionTokenType* ExpressionCreateNumericToken(double value)
+ExpressionTokenType* ExpressionNumericTokenCreate(double value)
 {
-    ExpressionTokenValue tokenVal = ExpressionCreateTokenValue(value);
+    ExpressionTokenValue tokenVal = ExpressionTokenValueСreate(value);
 
     return ExpressionTokenCtor(tokenVal, ExpressionTokenValueTypeof::VALUE);
 }

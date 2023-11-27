@@ -89,7 +89,7 @@ static const size_t NumberOfOperations = sizeof(OperationsDiff) / sizeof(*Operat
 
 #undef GENERATE_OPERATION_CMD
 
-static inline DiffFuncType* GetOperationDiffFunc(const ExpressionOperationsIds operationId);
+static inline DiffFuncType* ExpressionOperationGetDiffFunc(const ExpressionOperationsIds operationId);
 
 //---------------------------------------------------------------------------------------
 
@@ -189,9 +189,10 @@ static ExpressionTokenType* ExpressionDifferentiate(
             break;
 
         case ExpressionTokenValueTypeof::OPERATION:
-            diffToken = GetOperationDiffFunc(token->value.operation.operationId)(token,
-                                                                                 varsArr,
-                                                                                 outTex);
+            //TODO: отдельно создать функцию будет гораздо читабельнее
+            diffToken = ExpressionOperationGetDiffFunc(token->value.operation.operationId)(token,
+                                                                                           varsArr,
+                                                                                           outTex);
             break;
 
         default:
@@ -212,10 +213,10 @@ static ExpressionTokenType* ExpressionDifferentiate(
 #define D(TOKEN) ExpressionDifferentiate(TOKEN, varsArr, outTex)
 #define C(TOKEN) ExpressionTokenCopy(TOKEN)
 
-#define CONST_TOKEN(VALUE) ExpressionCreateNumericToken(VALUE)
+#define CONST_TOKEN(VALUE) ExpressionNumericTokenCreate(VALUE)
 
 #define TOKEN(OPERATION_NAME, LEFT_TOKEN, RIGHT_TOKEN)                                        \
-    ExpressionTokenCtor(ExpressionCreateTokenValue(                                   \
+    ExpressionTokenCtor(ExpressionTokenValueСreate(                                   \
                                             ExpressionOperationsIds::OPERATION_NAME),   \
                             ExpressionTokenValueTypeof::OPERATION,                        \
                             LEFT_TOKEN, RIGHT_TOKEN)                                               
@@ -441,7 +442,7 @@ static inline ExpressionTokenType* ExpressionDifferentiateARCCOT(
                                             TOKEN(POW, C(token->left), CONST_TOKEN(2)))));
 }
 
-static inline DiffFuncType* GetOperationDiffFunc(const ExpressionOperationsIds operationId)
+static inline DiffFuncType* ExpressionOperationGetDiffFunc(const ExpressionOperationsIds operationId)
 {
     assert((int)operationId >= 0);
     assert((size_t)operationId < NumberOfOperations);
