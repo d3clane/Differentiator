@@ -45,9 +45,6 @@ static ExpressionVariableType* AddVariable(ExpressionVariablesArrayType* varsArr
 static ExpressionVariableType* GetVariablePtrByName(const ExpressionVariablesArrayType* varsArr, 
                                                     const char* variableName);
 
-static bool IsPrefixOperation(const ExpressionOperationType* operation, bool inTex = false);
-static bool IsUnaryOperation(const ExpressionOperationType* operation);
-
 #define PRINT(outStream, ...)                          \
 do                                                     \
 {                                                      \
@@ -137,7 +134,7 @@ static ExpressionErrors ExpressionPrintEquationFormat(
 
     assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
 
-    bool isPrefixOperation = IsPrefixOperation(&token->value.operation);
+    bool isPrefixOperation = ExpressionOperationIsPrefix(&token->value.operation);
     if (isPrefixOperation) fprintf(outStream, "%s ", token->value.operation.shortName);
 
     bool needLeftBrackets = HaveToPutBrackets(token, token->left);
@@ -150,7 +147,7 @@ static ExpressionErrors ExpressionPrintEquationFormat(
 
     if (!isPrefixOperation) fprintf(outStream, "%s ", token->value.operation.shortName);
 
-    if (IsUnaryOperation(&token->value.operation))  
+    if (ExpressionOperationIsUnary(&token->value.operation))  
         return err;
 
     bool needRightBrackets = HaveToPutBrackets(token, token->right);
@@ -179,7 +176,7 @@ static bool HaveToPutBrackets(const ExpressionTokenType* parent,
     ExpressionOperationsIds parentOperation = parent->value.operation.operationId;
     ExpressionOperationsIds sonOperation    = son->value.operation.operationId;
 
-    if (IsPrefixOperation(&son->value.operation, inTex))
+    if (ExpressionOperationIsPrefix(&son->value.operation, inTex))
         return false;
 
     if (sonOperation == ExpressionOperationsIds::POW)
@@ -261,7 +258,7 @@ static ExpressionTokenType* ExpressionReadPrefixFormat(
     ExpressionTokenType* left  = ExpressionReadPrefixFormat(stringPtr, &stringPtr, varsArr);
 
     ExpressionTokenType* right = nullptr;
-    if (!IsUnaryOperation(&token->value.operation))
+    if (!ExpressionOperationIsUnary(&token->value.operation))
         right = ExpressionReadPrefixFormat(stringPtr, &stringPtr, varsArr);
 
     stringPtr = SkipSymbolsUntilStopChar(stringPtr, ')');
@@ -373,7 +370,7 @@ static const char* ExpressionReadTokenValue(ExpressionTokenValue* value,
     stringPtr = string + shift;
     assert(isspace(*stringPtr));
 
-    int operationId = GetOperationId(inputString);
+    int operationId = ExpressionOperationGetId(inputString);
     if (operationId != -1)
     {
         *value     = ExpressionCreateTokenValue((ExpressionOperationsIds) operationId);
@@ -389,26 +386,6 @@ static const char* ExpressionReadTokenValue(ExpressionTokenValue* value,
     *valueType   = ExpressionTokenValueTypeof::VARIABLE;
 
     return stringPtr;
-}
-
-
-static bool IsPrefixOperation(const ExpressionOperationType* operation, bool inTex)
-{
-    assert(operation);
-
-    if (inTex)
-        return operation->operationTexFormat == ExpressionOperationFormat::PREFIX;
-
-    return operation->operationFormat == ExpressionOperationFormat::PREFIX;
-}
-
-//---------------------------------------------------------------------------------------
-
-static bool IsUnaryOperation(const ExpressionOperationType* operation)
-{
-    assert(operation);
-
-    return operation->isUnaryOperation;
 }
 
 //---------------------------------------------------------------------------------------
@@ -503,7 +480,7 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
     ExpressionErrors err = ExpressionErrors::NO_ERR;
     assert((token->valueType == ExpressionTokenValueTypeof::OPERATION));
 
-    bool isPrefixOperation    = IsPrefixOperation(&token->value.operation, true);
+    bool isPrefixOperation    = ExpressionOperationIsPrefix(&token->value.operation, true);
 
     if (isPrefixOperation) fprintf(outStream, "%s ", token->value.operation.texName);
 
@@ -520,7 +497,7 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
 
     if (!isPrefixOperation) fprintf(outStream, "%s ", token->value.operation.texName);
 
-    if (IsUnaryOperation(&token->value.operation))
+    if (ExpressionOperationIsUnary(&token->value.operation))
         return err;
 
     bool needTexRightBraces   = token->value.operation.needTexRightBraces;

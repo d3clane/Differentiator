@@ -27,6 +27,10 @@ static ExpressionOperationType ExpressionOperationTypeCtor(
                                                     bool needTexRightBraces,
                                                     CalculationFuncType* CalculationFunc);
 
+
+static double ExpressionCalculate(const ExpressionTokenType* token, 
+                                  const ExpressionVariablesArrayType* varsArr);
+
 static inline double CalculateADD(const double val1, const double val2);
 static inline double CalculateSUB(const double val1, const double val2);
 static inline double CalculateMUL(const double val1, const double val2);
@@ -607,7 +611,7 @@ void ExpressionTokenSetEdges(ExpressionTokenType* token, ExpressionTokenType* le
 }
 
 //TODO: подумать над созданием файла, где будет все, связанное с операциями
-int GetOperationId(const char* string)
+int ExpressionOperationGetId(const char* string)
 {
     assert(string);
 
@@ -618,4 +622,48 @@ int GetOperationId(const char* string)
             return (int)i;
     }
     return -1;
+}
+
+bool ExpressionOperationIsPrefix(const ExpressionOperationType* operation, bool inTex)
+{
+    assert(operation);
+
+    if (inTex)
+        return operation->operationTexFormat == ExpressionOperationFormat::PREFIX;
+
+    return operation->operationFormat == ExpressionOperationFormat::PREFIX;
+}
+
+bool ExpressionOperationIsUnary(const ExpressionOperationType* operation)
+{
+    assert(operation);
+
+    return operation->isUnaryOperation;
+}
+
+//---------------------------------------------------------------------------------------
+
+double ExpressionCalculate(const ExpressionType* expression)
+{
+    assert(expression);
+
+    return ExpressionCalculate(expression->root, &expression->variables);
+}
+
+static double ExpressionCalculate(const ExpressionTokenType* token, 
+                                  const ExpressionVariablesArrayType* varsArr)
+{
+    if (token == nullptr)
+        return NAN;
+    
+    if (token->valueType == ExpressionTokenValueTypeof::VALUE)
+        return token->value.value;
+
+    if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
+        return token->value.varPtr->variableValue;
+
+    double firstVal  = ExpressionCalculate(token->left,  varsArr);
+    double secondVal = ExpressionCalculate(token->right, varsArr);
+    
+    return token->value.operation.CalculationFunc(firstVal, secondVal);
 }

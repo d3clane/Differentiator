@@ -7,11 +7,6 @@
 
 //---------------------------------------------------------------------------------------
 
-static double ExpressionCalculate(const ExpressionTokenType* token, 
-                                      const ExpressionVariablesArrayType* varsArr);
-
-//---------------------------------------------------------------------------------------
-
 static ExpressionTokenType* ExpressionDifferentiate(
                                         const ExpressionTokenType* token,
                                         const ExpressionVariablesArrayType* varsArr = nullptr,
@@ -143,36 +138,6 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnConstToken(
 //---------------------------------------------------------------------------------------
 
 static bool ExpressionTokenContainVariable(const ExpressionTokenType* token);
-
-//---------------------------------------------------------------------------------------
-
-
-double ExpressionCalculate(const ExpressionType* expression)
-{
-    assert(expression);
-
-    return ExpressionCalculate(expression->root, &expression->variables);
-}
-
-//---------------------------------------------------------------------------------------
-
-static double ExpressionCalculate(const ExpressionTokenType* token, 
-                                      const ExpressionVariablesArrayType* varsArr)
-{
-    if (token == nullptr)
-        return NAN;
-    
-    if (token->valueType == ExpressionTokenValueTypeof::VALUE)
-        return token->value.value;
-
-    if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
-        return token->value.varPtr->variableValue;
-
-    double firstVal  = ExpressionCalculate(token->left,  varsArr);
-    double secondVal = ExpressionCalculate(token->right, varsArr);
-    
-    return token->value.operation.CalculationFunc(firstVal, secondVal);
-}
 
 //---------------------------------------------------------------------------------------
 

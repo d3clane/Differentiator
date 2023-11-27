@@ -3,8 +3,6 @@
 
 #include "MathExpressionsHandler.h"
 
-double ExpressionCalculate(const ExpressionType* expression);
-
 ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
                                                FILE* outTex = nullptr);
 

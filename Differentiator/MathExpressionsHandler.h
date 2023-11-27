@@ -131,6 +131,10 @@ ExpressionType       ExpressionCopy(const ExpressionType* expression);
 ExpressionTokenType* ExpressionTokenCopy(const ExpressionTokenType* token);
 void ExpressionsCopyVariables(ExpressionType* target, const ExpressionType* source);
 
-int GetOperationId(const char* string);
+double ExpressionCalculate(const ExpressionType* expression);
+
+int  ExpressionOperationGetId(const char* string);
+bool ExpressionOperationIsPrefix(const ExpressionOperationType* operation, bool inTex = false);
+bool ExpressionOperationIsUnary(const ExpressionOperationType* operation);
 
 #endif // _EXPRESSIONS_HADNLER_H
