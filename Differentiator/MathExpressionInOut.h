@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "MathExpressionsHandler.h"
+#include "MathExpressionsMain.h"
 
 ExpressionErrors ExpressionPrintPrefixFormat     (const ExpressionType* expression, 
                                                           FILE* outStream = stdout);
@@ -17,7 +17,7 @@ ExpressionErrors ExpressionTokenPrintTexTrollString(
                                                 const ExpressionTokenType* rootToken,
                                                 FILE* outStream,
                                                 const char* string = nullptr);
-                                                
+
 ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token, 
                                          FILE* outStream);
 
