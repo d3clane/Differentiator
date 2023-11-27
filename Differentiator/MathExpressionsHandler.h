@@ -1,18 +1,18 @@
-#ifndef MATH_EXPRESSIONS_HADNLER_H
-#define MATH_EXPRESSIONS_HADNLER_H
+#ifndef _EXPRESSIONS_HADNLER_H
+#define _EXPRESSIONS_HADNLER_H
 
 #include <stdio.h>
 #include <math.h>
 
-struct MathExpressionVariableType
+struct ExpressionVariableType
 {
-    char* variableName;
-    double      variableValue; 
+    char*  variableName;
+    double variableValue; 
 };
 
-struct MathExpressionVariablesArrayType
+struct ExpressionVariablesArrayType
 {
-    MathExpressionVariableType* data;
+    ExpressionVariableType* data;
 
     size_t capacity;
     size_t size;
@@ -20,14 +20,14 @@ struct MathExpressionVariablesArrayType
 
 #define GENERATE_OPERATION_CMD(NAME, ...) NAME, 
 
-enum class MathExpressionOperationsIds
+enum class ExpressionOperationsIds
 {
     #include "Operations.h"
 };
 
 #undef GENERATE_OPERATION_CMD
 
-enum class MathExpressionOperationFormat
+enum class ExpressionOperationFormat
 {
     PREFIX,
     INFIX,
@@ -35,12 +35,12 @@ enum class MathExpressionOperationFormat
 
 typedef double (CalculationFuncType)(double firstVal, double secondVal);
 
-struct MathExpressionOperationType
+struct ExpressionOperationType
 {
 
-    MathExpressionOperationsIds operationId;
-    MathExpressionOperationFormat operationFormat;
-    MathExpressionOperationFormat operationTexFormat;
+    ExpressionOperationsIds   operationId;
+    ExpressionOperationFormat operationFormat;
+    ExpressionOperationFormat operationTexFormat;
     
     bool isUnaryOperation;
 
@@ -49,92 +49,90 @@ struct MathExpressionOperationType
 
     const char* texName;
     bool needTexLeftBraces;
-    bool needTexRightBraces; //TODO: че лучше, два bool-a или битовая фигня, как будто битовая оверкилл для двух случаев
+    bool needTexRightBraces;
 
     CalculationFuncType* CalculationFunc;
 };
 
-union MathExpressionTokenValue
+union ExpressionTokenValue
 {
     double             value;
     int                varId;
-    MathExpressionOperationType operation;
+    ExpressionOperationType operation;
 }; 
 
-enum class MathExpressionTokenValueTypeof
+enum class ExpressionTokenValueTypeof
 {
     VALUE,
     VARIABLE,
     OPERATION, 
 };
 
-struct MathExpressionTokenType
+struct ExpressionTokenType
 {
-    MathExpressionTokenValue        value;
-    MathExpressionTokenValueTypeof  valueType;
+    ExpressionTokenValue        value;
+    ExpressionTokenValueTypeof  valueType;
     
-    MathExpressionTokenType*  left;
-    MathExpressionTokenType* right;
+    ExpressionTokenType*  left;
+    ExpressionTokenType* right;
 };
 
-struct MathExpressionType
+struct ExpressionType
 {
-    MathExpressionTokenType* root;
+    ExpressionTokenType* root;
 
-    MathExpressionVariablesArrayType variables;
+    ExpressionVariablesArrayType variables;
 };
 
-enum class MathExpressionErrors
+enum class ExpressionErrors
 {
     NO_ERR,
 
     MEM_ERR,
 
-    READING_ERR
+    READING_ERR,
+
+
 };
 
-MathExpressionErrors MathExpressionCtor(MathExpressionType* expression);
-MathExpressionErrors MathExpressionDtor(MathExpressionType* expression);
+ExpressionErrors ExpressionCtor(ExpressionType* expression);
+ExpressionErrors ExpressionDtor(ExpressionType* expression);
 
-MathExpressionErrors MathExpressionPrintPrefixFormat     (const MathExpressionType* expression, 
-                                                          FILE* outStream = stdout);
-MathExpressionErrors MathExpressionPrintEquationFormat   (const MathExpressionType* expression, 
-                                                          FILE* outStream = stdout);
-MathExpressionErrors MathExpressionPrintTex(const MathExpressionType* expression,
-                                                          FILE* outStream = stdout, 
-                                                          const char* funnyString = nullptr);
+ExpressionTokenType* ExpressionTokenCtor(ExpressionTokenValue value, 
+                                                        ExpressionTokenValueTypeof valueType,
+                                                        ExpressionTokenType* left  = nullptr,
+                                                        ExpressionTokenType* right = nullptr);
+void ExpressionTokenDtor(ExpressionTokenType* token);
 
-MathExpressionErrors MathExpressionReadPrefixFormat(MathExpressionType* expression, 
-                                                    FILE* inStream = stdin);
-MathExpressionErrors MathExpressionReadInfixFormat (MathExpressionType* expression, 
-                                                    FILE* inStream = stdin);
-MathExpressionErrors MathExpressionReadVariables(MathExpressionType* expression);
+ExpressionTokenValue ExpressionCreateTokenValue(double value);
+ExpressionTokenValue ExpressionCreateTokenValue(ExpressionOperationsIds operationId);
+ExpressionTokenType* ExpressionCreateNumericToken(double value);
 
-#define MATH_EXPRESSION_TEXT_DUMP(expression) MathExpressionTextDump((expression), __FILE__, \
+#define _EXPRESSION_TEXT_DUMP(expression) ExpressionTextDump((expression), __FILE__, \
                                                                                    __func__, \
                                                                                    __LINE__)
 
-void MathExpressionTextDump(const MathExpressionType* expression, const char* fileName, 
+void ExpressionTextDump(const ExpressionType* expression, const char* fileName, 
                                                                   const char* funcName,
                                                                   const int   line);
 
-void MathExpressionGraphicDump(const MathExpressionType* expression, bool openImg = false);
+void ExpressionGraphicDump(const ExpressionType* expression, bool openImg = false);
 
-#define MATH_EXPRESSION_DUMP(expression) MathExpressionDump((expression), __FILE__,  \
+#define _EXPRESSION_DUMP(expression) ExpressionDump((expression), __FILE__,  \
                                                                           __func__,  \
                                                                           __LINE__)
 
-void MathExpressionDump(const MathExpressionType* expression, const char* fileName,
+void ExpressionDump(const ExpressionType* expression, const char* fileName,
                                                               const char* funcName,
                                                               const int   line);
 
-double MathExpressionCalculate(const MathExpressionType* expression);
+void ExpressionTokenSetEdges(ExpressionTokenType* token, ExpressionTokenType* left, 
+                                                         ExpressionTokenType* right);
 
-MathExpressionTokenType* MathExpressionCopy(const MathExpressionTokenType* token);
+ExpressionType       ExpressionCopy(const ExpressionType* expression);
+ExpressionTokenType* ExpressionTokenCopy(const ExpressionTokenType* token);
+void ExpressionsCopyVariables(ExpressionType* target, const ExpressionType* source);
 
-void MathExpressionSimplify(MathExpressionType* expression, FILE* outTex = nullptr);
+int GetOperationId(const char* string);
 
-MathExpressionType MathExpressionDifferentiate(const MathExpressionType* expression,
-                                               FILE* outTex = nullptr);
-
-#endif // MATH_EXPRESSIONS_HADNLER_H
+#endif // _EXPRESSIONS_HADNLER_H

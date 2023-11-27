@@ -1,0 +1,597 @@
+#include <assert.h>
+#include <string.h>
+#include <ctype.h>
+
+#include "MathExpressionInOut.h"
+#include "Common/Log.h"
+#include "FastInput/InputOutput.h"
+#include "Common/StringFuncs.h"
+
+static ExpressionErrors ExpressionPrintPrefixFormat     (
+                                                const ExpressionTokenType* token, 
+                                                const ExpressionVariablesArrayType* varsArr, 
+                                                FILE* outStream);
+
+static ExpressionErrors ExpressionPrintEquationFormat   (
+                                                const ExpressionTokenType* token, 
+                                                const ExpressionVariablesArrayType* varsArr,
+                                                FILE* outStream);
+
+static ExpressionErrors ExpressionPrintTex(
+                                                const ExpressionTokenType* token, 
+                                                const ExpressionVariablesArrayType* varsArr, 
+                                                FILE* outStream);
+
+static void ExpressionTokenPrintValue                       (
+                                                const ExpressionTokenType* token, 
+                                                const ExpressionVariablesArrayType* varsArr, 
+                                                FILE* outStream);
+
+static ExpressionTokenType* ExpressionReadPrefixFormat(
+                                                const char* const string, 
+                                                const char** stringEndPtr,
+                                                ExpressionVariablesArrayType* varsArr);
+
+static ExpressionTokenType* ExpressionReadInfixFormat(
+                                                const char* const string, 
+                                                const char** stringEndPtr,
+                                                ExpressionVariablesArrayType* varsArr);
+
+static const char* ExpressionReadTokenValue(ExpressionTokenValue* value, 
+                                               ExpressionTokenValueTypeof* valueType, 
+                                               ExpressionVariablesArrayType* varsArr,
+                                               const char* stringPtr);
+
+static bool HaveToPutBrackets(const ExpressionTokenType* parent, 
+                              const ExpressionTokenType* son,
+                              bool inTex = false);
+
+static int AddVariable(ExpressionVariablesArrayType* varsArr, const char*  variableName, 
+                                                              const double variableValue = 0);
+static int GetVariableIdByName(const ExpressionVariablesArrayType* varsArr, 
+                               const char* variableName);
+
+static bool IsPrefixOperation(const ExpressionOperationType* operation, bool inTex = false);
+static bool IsUnaryOperation(const ExpressionOperationType* operation);
+
+#define PRINT(outStream, ...)                          \
+do                                                     \
+{                                                      \
+    if (outStream) fprintf(outStream, __VA_ARGS__);    \
+    Log(__VA_ARGS__);                                  \
+} while (0)
+
+ExpressionErrors ExpressionPrintPrefixFormat(const ExpressionType* expression, 
+                                                     FILE* outStream)
+{
+    assert(expression);
+    assert(outStream);
+
+    LOG_BEGIN();
+
+    ExpressionErrors err = ExpressionPrintPrefixFormat(expression->root, 
+                                                               &expression->variables, 
+                                                               outStream);
+
+    PRINT(outStream, "\n");
+
+    LOG_END();
+
+    return err;
+}
+
+//---------------------------------------------------------------------------------------
+
+static ExpressionErrors ExpressionPrintPrefixFormat(
+                                                    const ExpressionTokenType* token, 
+                                                    const ExpressionVariablesArrayType* varsArr, 
+                                                    FILE* outStream)
+{
+    if (token == nullptr)
+    {
+        PRINT(outStream, "nil ");
+        return ExpressionErrors::NO_ERR;
+    }
+
+    PRINT(outStream, "(");
+    
+    if (token->valueType == ExpressionTokenValueTypeof::VALUE)
+        PRINT(outStream, "%.2lf ", token->value.value);
+    else if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
+        PRINT(outStream, "%s ", varsArr->data[token->value.varId].variableName);
+    else
+        PRINT(outStream, "%s ", token->value.operation.longName);
+
+    ExpressionErrors err = ExpressionErrors::NO_ERR;
+
+    err = ExpressionPrintPrefixFormat(token->left,  varsArr, outStream);
+    
+    err = ExpressionPrintPrefixFormat(token->right, varsArr, outStream);
+
+    PRINT(outStream, ")");
+    
+    return err;
+}
+
+//---------------------------------------------------------------------------------------
+
+ExpressionErrors ExpressionPrintEquationFormat(const ExpressionType* expression, 
+                                                       FILE* outStream)
+{
+    assert(expression);
+    assert(outStream);
+
+    LOG_BEGIN();
+
+    ExpressionErrors err = ExpressionPrintEquationFormat(expression->root, 
+                                                                 &expression->variables, 
+                                                                 outStream);
+    PRINT(outStream, "\n");
+
+    LOG_END();
+
+    return err; 
+}
+
+//---------------------------------------------------------------------------------------
+
+static ExpressionErrors ExpressionPrintEquationFormat(
+                                          const ExpressionTokenType* token, 
+                                          const ExpressionVariablesArrayType* varsArr,
+                                          FILE* outStream)
+{
+    if (token->left == nullptr && token->right == nullptr)
+    {
+        ExpressionTokenPrintValue(token, varsArr, outStream);
+
+        return ExpressionErrors::NO_ERR;
+    }
+
+    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
+
+    bool isPrefixOperation = IsPrefixOperation(&token->value.operation);
+    if (isPrefixOperation) fprintf(outStream, "%s ", token->value.operation.shortName);
+
+    bool needLeftBrackets = HaveToPutBrackets(token, token->left);
+    if (needLeftBrackets) PRINT(outStream, "(");
+
+    ExpressionErrors err = ExpressionErrors::NO_ERR;
+    err = ExpressionPrintEquationFormat(token->left, varsArr, outStream);
+
+    if (needLeftBrackets) PRINT(outStream, ")");
+
+    if (!isPrefixOperation) fprintf(outStream, "%s ", token->value.operation.shortName);
+
+    if (IsUnaryOperation(&token->value.operation))  
+        return err;
+
+    bool needRightBrackets = HaveToPutBrackets(token, token->right);
+    if (needRightBrackets) PRINT(outStream, "(");
+
+    err = ExpressionPrintEquationFormat(token->right, varsArr, outStream);
+
+    if (needRightBrackets) PRINT(outStream, ")");
+
+    return err;
+}
+
+//---------------------------------------------------------------------------------------
+
+static bool HaveToPutBrackets(const ExpressionTokenType* parent, 
+                              const ExpressionTokenType* son,
+                              bool inTex)
+{
+    assert(parent);
+
+    assert(parent->valueType == ExpressionTokenValueTypeof::OPERATION);
+
+    if (son->valueType != ExpressionTokenValueTypeof::OPERATION)
+        return false;
+
+    ExpressionOperationsIds parentOperation = parent->value.operation.operationId;
+    ExpressionOperationsIds sonOperation    = son->value.operation.operationId;
+
+    if (IsPrefixOperation(&son->value.operation, inTex))
+        return false;
+
+    if (sonOperation == ExpressionOperationsIds::POW)
+        return false;
+
+    if ((sonOperation    == ExpressionOperationsIds::MUL  || 
+         sonOperation    == ExpressionOperationsIds::DIV) &&
+        (parentOperation == ExpressionOperationsIds::SUB  || 
+         parentOperation == ExpressionOperationsIds::ADD))
+        return false;
+
+    if (sonOperation    == ExpressionOperationsIds::ADD && 
+        parentOperation == ExpressionOperationsIds::ADD)
+        return false;
+    
+    if (sonOperation    == ExpressionOperationsIds::MUL && 
+        parentOperation == ExpressionOperationsIds::MUL)
+        return false;
+
+    return true;
+}
+
+//---------------------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------------------
+
+ExpressionErrors ExpressionReadPrefixFormat(ExpressionType* expression, FILE* inStream)
+{
+    assert(expression);
+    assert(inStream);
+
+    char* inputExpression = ReadText(inStream);
+
+    if (inputExpression == nullptr)
+        return ExpressionErrors::MEM_ERR;
+
+    const char* inputExpressionEndPtr = inputExpression;
+
+    expression->root = ExpressionReadPrefixFormat(inputExpression, 
+                                                      &inputExpressionEndPtr, 
+                                                      &expression->variables);
+
+    free(inputExpression);
+
+    return ExpressionErrors::NO_ERR;
+}
+
+//---------------------------------------------------------------------------------------
+
+static ExpressionTokenType* ExpressionReadPrefixFormat(
+                                                        const char* const string, 
+                                                        const char** stringEndPtr,
+                                                        ExpressionVariablesArrayType* varsArr)
+{
+    assert(string);
+
+    const char* stringPtr = string;
+
+    stringPtr = SkipSymbolsWhileStatement(stringPtr, isspace);
+
+    int symbol = *stringPtr;
+    stringPtr++;
+    if (symbol != '(') //skipping nils
+    {
+        int shift = 0;
+        sscanf(stringPtr, "%*s%n", &shift);
+        stringPtr += shift;
+
+        *stringEndPtr = stringPtr;
+        return nullptr;
+    }
+
+    ExpressionTokenValue value;
+    ExpressionTokenValueTypeof valueType;
+
+    stringPtr = ExpressionReadTokenValue(&value, &valueType, varsArr, stringPtr);
+    ExpressionTokenType* token = ExpressionTokenCtor(value, valueType);
+    
+    ExpressionTokenType* left  = ExpressionReadPrefixFormat(stringPtr, &stringPtr, varsArr);
+
+    ExpressionTokenType* right = nullptr;
+    if (!IsUnaryOperation(&token->value.operation))
+        right = ExpressionReadPrefixFormat(stringPtr, &stringPtr, varsArr);
+
+    stringPtr = SkipSymbolsUntilStopChar(stringPtr, ')');
+    ++stringPtr;
+
+    ExpressionTokenSetEdges(token, left, right);
+
+    *stringEndPtr = stringPtr;
+    return token;
+}
+
+//---------------------------------------------------------------------------------------
+
+ExpressionErrors ExpressionReadInfixFormat (ExpressionType* expression, FILE* inStream)
+{
+    assert(expression);
+    assert(inStream);
+
+    char* inputExpression = ReadText(inStream);
+
+    if (inputExpression == nullptr)
+        return ExpressionErrors::MEM_ERR;
+    
+    const char* inputExpressionEndPtr = inputExpression;
+
+    expression->root = ExpressionReadInfixFormat(inputExpression, 
+                                                     &inputExpressionEndPtr, 
+                                                     &expression->variables);
+
+    free(inputExpression);
+
+    return ExpressionErrors::NO_ERR;
+}
+
+//---------------------------------------------------------------------------------------
+
+static ExpressionTokenType* ExpressionReadInfixFormat(
+                                            const char* const string, 
+                                            const char** stringEndPtr,
+                                            ExpressionVariablesArrayType* varsArr)
+{
+    assert(string);
+
+    const char* stringPtr = string;
+
+    stringPtr = SkipSymbolsWhileStatement(stringPtr, isspace);
+
+    ExpressionTokenValue     value;
+    ExpressionTokenValueTypeof valueType;
+
+    int symbol = *stringPtr;
+    stringPtr++;
+
+    if (symbol != '(')
+    {
+        --stringPtr;
+
+        stringPtr = ExpressionReadTokenValue(&value, &valueType, varsArr, stringPtr);
+        ExpressionTokenType* token = ExpressionTokenCtor(value, valueType);
+
+        *stringEndPtr = stringPtr;
+        return token;
+    }
+
+    ExpressionTokenType* left  = ExpressionReadInfixFormat(stringPtr, &stringPtr, varsArr);
+
+    stringPtr = ExpressionReadTokenValue(&value, &valueType, varsArr, stringPtr);
+    ExpressionTokenType* token = ExpressionTokenCtor(value, valueType);
+    ExpressionTokenType* right = ExpressionReadInfixFormat(stringPtr, &stringPtr, varsArr);
+
+    ExpressionTokenSetEdges(token, left, right);
+
+    stringPtr = SkipSymbolsWhileChar(stringPtr, ')');
+
+    *stringEndPtr = stringPtr;
+    return token;
+}
+
+//---------------------------------------------------------------------------------------
+
+static const char* ExpressionReadTokenValue(ExpressionTokenValue* value, 
+                                               ExpressionTokenValueTypeof* valueType, 
+                                               ExpressionVariablesArrayType* varsArr,
+                                               const char* string)
+{
+    assert(value);
+    assert(string);
+    assert(valueType);
+
+    double readenValue = NAN;
+    int shift = 0;
+    int scanResult = sscanf(string, "%lf%n\n", &readenValue, &shift);
+
+    if (scanResult != 0)
+    {
+        value->value = readenValue;
+        *valueType   = ExpressionTokenValueTypeof::VALUE;
+        return string + shift;
+    }
+
+    shift = 0;
+
+    static const size_t      maxInputStringSize  = 128;
+    static char  inputString[maxInputStringSize] =  "";
+
+    const char* stringPtr = string;
+    sscanf(string, "%s%n", inputString, &shift);
+
+    stringPtr = string + shift;
+    assert(isspace(*stringPtr));
+
+    int operationId = GetOperationId(inputString);
+    if (operationId != -1)
+    {
+        *value     = ExpressionCreateTokenValue((ExpressionOperationsIds) operationId);
+        *valueType = ExpressionTokenValueTypeof::OPERATION;
+        return stringPtr;
+    }
+
+    int varId = AddVariable(varsArr, inputString);
+
+    assert(varId != -1);
+
+    value->varId = varId;
+    *valueType   = ExpressionTokenValueTypeof::VARIABLE;
+
+    return stringPtr;
+}
+
+
+static bool IsPrefixOperation(const ExpressionOperationType* operation, bool inTex)
+{
+    assert(operation);
+
+    if (inTex)
+        return operation->operationTexFormat == ExpressionOperationFormat::PREFIX;
+
+    return operation->operationFormat == ExpressionOperationFormat::PREFIX;
+}
+
+//---------------------------------------------------------------------------------------
+
+static bool IsUnaryOperation(const ExpressionOperationType* operation)
+{
+    assert(operation);
+
+    return operation->isUnaryOperation;
+}
+
+//---------------------------------------------------------------------------------------
+
+static void ExpressionTokenPrintValue(const ExpressionTokenType* token, 
+                                          const ExpressionVariablesArrayType* varsArr, 
+                                          FILE* outStream)
+{
+    assert(token->valueType != ExpressionTokenValueTypeof::OPERATION);
+
+    if (token->valueType == ExpressionTokenValueTypeof::VALUE)
+        PRINT(outStream, "%.2lf ", token->value.value);
+    else if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
+        PRINT(outStream, "%s ", varsArr->data[token->value.varId].variableName);
+}
+
+#undef PRINT
+
+//---------------------------------------------------------------------------------------
+
+ExpressionErrors ExpressionPrintTex(const ExpressionType* expression, 
+                                                          FILE* outStream,
+                                                          const char* string)
+{
+    assert(expression);
+    assert(outStream);
+
+    return ExpressionPrintTexTrollString(expression->root, 
+                                         &expression->variables, outStream, string);
+}
+
+//TODO: подумать над тем, куда запихать, потому что явно статическая
+ExpressionErrors ExpressionPrintTexTrollString( const ExpressionTokenType* rootToken,
+                                                const ExpressionVariablesArrayType* varsArr,
+                                                FILE* outStream,
+                                                const char* string)
+{
+    assert(rootToken);
+    assert(outStream);
+
+    static const size_t            numberOfRoflStrings  = 8;
+    static const char* roflStrings[numberOfRoflStrings] = 
+    {
+        "Очевидно, что",
+        "Несложно заметить, что", 
+        "Любопытный читатель может показать, что",
+        "Не буду утруждать себя доказательством, что",
+        "Я нашел удивительное решение, но здесь маловато места, чтобы его поместить, ",
+        "Без комментариев, ",
+        "Это же не рокет саенс, поэтому легко видеть, что",
+
+        "Ребят, вы че издеваетесь?"
+        "Я понимаю, что вам хочется просто расслабиться и наслаждаться жизнью."
+        "И не думать о дифференцировании, решении уравнений."
+        "У меня просто завален весь direct"
+        "\"Арман, ты же умеешь дифференцировать, продифференцируй, тебе жалко что ли?\""
+        "Мне не сложно, но я не могу дифференцировать просто так! Поэтому давайте поступим так."
+        "Целый год мои дифференциалы были платными."
+        "Для того, чтобы получить дифференцирование, нужно было заплатить." 
+        "Сегодня мне захотелось, чтобы через мой продукт смог пройти каждый."
+        "Чтобы у каждого была возможность не отчислиться."
+        "Потому что не каждый может позволить себе дифференциал, "
+        "когда в приоритете по расходам сначала идёт семья/кредиты/ипотеки."
+        "Не упусти свой шанс! Бесплатное дифференцирование: "
+    };
+
+    if (string == nullptr)
+        fprintf(outStream, "%s\n", roflStrings[rand() % numberOfRoflStrings]);
+    else
+        fprintf(outStream, "%s\n", string);
+    
+    fprintf(outStream, "\\begin{gather}\n\\end{gather}\n\\begin{}\n");
+
+    ExpressionErrors err = ExpressionPrintTex(rootToken, varsArr, outStream);
+
+    fprintf(outStream, "\\\\\n\\end{}\n");
+
+    return err;
+}
+
+static ExpressionErrors ExpressionPrintTex(
+                                             const ExpressionTokenType* token, 
+                                             const ExpressionVariablesArrayType* varsArr, 
+                                             FILE* outStream)
+{
+    assert(token);
+    assert(outStream);
+
+    if (token->left == nullptr && token->right == nullptr)
+    {
+        ExpressionTokenPrintValue(token, varsArr, outStream);
+
+        return ExpressionErrors::NO_ERR;
+    }
+
+    ExpressionErrors err = ExpressionErrors::NO_ERR;
+    assert((token->valueType == ExpressionTokenValueTypeof::OPERATION));
+
+    bool isPrefixOperation    = IsPrefixOperation(&token->value.operation, true);
+
+    if (isPrefixOperation) fprintf(outStream, "%s ", token->value.operation.texName);
+
+    bool needLeftBrackets  = HaveToPutBrackets(token, token->left);
+    bool needTexLeftBraces = token->value.operation.needTexLeftBraces;
+
+    if (needTexLeftBraces)                      fprintf(outStream, "{");
+    if (!needTexLeftBraces && needLeftBrackets) fprintf(outStream, "(");
+
+    err = ExpressionPrintTex(token->left, varsArr, outStream);
+
+    if (!needTexLeftBraces && needLeftBrackets) fprintf(outStream, ")");
+    if (needTexLeftBraces)                      fprintf(outStream, "}");
+
+    if (!isPrefixOperation) fprintf(outStream, "%s ", token->value.operation.texName);
+
+    if (IsUnaryOperation(&token->value.operation))
+        return err;
+
+    bool needTexRightBraces   = token->value.operation.needTexRightBraces;
+    bool needRightBrackets    = HaveToPutBrackets(token, token->right);
+    
+    if (needTexRightBraces)                       fprintf(outStream, "{");
+    if (!needTexRightBraces && needRightBrackets) fprintf(outStream, "(");
+    err = ExpressionPrintTex(token->right, varsArr, outStream);
+    if (!needTexRightBraces && needRightBrackets) fprintf(outStream, ")");
+    if (needTexRightBraces)                       fprintf(outStream, "}");
+
+    return err;   
+}
+//---------------------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------------------
+
+static int AddVariable(ExpressionVariablesArrayType* varsArr, const char*  variableName, 
+                                                              const double variableValue)
+{
+    assert(varsArr);
+    assert(variableName);
+
+    int varId = GetVariableIdByName(varsArr, variableName);
+
+    if (varId != -1)
+        return varId;
+        
+    assert(varsArr->size < varsArr->capacity);
+
+    varsArr->data[varsArr->size].variableName  = strdup(variableName);
+
+    assert(varsArr->data[varsArr->size].variableName);
+    if (varsArr->data[varsArr->size].variableName == nullptr)
+        return -1;
+    
+    varsArr->data[varsArr->size].variableValue = variableValue;
+    varsArr->size++;
+
+    return (int)varsArr->size - 1;
+}
+
+//---------------------------------------------------------------------------------------
+
+static int GetVariableIdByName(const ExpressionVariablesArrayType* varsArr, 
+                               const char* variableName)
+{
+    assert(varsArr);
+    assert(variableName);
+
+    for (size_t i = 0; i < varsArr->size; ++i)
+    {
+        if (strcmp(varsArr->data[i].variableName, variableName) == 0)
+            return (int)i;
+    }
+    
+    return -1;
+}

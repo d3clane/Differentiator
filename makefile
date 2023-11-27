@@ -14,16 +14,22 @@ CXXFLAGS = -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++ -Waggressive-l
 		   -fPIE -Werror=vla -I/Library/Frameworks/SDL2.framework/Headers -F/Library/Frameworks	  	  \
 		   -framework SDL2
 
-TARGET = differentiator
+HOME = $(shell pwd)
+CXXFLAGS += -I $(HOME)
+
+TARGET = Differentiator/differentiator.exe
 DOXYFILE = Others/Doxyfile
 
-HEADERS  = MathExpressionsHandler.h ../Common/Log.h ../Common/Errors.h ../Common/Colors.h ../Common/StringFuncs.h \
-							../Common/DoubleFuncs.h 					\
-							../FastInput/InputOutput.h ../FastInput/StringFuncs.h
 
-FILESCPP = MathExpressionsHandler.cpp main.cpp ../Common/Log.cpp ../Common/Errors.cpp ../Common/StringFuncs.cpp \
-									   ../Common/DoubleFuncs.cpp 	\
-							../FastInput/InputOutput.cpp ../FastInput/StringFuncs.cpp
+HEADERS  = Differentiator/MathExpressionsHandler.h 	Differentiator/MathExpressionCalculations.h	\
+		   Differentiator/MathExpressionInOut.h \
+		   Common/Log.h Common/Errors.h Common/Colors.h Common/StringFuncs.h Common/DoubleFuncs.h 	\
+		   FastInput/InputOutput.h 	FastInput/StringFuncs.h
+
+FILESCPP = Differentiator/MathExpressionsHandler.cpp 	Differentiator/main.cpp \
+		   Differentiator/MathExpressionCalculations.cpp	Differentiator/MathExpressionInOut.cpp \
+		   Common/Log.cpp Common/Errors.cpp Common/StringFuncs.cpp Common/DoubleFuncs.cpp 	\
+		   FastInput/InputOutput.cpp	FastInput/StringFuncs.cpp
 
 objects = $(FILESCPP:%.cpp=%.o)
 

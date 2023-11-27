@@ -1,3 +1,7 @@
+#ifndef GENERATE_OPERATION_CMD
+#define GENERATE_OPERATION_CMD(...)
+#endif
+
 GENERATE_OPERATION_CMD(ADD, INFIX,  INFIX, false, "+", "+",      false, false)
 GENERATE_OPERATION_CMD(SUB, INFIX,  INFIX, false, "-", "-",      false, false)
 GENERATE_OPERATION_CMD(MUL, INFIX,  INFIX, false, "*", "\\cdot", false, false)
@@ -16,3 +20,4 @@ GENERATE_OPERATION_CMD(ARCSIN, PREFIX, PREFIX, true, "arcsin", "\\arcsin", false
 GENERATE_OPERATION_CMD(ARCCOS, PREFIX, PREFIX, true, "arccos", "\\arccos", false, false)
 GENERATE_OPERATION_CMD(ARCTAN, PREFIX, PREFIX, true, "arctan", "\\arctan", false, false)
 GENERATE_OPERATION_CMD(ARCCOT, PREFIX, PREFIX, true, "arccot", "\\arccot", false, false)
+
