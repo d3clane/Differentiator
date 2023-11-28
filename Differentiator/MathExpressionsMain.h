@@ -88,7 +88,11 @@ void ExpressionTokenDtor(ExpressionTokenType* token);
 
 ExpressionTokenValue ExpressionTokenValueСreate(double value);
 ExpressionTokenValue ExpressionTokenValueСreate(ExpressionOperationId operationId);
+ExpressionTokenValue ExpressionTokenValueСreate(ExpressionVariableType* varPtr);
+
 ExpressionTokenType* ExpressionNumericTokenCreate(double value);
+ExpressionTokenType* ExpressionVariableTokenCreate(ExpressionVariablesArrayType* varsArr,
+                                                   const char* varName);
 
 #define _EXPRESSION_TEXT_DUMP(expression) ExpressionTextDump((expression), __FILE__, \
                                                                                    __func__, \
@@ -114,18 +118,20 @@ void ExpressionTokenSetEdges(ExpressionTokenType* token, ExpressionTokenType* le
 ExpressionType       ExpressionCopy(const ExpressionType* expression);
 ExpressionTokenType* ExpressionTokenCopy(const ExpressionTokenType* token);
 
-void ExpressionsCopyVariables(ExpressionType* target, const ExpressionType* source);
+ExpressionVariableType* ExpressionVariableSet(ExpressionType* expression, 
+                                              const char*  variableName, 
+                                              const double variableValue = 0);
 
-double ExpressionCalculate(const ExpressionType* expression);
+ExpressionVariableType* ExpressionVariableSet(ExpressionVariablesArrayType* varsArr, 
+                                              const char*  variableName, 
+                                              const double variableValue = 0);
+
+void ExpressionsCopyVariables(ExpressionType* target, const ExpressionType* source);
 
 //-------------Operations funcs-----------
 
 int  ExpressionOperationGetId(const char* string);
-
 const char* ExpressionOperationGetLongName(const  ExpressionOperationId operation);
 const char* ExpressionOperationGetShortName(const ExpressionOperationId operation);
-//TODO: вот теперь можно переносить в InOut
-bool ExpressionOperationIsPrefix(const ExpressionOperationId operation, bool inTex = false);
-bool ExpressionOperationIsUnary(const ExpressionOperationId operation);
 
 #endif // _EXPRESSIONS_HADNLER_H

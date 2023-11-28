@@ -14,6 +14,9 @@
 
 static void ExpressionDtor     (ExpressionTokenType* token);
 
+static ExpressionVariableType* GetVariablePtrByName(const ExpressionVariablesArrayType* varsArr, 
+                                                    const char* variableName);
+
 static void ExpressionGraphicDump(const ExpressionTokenType* token, FILE* outDotFile);
 static void DotFileCreateTokens(const ExpressionTokenType* token, 
                                const ExpressionVariablesArrayType* varsArr, FILE* outDotFile);
@@ -278,6 +281,57 @@ void ExpressionsCopyVariables(      ExpressionType* target,
 
 //---------------------------------------------------------------------------------------
 
+ExpressionVariableType* ExpressionVariableSet(ExpressionType* expression, 
+                                    const char*  variableName, 
+                                    const double variableValue)
+{
+    assert(expression);
+    assert(variableName);
+
+    return ExpressionVariableSet(&expression->variables, variableName, variableValue);
+}
+
+ExpressionVariableType* ExpressionVariableSet(ExpressionVariablesArrayType* varsArr, 
+                                              const char*  variableName, 
+                                              const double variableValue = 0)
+{
+    assert(varsArr);
+    assert(variableName);
+
+    ExpressionVariableType* varPtr = GetVariablePtrByName(varsArr, variableName);
+
+    if (varPtr != nullptr)
+        return varPtr;
+        
+    assert(varsArr->size < varsArr->capacity);
+
+    varsArr->data[varsArr->size].variableName  = strdup(variableName);
+
+    assert(varsArr->data[varsArr->size].variableName);
+    if (varsArr->data[varsArr->size].variableName == nullptr)
+        return nullptr;
+    
+    varsArr->data[varsArr->size].variableValue = variableValue;
+    varsArr->size++;
+
+    return varsArr->data + (int)varsArr->size - 1;
+}
+
+static ExpressionVariableType* GetVariablePtrByName(const ExpressionVariablesArrayType* varsArr, 
+                                                    const char* variableName)
+{
+    assert(varsArr);
+    assert(variableName);
+
+    for (size_t i = 0; i < varsArr->size; ++i)
+    {
+        if (strcmp(varsArr->data[i].variableName, variableName) == 0)
+            return varsArr->data + i;
+    }
+    
+    return nullptr;
+}
+
 ExpressionErrors ExpressionReadVariables(ExpressionType* expression)
 {
     assert(expression);
@@ -333,13 +387,21 @@ ExpressionTokenValue ExpressionTokenValueСreate(double value)
     return tokenValue;
 }
 
-//---------------------------------------------------------------------------------------
-
 ExpressionTokenValue ExpressionTokenValueСreate(ExpressionOperationId operation)
 {
     ExpressionTokenValue value =
     {
         .operation = operation,
+    };
+
+    return value;
+}
+
+ExpressionTokenValue ExpressionTokenValueСreate(ExpressionVariableType* varPtr)
+{
+    ExpressionTokenValue value =
+    {
+        .varPtr = varPtr,
     };
 
     return value;
@@ -352,6 +414,18 @@ ExpressionTokenType* ExpressionNumericTokenCreate(double value)
     ExpressionTokenValue tokenVal = ExpressionTokenValueСreate(value);
 
     return ExpressionTokenCtor(tokenVal, ExpressionTokenValueTypeof::VALUE);
+}
+
+ExpressionTokenType* ExpressionVariableTokenCreate(ExpressionVariablesArrayType* varsArr,
+                                                   const char* varName)
+{
+    assert(varsArr);
+    assert(varName);
+
+    ExpressionVariableType* varPtr = ExpressionVariableSet(varsArr, varName);
+    ExpressionTokenValue tokenVal  = ExpressionTokenValueСreate(varPtr);
+
+    return ExpressionTokenCtor(tokenVal, ExpressionTokenValueTypeof::VARIABLE);
 }
 
 //---------------------------------------------------------------------------------------
@@ -396,64 +470,6 @@ int ExpressionOperationGetId(const char* string)
     }
 
     return -1;
-}
-
-bool ExpressionOperationIsPrefix(const ExpressionOperationId operation, bool inTex)
-{
-
-    #define GENERATE_OPERATION_CMD(NAME, FORMAT, TEX_FORMAT, ...)                               \
-        case ExpressionOperationId::NAME:                                                       \
-            return ExpressionOperationFormat::TEX_FORMAT == ExpressionOperationFormat::PREFIX;
-
-    if (inTex)
-    {
-        switch (operation)
-        {
-            #include "Operations.h"
-
-            default:
-                break;
-        }
-
-        return false;
-    }
-
-    #undef  GENERATE_OPERATION_CMD
-    #define GENERATE_OPERATION_CMD(NAME, FORMAT, ...)                                           \
-        case ExpressionOperationId::NAME:                                                       \
-            return ExpressionOperationFormat::FORMAT == ExpressionOperationFormat::PREFIX;
-
-    switch(operation)
-    {
-        #include "Operations.h"
-
-        default:
-            break;
-    }
-
-    #undef  GENERATE_OPERATION_CMD
-
-    return false;
-}
-
-bool ExpressionOperationIsUnary(const ExpressionOperationId operation)
-{
-
-    #define GENERATE_OPERATION_CMD(NAME, v1, v2, IS_UNARY, ...)                         \
-        case ExpressionOperationId::NAME:                                               \
-            return IS_UNARY;
-        
-    switch (operation)
-    {
-        #include "Operations.h"
-
-        default:
-            break;
-    }
-
-    #undef GENERATE_OPERATION_CMD
-
-    return false;
 }
 
 const char* ExpressionOperationGetLongName(const  ExpressionOperationId operation)

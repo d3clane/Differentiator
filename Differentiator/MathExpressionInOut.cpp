@@ -11,6 +11,9 @@ static const char* ExpressionOperationGetTexName (const ExpressionOperationId op
 static bool ExpressionOperationNeedTexRightBraces(const ExpressionOperationId operation);
 static bool ExpressionOperationNeedTexLeftBraces (const ExpressionOperationId operation);
 
+static bool ExpressionOperationIsPrefix(const ExpressionOperationId operation, bool inTex = false);
+static bool ExpressionOperationIsUnary(const ExpressionOperationId operation);
+
 static ExpressionErrors ExpressionPrintPrefixFormat     (
                                                 const ExpressionTokenType* token, 
                                                 FILE* outStream);
@@ -41,10 +44,6 @@ static const char* ExpressionReadTokenValue(ExpressionTokenValue* value,
 static bool HaveToPutBrackets(const ExpressionTokenType* parent, 
                               const ExpressionTokenType* son,
                               bool inTex = false);
-
-static ExpressionVariableType* AddVariable(ExpressionVariablesArrayType* varsArr, 
-                                           const char*  variableName, 
-                                           const double variableValue = 0);
 
 static ExpressionVariableType* GetVariablePtrByName(const ExpressionVariablesArrayType* varsArr, 
                                                     const char* variableName);
@@ -384,7 +383,7 @@ static const char* ExpressionReadTokenValue(ExpressionTokenValue* value,
         return stringPtr;
     }
 
-    ExpressionVariableType* varPtr = AddVariable(varsArr, inputString);
+    ExpressionVariableType* varPtr = ExpressionVariableSet(varsArr, inputString);
 
     assert(varPtr != nullptr);
 
@@ -520,50 +519,8 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
     return err;   
 }
 
-//---------------------------------------------------------------------------------------
-
-static ExpressionVariableType* AddVariable(ExpressionVariablesArrayType* varsArr, 
-                                           const char*  variableName, 
-                                           const double variableValue)
-{
-    assert(varsArr);
-    assert(variableName);
-
-    ExpressionVariableType* varPtr = GetVariablePtrByName(varsArr, variableName);
-
-    if (varPtr != nullptr)
-        return varPtr;
-        
-    assert(varsArr->size < varsArr->capacity);
-
-    varsArr->data[varsArr->size].variableName  = strdup(variableName);
-
-    assert(varsArr->data[varsArr->size].variableName);
-    if (varsArr->data[varsArr->size].variableName == nullptr)
-        return nullptr;
-    
-    varsArr->data[varsArr->size].variableValue = variableValue;
-    varsArr->size++;
-
-    return varsArr->data + (int)varsArr->size - 1;
-}
 
 //---------------------------------------------------------------------------------------
-
-static ExpressionVariableType* GetVariablePtrByName(const ExpressionVariablesArrayType* varsArr, 
-                                                    const char* variableName)
-{
-    assert(varsArr);
-    assert(variableName);
-
-    for (size_t i = 0; i < varsArr->size; ++i)
-    {
-        if (strcmp(varsArr->data[i].variableName, variableName) == 0)
-            return varsArr->data + i;
-    }
-    
-    return nullptr;
-}
 
 static const char* ExpressionOperationGetTexName(const ExpressionOperationId operation)
 {
@@ -621,3 +578,62 @@ static bool ExpressionOperationNeedTexLeftBraces(const ExpressionOperationId ope
 
     return false;
 }
+
+bool ExpressionOperationIsPrefix(const ExpressionOperationId operation, bool inTex)
+{
+
+    #define GENERATE_OPERATION_CMD(NAME, FORMAT, TEX_FORMAT, ...)                               \
+        case ExpressionOperationId::NAME:                                                       \
+            return ExpressionOperationFormat::TEX_FORMAT == ExpressionOperationFormat::PREFIX;
+
+    if (inTex)
+    {
+        switch (operation)
+        {
+            #include "Operations.h"
+
+            default:
+                break;
+        }
+
+        return false;
+    }
+
+    #undef  GENERATE_OPERATION_CMD
+    #define GENERATE_OPERATION_CMD(NAME, FORMAT, ...)                                           \
+        case ExpressionOperationId::NAME:                                                       \
+            return ExpressionOperationFormat::FORMAT == ExpressionOperationFormat::PREFIX;
+
+    switch(operation)
+    {
+        #include "Operations.h"
+
+        default:
+            break;
+    }
+
+    #undef  GENERATE_OPERATION_CMD
+
+    return false;
+}
+
+bool ExpressionOperationIsUnary(const ExpressionOperationId operation)
+{
+
+    #define GENERATE_OPERATION_CMD(NAME, v1, v2, IS_UNARY, ...)                         \
+        case ExpressionOperationId::NAME:                                               \
+            return IS_UNARY;
+        
+    switch (operation)
+    {
+        #include "Operations.h"
+
+        default:
+            break;
+    }
+
+    #undef GENERATE_OPERATION_CMD
+
+    return false;
+}
+

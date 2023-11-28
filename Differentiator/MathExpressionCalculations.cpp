@@ -17,8 +17,8 @@ static double CalculateUsingOperation(const ExpressionOperationId operation,
 #define D(TOKEN) ExpressionDifferentiate(TOKEN, outTex)
 #define C(TOKEN) ExpressionTokenCopy(TOKEN)                                     
 
-
-#define CONST_TOKEN(VALUE) ExpressionNumericTokenCreate(VALUE)
+#define NUM_TOKEN(VALUE)    ExpressionNumericTokenCreate(VALUE)
+#define VAR_TOKEN(VARS_ARR, VAR_NAME) ExpressionVariableTokenCreate(VARS_ARR, VAR_NAME)
 
 #define GENERATE_OPERATION_CMD(NAME, ...)                                                   \
     static inline ExpressionTokenType* _##NAME(ExpressionTokenType* left,                   \
@@ -169,8 +169,7 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
     return diffExpression;
 }
 
-static ExpressionTokenType* ExpressionDifferentiate(
-                                                    const ExpressionTokenType* token,
+static ExpressionTokenType* ExpressionDifferentiate(const ExpressionTokenType* token,
                                                     FILE* outTex)
 {
     assert(token);
@@ -312,7 +311,7 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
         leftVal = token->left->value.value;
         if (token->right) rightVal = token->right->value.value;
 
-        return CONST_TOKEN(CalculateUsingOperation(token->value.operation, leftVal, rightVal));
+        return NUM_TOKEN(CalculateUsingOperation(token->value.operation, leftVal, rightVal));
     }
     return token;
 }
@@ -429,7 +428,7 @@ static inline ExpressionTokenType* ExpressionSimplifySub(ExpressionTokenType* to
         ExpressionTokenDtor(token->left);
         token->left = nullptr;
 
-        ExpressionTokenType* simpledToken = _MUL(CONST_TOKEN(-1), token->right);
+        ExpressionTokenType* simpledToken = _MUL(NUM_TOKEN(-1), token->right);
         token->right = nullptr;
 
         return simpledToken;
@@ -587,16 +586,14 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnConstToken(
     token->left  = nullptr;
     token->right = nullptr;
 
-    return CONST_TOKEN(value);
+    return NUM_TOKEN(value);
 }
 
 //---------------------------------------------------------------------------------------
 
 #undef C
 #undef D
-#undef TOKEN
 #undef CONST_TOKEN
-#undef UNARY_TOKEN
 
 //---------------------------------------------------------------------------------------
 
@@ -616,4 +613,39 @@ static bool ExpressionTokenContainVariable(const ExpressionTokenType* token)
     containVariable = ExpressionTokenContainVariable(token->right);
 
     return containVariable;
+}
+
+//---------------------------------------------------------------------------------------
+
+ExpressionType ExpressionTaylorize(const ExpressionType* expression, const int n)
+{
+    assert(expression);
+    assert(expression->variables.size == 1);
+    // проверка на 1 потому что я умею раскладывать тейлор только по одному значению
+
+    ExpressionType taylorSeries = ExpressionCopy(expression);
+    ExpressionType tmpDiffExpr  = ExpressionCopy(expression);
+
+    ExpressionTokenType* xMinusX0Token = _SUB(VAR_TOKEN(&taylorSeries.variables, 
+                                                    taylorSeries.variables.data[0].variableName),
+                                                    VAR_TOKEN(&taylorSeries.variables, "x_0"));
+
+    for (size_t i = 0; i < n; ++i)
+    {
+        ExpressionType tmp = ExpressionDifferentiate(&tmpDiffExpr);
+        ExpressionDtor(&tmpDiffExpr);
+
+        taylorSeries.root = _ADD(taylorSeries.root, 
+                                _MUL(tmp.root, POW(C(xMinusX0Token), NUM_TOKEN(i))));
+        
+        tmpDiffExpr = tmp;
+    }
+
+    ExpressionDtor(&tmpDiffExpr);
+    ExpressionTokenDtor(xMinusX0Token);
+    xMinusX0Token = nullptr;
+
+    ExpressionSimplify(&taylorSeries);
+    
+    return taylorSeries;
 }

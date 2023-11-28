@@ -88,7 +88,7 @@ GENERATE_OPERATION_CMD(DIV, INFIX, PREFIX, false, "/", "\\frac", true,  true,
 
     return _DIV(_SUB(_MUL(D(token->left), C(token->right)), 
                                  _MUL(C(token->left), D(token->right))),
-                      _POW(C(token->right), CONST_TOKEN(2)));
+                      _POW(C(token->right), NUM_TOKEN(2)));
 })
 
 GENERATE_OPERATION_CMD(POW, INFIX, INFIX, false,     "^",     "^",  false, true,
@@ -107,12 +107,12 @@ GENERATE_OPERATION_CMD(POW, INFIX, INFIX, false,     "^",     "^",  false, true,
     bool powerContainVar = ExpressionTokenContainVariable(token->right);
 
     if (!baseContainVar && !powerContainVar)
-        return CONST_TOKEN(0);
+        return NUM_TOKEN(0);
 
     if (baseContainVar && !powerContainVar)
         return _MUL(_MUL(C(token->right), D(token->left)), 
                           _POW(C(token->left), 
-                                     _SUB(C(token->right), CONST_TOKEN(1))));
+                                     _SUB(C(token->right), NUM_TOKEN(1))));
                         
     if (!baseContainVar && powerContainVar)
         return _MUL(_POW(C(token->left), C(token->right)),
@@ -184,7 +184,7 @@ GENERATE_OPERATION_CMD(COS, PREFIX, PREFIX, true, "cos", "\\cos", false, false,
     assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
     assert(token->value.operation == ExpressionOperationId::COS);
 
-    return _MUL(CONST_TOKEN(-1), 
+    return _MUL(NUM_TOKEN(-1), 
                       _MUL(_SIN(C(token->left)), D(token->left)));
 })
 
@@ -200,7 +200,7 @@ GENERATE_OPERATION_CMD(TAN, PREFIX, PREFIX, true, "tan", "\\tan", false, false,
     assert(token->value.operation == ExpressionOperationId::TAN);
 
     return _DIV(D(token->left), 
-                      _POW(_COS(C(token->left)), CONST_TOKEN(2)));
+                      _POW(_COS(C(token->left)), NUM_TOKEN(2)));
 })
 
 GENERATE_OPERATION_CMD(COT, PREFIX, PREFIX, true, "cot", "\\cot", false, false,
@@ -219,9 +219,9 @@ GENERATE_OPERATION_CMD(COT, PREFIX, PREFIX, true, "cot", "\\cot", false, false,
     assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
     assert(token->value.operation == ExpressionOperationId::COT);
 
-    return _MUL(CONST_TOKEN(-1), 
+    return _MUL(NUM_TOKEN(-1), 
                       _DIV(D(token->left), 
-                                 _POW(_SIN(C(token->left)), CONST_TOKEN(2))));
+                                 _POW(_SIN(C(token->left)), NUM_TOKEN(2))));
 })
 
 GENERATE_OPERATION_CMD(ARCSIN, PREFIX, PREFIX, true, "arcsin", "\\arcsin", false, false,
@@ -236,9 +236,9 @@ GENERATE_OPERATION_CMD(ARCSIN, PREFIX, PREFIX, true, "arcsin", "\\arcsin", false
     assert(token->value.operation == ExpressionOperationId::ARCSIN);
 
     return _DIV(D(token->left),
-                      _POW(_SUB(CONST_TOKEN(1), 
-                                            _POW(C(token->left), CONST_TOKEN(2))),
-                                 CONST_TOKEN(0.5)));
+                      _POW(_SUB(NUM_TOKEN(1), 
+                                            _POW(C(token->left), NUM_TOKEN(2))),
+                                 NUM_TOKEN(0.5)));
 })
 
 GENERATE_OPERATION_CMD(ARCCOS, PREFIX, PREFIX, true, "arccos", "\\arccos", false, false,
@@ -252,11 +252,11 @@ GENERATE_OPERATION_CMD(ARCCOS, PREFIX, PREFIX, true, "arccos", "\\arccos", false
     assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
     assert(token->value.operation == ExpressionOperationId::ARCCOS);
 
-    return _DIV(CONST_TOKEN(-1),
+    return _DIV(NUM_TOKEN(-1),
                       _MUL(D(token->left),
-                                 _POW(_SUB(CONST_TOKEN(1), 
-                                                       _POW(C(token->left), CONST_TOKEN(2))),
-                                            CONST_TOKEN(0.5))));
+                                 _POW(_SUB(NUM_TOKEN(1), 
+                                                       _POW(C(token->left), NUM_TOKEN(2))),
+                                            NUM_TOKEN(0.5))));
 })
 
 GENERATE_OPERATION_CMD(ARCTAN, PREFIX, PREFIX, true, "arctan", "\\arctan", false, false,
@@ -271,8 +271,8 @@ GENERATE_OPERATION_CMD(ARCTAN, PREFIX, PREFIX, true, "arctan", "\\arctan", false
     assert(token->value.operation == ExpressionOperationId::ARCTAN);
 
     return _DIV(D(token->left), 
-                      _ADD(CONST_TOKEN(1),
-                                 _POW(C(token->left), CONST_TOKEN(2))));
+                      _ADD(NUM_TOKEN(1),
+                                 _POW(C(token->left), NUM_TOKEN(2))));
 })
 
 GENERATE_OPERATION_CMD(ARCCOT, PREFIX, PREFIX, true, "arccot", "\\arccot", false, false,
@@ -286,8 +286,8 @@ GENERATE_OPERATION_CMD(ARCCOT, PREFIX, PREFIX, true, "arccot", "\\arccot", false
     assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
     assert(token->value.operation == ExpressionOperationId::ARCCOT);
 
-    return _MUL(CONST_TOKEN(-1),
+    return _MUL(NUM_TOKEN(-1),
                       _DIV(D(token->left),
-                                 _ADD(CONST_TOKEN(1),
-                                            _POW(C(token->left), CONST_TOKEN(2)))));
+                                 _ADD(NUM_TOKEN(1),
+                                            _POW(C(token->left), NUM_TOKEN(2)))));
 })
