@@ -553,3 +553,23 @@ const char* ExpressionOperationGetShortName(const ExpressionOperationId operatio
 
     return nullptr;
 }
+
+bool ExpressionOperationIsUnary(const ExpressionOperationId operation)
+{
+
+    #define GENERATE_OPERATION_CMD(NAME, v1, v2, IS_UNARY, ...)                         \
+        case ExpressionOperationId::NAME:                                               \
+            return IS_UNARY;
+        
+    switch (operation)
+    {
+        #include "Operations.h"
+
+        default:
+            break;
+    }
+
+    #undef GENERATE_OPERATION_CMD
+
+    return false;
+}

@@ -138,7 +138,8 @@ void ExpressionsCopyVariables(ExpressionType* target, const ExpressionType* sour
 //-------------Operations funcs-----------
 
 int  ExpressionOperationGetId(const char* string);
-const char* ExpressionOperationGetLongName(const  ExpressionOperationId operation);
+const char* ExpressionOperationGetLongName (const  ExpressionOperationId operation);
 const char* ExpressionOperationGetShortName(const ExpressionOperationId operation);
+bool ExpressionOperationIsUnary(const ExpressionOperationId operation);
 
 #endif // _EXPRESSIONS_HADNLER_H

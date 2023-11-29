@@ -215,7 +215,7 @@ static ExpressionTokenType* ExpressionDiffOperation(const ExpressionTokenType* t
 {
     assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
 
-    #define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, v4, v5, v6, v7, v8, DIFF_CODE)     \
+    #define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, v4, v5, v6, v7, v8, DIFF_CODE, ...)\
         case ExpressionOperationId::NAME:                                               \
         {                                                                               \
             DIFF_CODE;                                                                  \

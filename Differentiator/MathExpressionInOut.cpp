@@ -12,7 +12,6 @@ static bool ExpressionOperationNeedTexRightBraces(const ExpressionOperationId op
 static bool ExpressionOperationNeedTexLeftBraces (const ExpressionOperationId operation);
 
 static bool ExpressionOperationIsPrefix(const ExpressionOperationId operation, bool inTex = false);
-static bool ExpressionOperationIsUnary(const ExpressionOperationId operation);
 
 static ExpressionErrors ExpressionPrintPrefixFormat     (
                                                 const ExpressionTokenType* token, 
@@ -128,7 +127,6 @@ static ExpressionErrors ExpressionPrintEquationFormat(
 {
     if (token->left == nullptr && token->right == nullptr)
     {
-        assert(token->valueType != ExpressionTokenValueTypeof::OPERATION);
         ExpressionTokenPrintValue(token, outStream);
 
         return ExpressionErrors::NO_ERR;
@@ -402,12 +400,23 @@ static void ExpressionTokenPrintValue(const ExpressionTokenType* token,
 {
     assert(token->valueType != ExpressionTokenValueTypeof::OPERATION);
 
-    if (token->valueType == ExpressionTokenValueTypeof::VALUE)
-        PRINT(outStream, "%.2lf ", token->value.value);
-    else if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
-        PRINT(outStream, "%s ", token->value.varPtr->variableName);
-    else if (token->valueType == ExpressionTokenValueTypeof::OPERATION) 
-        PRINT(outStream, "%s ", ExpressionOperationGetLongName(token->value.operation));
+    switch (token->valueType)
+    {
+        case ExpressionTokenValueTypeof::VALUE:
+            PRINT(outStream, "%.2lf ", token->value.value);
+            break;
+        
+        case ExpressionTokenValueTypeof::VARIABLE:
+            PRINT(outStream, "%s ", token->value.varPtr->variableName);
+            break;
+        
+        case ExpressionTokenValueTypeof::OPERATION:
+            PRINT(outStream, "%s ", ExpressionOperationGetLongName(token->value.operation));
+            break;
+        
+        default:
+            break;
+    }
 }
 
 #undef PRINT
@@ -479,9 +488,6 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
 
     if (token->left == nullptr && token->right == nullptr)
     {
-        if (token->valueType == ExpressionTokenValueTypeof::OPERATION)
-            printf("Token val - %s\n", ExpressionOperationGetLongName(token->value.operation));
-        assert(token->valueType != ExpressionTokenValueTypeof::OPERATION);
         ExpressionTokenPrintValue(token, outStream);
 
         return ExpressionErrors::NO_ERR;
@@ -584,7 +590,7 @@ static bool ExpressionOperationNeedTexLeftBraces(const ExpressionOperationId ope
     return false;
 }
 
-bool ExpressionOperationIsPrefix(const ExpressionOperationId operation, bool inTex)
+static bool ExpressionOperationIsPrefix(const ExpressionOperationId operation, bool inTex)
 {
 
     #define GENERATE_OPERATION_CMD(NAME, FORMAT, TEX_FORMAT, ...)                               \
@@ -621,24 +627,3 @@ bool ExpressionOperationIsPrefix(const ExpressionOperationId operation, bool inT
 
     return false;
 }
-
-bool ExpressionOperationIsUnary(const ExpressionOperationId operation)
-{
-
-    #define GENERATE_OPERATION_CMD(NAME, v1, v2, IS_UNARY, ...)                         \
-        case ExpressionOperationId::NAME:                                               \
-            return IS_UNARY;
-        
-    switch (operation)
-    {
-        #include "Operations.h"
-
-        default:
-            break;
-    }
-
-    #undef GENERATE_OPERATION_CMD
-
-    return false;
-}
-

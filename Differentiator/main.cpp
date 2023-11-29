@@ -1,6 +1,7 @@
 #include "MathExpressionsMain.h"
 #include "MathExpressionInOut.h"
 #include "MathExpressionCalculations.h"
+#include "MathExpressionGnuPlot.h"
 
 #include "Common/Log.h"
 
@@ -38,4 +39,7 @@ int main(const int argc, const char* argv[])
     ExpressionPrintTex   (&taylorSeries, outputTex, "Разложение по маклорену: ");
     ExpressionPrintEquationFormat(&taylorSeries, output);
     printf("Diff result in x: %lf\n\n\n", ExpressionCalculate(&ExpressionDiff));
+
+    ExpressionPrintGnuPlot(&expression, stdout);
+    ExpressionPrintGnuPlot(&taylorSeries, stdout);
 }
