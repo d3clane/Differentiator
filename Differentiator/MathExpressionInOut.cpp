@@ -45,9 +45,6 @@ static bool HaveToPutBrackets(const ExpressionTokenType* parent,
                               const ExpressionTokenType* son,
                               bool inTex = false);
 
-static ExpressionVariableType* GetVariablePtrByName(const ExpressionVariablesArrayType* varsArr, 
-                                                    const char* variableName);
-
 #define PRINT(outStream, ...)                          \
 do                                                     \
 {                                                      \
@@ -124,12 +121,14 @@ ExpressionErrors ExpressionPrintEquationFormat(const ExpressionType* expression,
 
 //---------------------------------------------------------------------------------------
 
+//TODO: переписать функции принтов на адекватный вид, где нормально проверяется IsUnary и все подобное, а не просто где-то в центре
 static ExpressionErrors ExpressionPrintEquationFormat(
                                           const ExpressionTokenType* token, 
                                           FILE* outStream)
 {
     if (token->left == nullptr && token->right == nullptr)
     {
+        assert(token->valueType != ExpressionTokenValueTypeof::OPERATION);
         ExpressionTokenPrintValue(token, outStream);
 
         return ExpressionErrors::NO_ERR;
@@ -180,6 +179,9 @@ static bool HaveToPutBrackets(const ExpressionTokenType* parent,
 
     ExpressionOperationId parentOperation = parent->value.operation;
     ExpressionOperationId sonOperation    = son->value.operation;
+
+    if (inTex && sonOperation == ExpressionOperationId::POW && sonOperation == parentOperation)
+        return true;
 
     if (ExpressionOperationIsPrefix(sonOperation, inTex))
         return false;
@@ -460,11 +462,11 @@ ExpressionErrors ExpressionTokenPrintTexTrollString(const ExpressionTokenType* r
     else
         fprintf(outStream, "%s\n", string);
     
-    fprintf(outStream, "\\begin{gather}\n\\end{gather}\n\\begin{}\n");
+    fprintf(outStream, "\\begin{gather}\n\\end{gather}\n\\begin{math}\n");
 
     ExpressionErrors err = ExpressionTokenPrintTex(rootToken, outStream);
 
-    fprintf(outStream, "\\\\\n\\end{}\n");
+    fprintf(outStream, "\\\\\n\\end{math}\n");
 
     return err;
 }
@@ -477,6 +479,9 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
 
     if (token->left == nullptr && token->right == nullptr)
     {
+        if (token->valueType == ExpressionTokenValueTypeof::OPERATION)
+            printf("Token val - %s\n", ExpressionOperationGetLongName(token->value.operation));
+        assert(token->valueType != ExpressionTokenValueTypeof::OPERATION);
         ExpressionTokenPrintValue(token, outStream);
 
         return ExpressionErrors::NO_ERR;
@@ -490,7 +495,7 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
     if (isPrefixOperation) fprintf(outStream, "%s ", 
                                     ExpressionOperationGetTexName(token->value.operation));
 
-    bool needLeftBrackets  = HaveToPutBrackets(token, token->left);
+    bool needLeftBrackets  = HaveToPutBrackets(token, token->left, true);
     bool needTexLeftBraces = ExpressionOperationNeedTexLeftBraces(token->value.operation);
 
     if (needTexLeftBraces)                      fprintf(outStream, "{");
@@ -508,7 +513,7 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
         return err;
 
     bool needTexRightBraces   = ExpressionOperationNeedTexRightBraces(token->value.operation);
-    bool needRightBrackets    = HaveToPutBrackets(token, token->right);
+    bool needRightBrackets    = HaveToPutBrackets(token, token->right, true);
     
     if (needTexRightBraces)                       fprintf(outStream, "{");
     if (!needTexRightBraces && needRightBrackets) fprintf(outStream, "(");
@@ -524,8 +529,8 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
 
 static const char* ExpressionOperationGetTexName(const ExpressionOperationId operation)
 {
-    #define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, TEX_NAME, ...) \
-        case ExpressionOperationId::NAME:                           \
+    #define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, v4, TEX_NAME, ...) \
+        case ExpressionOperationId::NAME:                            \
             return TEX_NAME;
 
     switch(operation)

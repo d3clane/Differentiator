@@ -12,6 +12,7 @@ static double ExpressionCalculate(const ExpressionTokenType* token);
 static double CalculateUsingOperation(const ExpressionOperationId operation, 
                                       const double val1, const double val2 = NAN);
 
+
 //--------------------DSL-----------------------------
 
 #define D(TOKEN) ExpressionDifferentiate(TOKEN, outTex)
@@ -46,11 +47,13 @@ static ExpressionTokenType* ExpressionDiffOperation(const ExpressionTokenType* t
 //--------------------------------Simplify-------------------------------------------
 
 static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* token,
-                                                                 int* simplifiesCount,
-                                                                 bool* haveVariables = nullptr);
+                                                         int* simplifiesCount,
+                                                         bool* haveVariables = nullptr,
+                                                         FILE* outTex = nullptr);
 
 static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType* token, 
-                                                                    int* simplifiesCount);
+                                                            int* simplifiesCount,
+                                                            FILE* outTex = nullptr);
 
 static inline ExpressionTokenType* ExpressionSimplifyAdd(ExpressionTokenType* token,   
                                                                  ExpressionTokenType* left,
@@ -90,6 +93,12 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnConstToken(
 //---------------------------------------------------------------------------------------
 
 static bool ExpressionTokenContainVariable(const ExpressionTokenType* token);
+
+//---------------------------------------------------------------------------------------
+
+static inline void TokenPrintChangeToTex(const ExpressionTokenType* prevToken, 
+                                         const ExpressionTokenType* newToken, FILE* outTex, 
+                                         const char* stringToPrint);
 
 //---------------------------------------------------------------------------------------
 
@@ -162,7 +171,10 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
     ExpressionsCopyVariables(&diffExpression, expression);
 
     if (outTex)
+    {
+        ExpressionPrintTex(&diffExpression, outTex, "Выражение после взятия производной:\n");
         fprintf(outTex, "***** не понятно, но очень интересно. Сделаем выражение более понятным\n");
+    }
 
     ExpressionSimplify(&diffExpression, outTex);
 
@@ -196,11 +208,7 @@ static ExpressionTokenType* ExpressionDifferentiate(const ExpressionTokenType* t
             break;
     }
 
-    if (outTex) 
-    {
-        ExpressionTokenPrintTexTrollString(token, outTex, "Возьмем производную от:");
-        ExpressionTokenPrintTexTrollString(diffToken, outTex);
-    }
+    TokenPrintChangeToTex(token, diffToken, outTex, "Возьмем производную от: ");
 
     return diffToken;  
 }
@@ -236,7 +244,7 @@ static ExpressionTokenType* ExpressionDiffOperation(const ExpressionTokenType* t
 //---------------------------------------------------------------------------------------
 
 void ExpressionSimplify(ExpressionType* expression,
-                            FILE* outTex)
+                        FILE* outTex)
 {
     assert(expression);
 
@@ -244,32 +252,35 @@ void ExpressionSimplify(ExpressionType* expression,
     do
     {
         simplifiesCount = 0;
-        expression->root = ExpressionSimplifyConstants(expression->root, &simplifiesCount);
-        expression->root = ExpressionSimplifyNeutralTokens(expression->root, 
-                                                           &simplifiesCount);
+        //TODO: подумать над сменой местами последних двух параметров в simplify constants
+        expression->root = ExpressionSimplifyConstants(expression->root, &simplifiesCount, 
+                                                       nullptr, outTex);
+        expression->root = ExpressionSimplifyNeutralTokens(expression->root, &simplifiesCount,
+                                                           outTex);
     } while (simplifiesCount != 0);
+
+    if (outTex) ExpressionPrintTex(expression, outTex, "Итоговое выражение после упрощений:");
 }
 
 static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* token,
-                                                                 int* simplifiesCount,
-                                                                 bool* haveVariables)
+                                                         int* simplifiesCount,
+                                                         bool* haveVariables,
+                                                         FILE* outTex)
 {
     assert(simplifiesCount);
 
     if (token == nullptr || token->valueType == ExpressionTokenValueTypeof::VALUE)
     {
-        assert(haveVariables != nullptr);
-        
-        *haveVariables = false;
+        if (haveVariables != nullptr)
+            *haveVariables = false;
         
         return token;
     }
 
     if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
     {
-        assert(haveVariables != nullptr);
-
-        *haveVariables = true;
+        if (haveVariables != nullptr)
+            *haveVariables = true;
 
         return token;
     }
@@ -277,12 +288,13 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
     bool leftTokenHaveVariables  = false;
     bool rightTokenHaveVariables = false;
     ExpressionTokenType* left  = ExpressionSimplifyConstants(token->left,  
-                                                                     simplifiesCount,
-                                                                     &leftTokenHaveVariables);
+                                                             simplifiesCount,
+                                                             &leftTokenHaveVariables,
+                                                             outTex);
     ExpressionTokenType* right = ExpressionSimplifyConstants(token->right, 
-                                                                     simplifiesCount,
-                                                                     &rightTokenHaveVariables);
-
+                                                             simplifiesCount,
+                                                             &rightTokenHaveVariables,
+                                                             outTex);
 
     if (token->left != left)
     {
@@ -311,32 +323,56 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
         leftVal = token->left->value.value;
         if (token->right) rightVal = token->right->value.value;
 
-        return NUM_TOKEN(CalculateUsingOperation(token->value.operation, leftVal, rightVal));
+        ExpressionTokenType* simplifiedToken = NUM_TOKEN(
+                                    CalculateUsingOperation(token->value.operation, leftVal, 
+                                                                                    rightVal));
+
+        TokenPrintChangeToTex(token, simplifiedToken, outTex, "Упростим это выражение: "); 
+
+        return simplifiedToken;
     }
     return token;
 }
 
 //---------------------------------------------------------------------------------------
 
+static inline void TokenPrintChangeToTex(const ExpressionTokenType* prevToken, 
+                                         const ExpressionTokenType* newToken, FILE* outTex, 
+                                         const char* stringToPrint)
+{
+    assert(prevToken);
+    assert(newToken);
+
+    if (outTex)
+    {
+        ExpressionTokenPrintTexTrollString(prevToken, outTex, stringToPrint);
+        ExpressionTokenPrintTexTrollString(newToken, outTex);
+    }
+}
+
 static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType* token, 
-                                                                    int* simplifiesCount)
+                                                            int* simplifiesCount,
+                                                            FILE* outTex)
 {
     if (token == nullptr || token->valueType != ExpressionTokenValueTypeof::OPERATION)
         return token;
     
-    ExpressionTokenType* left  = ExpressionSimplifyNeutralTokens(token->left,  
-                                                                        simplifiesCount);
-    ExpressionTokenType* right = ExpressionSimplifyNeutralTokens(token->right, 
-                                                                        simplifiesCount);
+    ExpressionTokenType* left  = ExpressionSimplifyNeutralTokens(token->left, simplifiesCount,
+                                                                 outTex);
+    ExpressionTokenType* right = ExpressionSimplifyNeutralTokens(token->right, simplifiesCount,
+                                                                 outTex);
     
     if (token->left != left)
     {
+        TokenPrintChangeToTex(token->left, left, outTex, "Несложно упростить это: ");
         ExpressionTokenDtor(token->left);
         token->left = left;
     }
 
     if (token->right != right)
     {
+        //TokenPrintChangeToTex(token->right, right, outTex, 
+        //                                            "Всем очевидно, что это можно упростить: ");
         ExpressionTokenDtor(token->right);
         token->right = right;
     }
@@ -357,6 +393,8 @@ static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType*
     if (!leftIsValue && !rightIsValue)
         return token;
 
+    assert(token->left  == left);
+    assert(token->right == right);
     switch (token->value.operation)
     {
         case ExpressionOperationId::ADD:
@@ -383,9 +421,9 @@ static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType*
 //---------------------------------------------------------------------------------------
 
 static inline ExpressionTokenType* ExpressionSimplifyAdd(ExpressionTokenType* token,   
-                                                                 ExpressionTokenType* left,
-                                                                 ExpressionTokenType* right,
-                                                                 int* simplifiesCount)
+                                                            ExpressionTokenType* left,
+                                                            ExpressionTokenType* right,
+                                                            int* simplifiesCount)
 {
     assert(simplifiesCount);
 
@@ -591,12 +629,6 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnConstToken(
 
 //---------------------------------------------------------------------------------------
 
-#undef C
-#undef D
-#undef CONST_TOKEN
-
-//---------------------------------------------------------------------------------------
-
 static bool ExpressionTokenContainVariable(const ExpressionTokenType* token)
 {
     if (token == nullptr)
@@ -621,7 +653,7 @@ ExpressionType ExpressionTaylorize(const ExpressionType* expression, const int n
 {
     assert(expression);
     assert(expression->variables.size == 1);
-    // проверка на 1 потому что я умею раскладывать тейлор только по одному значению
+    assert(n >= 0);
 
     ExpressionType taylorSeries = ExpressionCopy(expression);
     ExpressionType tmpDiffExpr  = ExpressionCopy(expression);
@@ -630,14 +662,14 @@ ExpressionType ExpressionTaylorize(const ExpressionType* expression, const int n
                                                     taylorSeries.variables.data[0].variableName),
                                                     VAR_TOKEN(&taylorSeries.variables, "x_0"));
 
-    for (size_t i = 0; i < n; ++i)
+    for (size_t i = 1; i <= n; ++i)
     {
         ExpressionType tmp = ExpressionDifferentiate(&tmpDiffExpr);
         ExpressionDtor(&tmpDiffExpr);
 
         taylorSeries.root = _ADD(taylorSeries.root, 
-                                _MUL(tmp.root, POW(C(xMinusX0Token), NUM_TOKEN(i))));
-        
+                                _MUL(C(tmp.root), _POW(C(xMinusX0Token), NUM_TOKEN(i))));
+
         tmpDiffExpr = tmp;
     }
 
@@ -646,6 +678,14 @@ ExpressionType ExpressionTaylorize(const ExpressionType* expression, const int n
     xMinusX0Token = nullptr;
 
     ExpressionSimplify(&taylorSeries);
-    
+
     return taylorSeries;
 }
+
+//---------------------------------------------------------------------------------------
+
+#undef C
+#undef D
+#undef CONST_TOKEN
+
+//---------------------------------------------------------------------------------------

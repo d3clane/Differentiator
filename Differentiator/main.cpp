@@ -9,36 +9,33 @@ int main(const int argc, const char* argv[])
     setbuf(stdout, nullptr);
     LogOpen(argv[0]);
 
-    ExpressionType ExpressionPrefixInput;
-    //ExpressionType ExpressionInfixInput;
-    ExpressionCtor(&ExpressionPrefixInput);
-    //ExpressionCtor(&ExpressionPrefixInput);
-    //ExpressionCtor(&ExpressionInfixInput);
+    ExpressionType  expression = {};
+    ExpressionCtor(&expression);
 
     FILE* inStreamPrefix = fopen("input.txt",  "r");
     FILE* output         = fopen("output.txt", "w");
     FILE* outputTex      = fopen("output.tex", "w");
     setbuf(outputTex, nullptr);
-    //FILE* inStreamInfix  = fopen("input2.txt", "r");
-    ExpressionReadPrefixFormat(&ExpressionPrefixInput, inStreamPrefix);
-    //ExpressionReadInfixFormat(&ExpressionInfixInput,  inStreamInfix);
 
-    ExpressionReadVariables(&ExpressionPrefixInput);
+    ExpressionReadPrefixFormat(&expression, inStreamPrefix);
+    ExpressionReadVariables(&expression);
 
-    ExpressionPrintPrefixFormat     (&ExpressionPrefixInput, output);
+    ExpressionPrintPrefixFormat     (&expression, output);
+    ExpressionGraphicDump           (&expression);
+    ExpressionPrintEquationFormat   (&expression);
+    ExpressionPrintTex              (&expression, outputTex);
 
-    ExpressionGraphicDump(&ExpressionPrefixInput);
-    ExpressionPrintEquationFormat   (&ExpressionPrefixInput);
-    ExpressionPrintTex(&ExpressionPrefixInput, outputTex);
-    
+    printf("Calculation result: %lf\n\n\n", ExpressionCalculate(&expression));
 
-    printf("Calculation result: %lf\n\n\n", ExpressionCalculate(&ExpressionPrefixInput));
+    ExpressionType ExpressionDiff =  ExpressionDifferentiate(&expression, outputTex);
 
-    ExpressionType ExpressionDiff =  ExpressionDifferentiate(&ExpressionPrefixInput, outputTex);
-
-    //ExpressionPrintTex(&ExpressionDiff);
+    ExpressionPrintTex   (&ExpressionDiff, outputTex, "Итоговый ответ: ");
     ExpressionGraphicDump(&ExpressionDiff);
 
+    ExpressionType taylorSeries = ExpressionTaylorize(&expression, 3);
+
+    //ExpressionGraphicDump(&taylorSeries);
+    ExpressionPrintTex   (&taylorSeries, outputTex, "Разложение по тейлору: ");
 
     printf("Diff result in x: %lf\n\n\n", ExpressionCalculate(&ExpressionDiff));
 }

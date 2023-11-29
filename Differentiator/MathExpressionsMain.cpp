@@ -293,7 +293,7 @@ ExpressionVariableType* ExpressionVariableSet(ExpressionType* expression,
 
 ExpressionVariableType* ExpressionVariableSet(ExpressionVariablesArrayType* varsArr, 
                                               const char*  variableName, 
-                                              const double variableValue = 0)
+                                              const double variableValue)
 {
     assert(varsArr);
     assert(variableName);
