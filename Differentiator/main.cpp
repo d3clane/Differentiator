@@ -32,10 +32,10 @@ int main(const int argc, const char* argv[])
     ExpressionPrintTex   (&ExpressionDiff, outputTex, "Итоговый ответ: ");
     ExpressionGraphicDump(&ExpressionDiff);
 
-    ExpressionType taylorSeries = ExpressionTaylorize(&expression, 3);
+    ExpressionType taylorSeries = ExpressionMacloren(&expression, 10);
 
     //ExpressionGraphicDump(&taylorSeries);
-    ExpressionPrintTex   (&taylorSeries, outputTex, "Разложение по тейлору: ");
-
+    ExpressionPrintTex   (&taylorSeries, outputTex, "Разложение по маклорену: ");
+    ExpressionPrintEquationFormat(&taylorSeries, output);
     printf("Diff result in x: %lf\n\n\n", ExpressionCalculate(&ExpressionDiff));
 }

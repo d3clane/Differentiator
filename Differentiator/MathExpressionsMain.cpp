@@ -13,6 +13,7 @@
 //---------------------------------------------------------------------------------------
 
 static void ExpressionDtor     (ExpressionTokenType* token);
+static void ExpressionVariableValuesDtor(ExpressionVariableType* varPtr);
 
 static ExpressionVariableType* GetVariablePtrByName(const ExpressionVariablesArrayType* varsArr, 
                                                     const char* variableName);
@@ -53,11 +54,8 @@ ExpressionErrors ExpressionDtor(ExpressionType* expression)
 
     for (size_t i = 0; i < expression->variables.capacity; ++i)
     {
-        if      (expression->variables.data->variableName)
-            free(expression->variables.data->variableName);
-
-        expression->variables.data->variableName  = nullptr;
-        expression->variables.data->variableValue = NAN;
+        if (expression->variables.data->variableName)
+            ExpressionVariableValuesDtor(expression->variables.data + i);
     }
 
     free(expression->variables.data);
@@ -82,6 +80,16 @@ static void ExpressionDtor(ExpressionTokenType* token)
     ExpressionDtor(token->right);
 
     ExpressionTokenDtor(token);
+}
+
+static void ExpressionVariableValuesDtor(ExpressionVariableType* varPtr)
+{
+    assert(varPtr);
+
+    free(varPtr->variableName);
+    varPtr->variableName = nullptr;
+
+    varPtr->variableValue = NAN;
 }
 
 //---------------------------------------------------------------------------------------
@@ -271,12 +279,14 @@ void ExpressionsCopyVariables(      ExpressionType* target,
     assert(target->variables.capacity == source->variables.capacity);
     assert(target->variables.size == 0);
 
-    //TODO: подумать над созданием функции копирования одной переменной, как будто не нужна
     for (size_t i = 0; i < source->variables.size; ++i)
     {
         target->variables.data[i].variableName  = strdup(source->variables.data->variableName);
         target->variables.data[i].variableValue = source->variables.data->variableValue;
     }
+
+    target->variables.size      = source->variables.size;
+    target->variables.capacity  = source->variables.capacity;
 }
 
 //---------------------------------------------------------------------------------------
@@ -317,6 +327,38 @@ ExpressionVariableType* ExpressionVariableSet(ExpressionVariablesArrayType* vars
     return varsArr->data + (int)varsArr->size - 1;
 }
 
+ExpressionVariableType* ExpressionVariableChangeName(ExpressionType* expression,
+                                                     const char* prevName,
+                                                     const char* newName)
+{
+    assert(expression);
+    assert(prevName);
+    assert(newName);
+
+    return ExpressionVariableChangeName(&expression->variables, prevName, newName);
+}
+
+ExpressionVariableType* ExpressionVariableChangeName(ExpressionVariablesArrayType* varsArr,
+                                                     const char* prevName,
+                                                     const char* newName)
+{
+    assert(varsArr);
+    assert(prevName);
+    assert(newName);
+
+    ExpressionVariableType* varPtr = GetVariablePtrByName(varsArr, prevName);
+    if (varPtr == nullptr)
+        return nullptr;
+    
+    const double varValue = varPtr->variableValue;
+    ExpressionVariableValuesDtor(varPtr);
+
+    varPtr->variableName  = strdup(newName);
+    varPtr->variableValue = varValue;
+
+    return varPtr;
+}
+
 static ExpressionVariableType* GetVariablePtrByName(const ExpressionVariablesArrayType* varsArr, 
                                                     const char* variableName)
 {
@@ -353,13 +395,13 @@ ExpressionErrors ExpressionReadVariables(ExpressionType* expression)
 
 ExpressionType ExpressionCopy(const ExpressionType* expression)
 {
-    ExpressionTokenType* copyExprRoot = ExpressionTokenCopy(expression->root);
     ExpressionType copyExpr = {};
     ExpressionCtor(&copyExpr);
+    ExpressionsCopyVariables(&copyExpr, expression);
+
+    ExpressionTokenType* copyExprRoot = ExpressionTokenCopy(expression->root);
 
     copyExpr.root = copyExprRoot;
-
-    ExpressionsCopyVariables(&copyExpr, expression);
 
     return copyExpr;
 }
@@ -395,6 +437,8 @@ ExpressionTokenValue ExpressionTokenValueСreate(ExpressionOperationId operation
     };
 
     return value;
+    
+    //проблема - я не умею подставлять как бы одну переменную
 }
 
 ExpressionTokenValue ExpressionTokenValueСreate(ExpressionVariableType* varPtr)

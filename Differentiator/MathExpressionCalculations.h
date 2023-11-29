@@ -10,6 +10,6 @@ void ExpressionSimplify(ExpressionType* expression, FILE* outTex = nullptr);
 ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
                                                FILE* outTex = nullptr);
 
-ExpressionType ExpressionTaylorize(const ExpressionType* expression, const int n);
+ExpressionType ExpressionMacloren(const ExpressionType* expression, const int n);
 
 #endif

@@ -126,6 +126,13 @@ ExpressionVariableType* ExpressionVariableSet(ExpressionVariablesArrayType* vars
                                               const char*  variableName, 
                                               const double variableValue = 0);
 
+ExpressionVariableType* ExpressionVariableChangeName(ExpressionType* expression,
+                                                     const char* prevName,
+                                                     const char* newName);
+ExpressionVariableType* ExpressionVariableChangeName(ExpressionVariablesArrayType* varsArr,
+                                                     const char* prevName,
+                                                     const char* newName);
+
 void ExpressionsCopyVariables(ExpressionType* target, const ExpressionType* source);
 
 //-------------Operations funcs-----------

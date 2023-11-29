@@ -56,25 +56,34 @@ static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType*
                                                             FILE* outTex = nullptr);
 
 static inline ExpressionTokenType* ExpressionSimplifyAdd(ExpressionTokenType* token,   
-                                                                 int* simplifiesCount);
+                                                         int* simplifiesCount,
+                                                         FILE* outTex = nullptr);
 static inline ExpressionTokenType* ExpressionSimplifySub(ExpressionTokenType* token,   
-                                                          int* simplifiesCount);
+                                                          int* simplifiesCount,
+                                                          FILE* outTex = nullptr);
 static inline ExpressionTokenType* ExpressionSimplifyMul(ExpressionTokenType* token,   
-                                                          int* simplifiesCount);
+                                                          int* simplifiesCount,
+                                                          FILE* outTex = nullptr);
 static inline ExpressionTokenType* ExpressionSimplifyDiv(ExpressionTokenType* token,   
-                                                          int* simplifiesCount);
+                                                          int* simplifiesCount,
+                                                          FILE* outTex = nullptr);
 static inline ExpressionTokenType* ExpressionSimplifyPow(ExpressionTokenType* token,   
-                                                          int* simplifiesCount);
+                                                          int* simplifiesCount,
+                                                          FILE* outTex = nullptr);
 static inline ExpressionTokenType* ExpressionSimplifyLog(ExpressionTokenType* token,   
-                                                          int* simplifiesCount);
+                                                          int* simplifiesCount,
+                                                          FILE* outTex = nullptr);
 
 static inline ExpressionTokenType* ExpressionSimplifyReturnLeftToken(
-                                                                ExpressionTokenType* token);
+                                                                ExpressionTokenType* token,
+                                                                FILE* outTex = nullptr);
 static inline ExpressionTokenType* ExpressionSimplifyReturnRightToken(
-                                                                ExpressionTokenType* token);
+                                                                ExpressionTokenType* token,
+                                                                FILE* outTex = nullptr);
 static inline ExpressionTokenType* ExpressionSimplifyReturnConstToken(
                                                                 ExpressionTokenType* token,
-                                                                double value);
+                                                                double value,
+                                                                FILE* outTex = nullptr);
 
 //---------------------------------------------------------------------------------------
 
@@ -350,15 +359,12 @@ static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType*
     
     if (token->left != left)
     {
-        TokenPrintChangeToTex(token->left, left, outTex, "Несложно упростить это: ");
         ExpressionTokenDtor(token->left);
         token->left = left;
     }
 
     if (token->right != right)
     {
-        //TokenPrintChangeToTex(token->right, right, outTex, 
-        //                                            "Всем очевидно, что это можно упростить: ");
         ExpressionTokenDtor(token->right);
         token->right = right;
     }
@@ -371,7 +377,7 @@ static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType*
     if (((right->valueType == ExpressionTokenValueTypeof::VARIABLE)  &&
          (left->valueType  == ExpressionTokenValueTypeof::VARIABLE)) &&
         (right->value.varPtr == left->value.varPtr))
-        return ExpressionSimplifyReturnConstToken(token, 0);
+        return ExpressionSimplifyReturnConstToken(token, 0, outTex);
 
     bool rightIsValue = (right->valueType == ExpressionTokenValueTypeof::VALUE);
     bool leftIsValue  = (left->valueType  == ExpressionTokenValueTypeof::VALUE);
@@ -384,18 +390,18 @@ static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType*
     switch (token->value.operation)
     {
         case ExpressionOperationId::ADD:
-            return ExpressionSimplifyAdd(token, simplifiesCount);
+            return ExpressionSimplifyAdd(token, simplifiesCount, outTex);
         case ExpressionOperationId::SUB:
-            return ExpressionSimplifySub(token, simplifiesCount);
+            return ExpressionSimplifySub(token, simplifiesCount, outTex);
         case ExpressionOperationId::MUL:
-            return ExpressionSimplifyMul(token, simplifiesCount);
+            return ExpressionSimplifyMul(token, simplifiesCount, outTex);
         case ExpressionOperationId::DIV:
-            return ExpressionSimplifyDiv(token, simplifiesCount);
+            return ExpressionSimplifyDiv(token, simplifiesCount, outTex);
         
         case ExpressionOperationId::POW:
-            return ExpressionSimplifyPow(token, simplifiesCount);
+            return ExpressionSimplifyPow(token, simplifiesCount, outTex);
         case ExpressionOperationId::LOG:
-            return ExpressionSimplifyLog(token, simplifiesCount);
+            return ExpressionSimplifyLog(token, simplifiesCount, outTex);
         
         default:
             break;
@@ -407,7 +413,8 @@ static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType*
 //---------------------------------------------------------------------------------------
 
 static inline ExpressionTokenType* ExpressionSimplifyAdd(ExpressionTokenType* token,   
-                                                            int* simplifiesCount)
+                                                         int* simplifiesCount,
+                                                         FILE* outTex)
 {
     
     assert(simplifiesCount);
@@ -424,20 +431,21 @@ static inline ExpressionTokenType* ExpressionSimplifyAdd(ExpressionTokenType* to
     if (rightIsValue && DoubleEqual(right->value.value, 0))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnLeftToken(token);
+        return ExpressionSimplifyReturnLeftToken(token, outTex);
     }
 
     if (leftIsValue && DoubleEqual(left->value.value, 0))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnRightToken(token);
+        return ExpressionSimplifyReturnRightToken(token, outTex);
     }
 
     return token;
 }
 
 static inline ExpressionTokenType* ExpressionSimplifySub(ExpressionTokenType* token,   
-                                                          int* simplifiesCount)
+                                                          int* simplifiesCount,
+                                                         FILE* outTex)
 {
     assert(token);
     assert(token->left);
@@ -452,7 +460,7 @@ static inline ExpressionTokenType* ExpressionSimplifySub(ExpressionTokenType* to
     if (rightIsValue && DoubleEqual(right->value.value, 0))
     {    
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnLeftToken(token);
+        return ExpressionSimplifyReturnLeftToken(token, outTex);
     }
 
     if (leftIsValue && DoubleEqual(left->value.value, 0))
@@ -472,7 +480,8 @@ static inline ExpressionTokenType* ExpressionSimplifySub(ExpressionTokenType* to
 }
 
 static inline ExpressionTokenType* ExpressionSimplifyMul(ExpressionTokenType* token,   
-                                                          int* simplifiesCount)
+                                                          int* simplifiesCount,
+                                                         FILE* outTex)
 {
     assert(token);
     assert(token->left);
@@ -487,32 +496,33 @@ static inline ExpressionTokenType* ExpressionSimplifyMul(ExpressionTokenType* to
     if (rightIsValue && DoubleEqual(right->value.value, 0))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnConstToken(token, 0);
+        return ExpressionSimplifyReturnConstToken(token, 0, outTex);
     }
 
     if (leftIsValue && DoubleEqual(left->value.value, 0))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnConstToken(token, 0);
+        return ExpressionSimplifyReturnConstToken(token, 0, outTex);
     }
 
     if (rightIsValue && DoubleEqual(right->value.value, 1))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnLeftToken(token);
+        return ExpressionSimplifyReturnLeftToken(token, outTex);
     }
 
     if (leftIsValue && DoubleEqual(left->value.value, 1))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnRightToken(token);
+        return ExpressionSimplifyReturnRightToken(token, outTex);
     }
 
     return token;
 }
 
 static inline ExpressionTokenType* ExpressionSimplifyDiv(ExpressionTokenType* token,   
-                                                          int* simplifiesCount)
+                                                          int* simplifiesCount,
+                                                         FILE* outTex)
 {
     assert(token);
     assert(token->left);
@@ -527,20 +537,21 @@ static inline ExpressionTokenType* ExpressionSimplifyDiv(ExpressionTokenType* to
     if (leftIsValue && DoubleEqual(left->value.value, 0))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnConstToken(token, 0);
+        return ExpressionSimplifyReturnConstToken(token, 0, outTex);
     }
 
     if (rightIsValue && DoubleEqual(right->value.value, 1))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnLeftToken(token);
+        return ExpressionSimplifyReturnLeftToken(token, outTex);
     }
 
     return token;
 }
 
 static inline ExpressionTokenType* ExpressionSimplifyPow(ExpressionTokenType* token,   
-                                                          int* simplifiesCount)
+                                                          int* simplifiesCount,
+                                                         FILE* outTex)
 {
     assert(token);
     assert(token->left);
@@ -555,32 +566,33 @@ static inline ExpressionTokenType* ExpressionSimplifyPow(ExpressionTokenType* to
     if (rightIsValue && DoubleEqual(right->value.value, 0))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnConstToken(token, 1);
+        return ExpressionSimplifyReturnConstToken(token, 1, outTex);
     }
 
     if (leftIsValue && DoubleEqual(left->value.value, 0))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnConstToken(token, 0);
+        return ExpressionSimplifyReturnConstToken(token, 0, outTex);
     }
 
     if (rightIsValue && DoubleEqual(right->value.value, 1))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnLeftToken(token);
+        return ExpressionSimplifyReturnLeftToken(token, outTex);
     }
 
     if (leftIsValue && DoubleEqual(left->value.value, 1))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnConstToken(token, 1);
+        return ExpressionSimplifyReturnConstToken(token, 1, outTex);
     }
 
     return token;
 }
 
 static inline ExpressionTokenType* ExpressionSimplifyLog(ExpressionTokenType* token,   
-                                                          int* simplifiesCount)
+                                                          int* simplifiesCount,
+                                                         FILE* outTex)
 {
     assert(token);
     assert(token->left);
@@ -594,7 +606,7 @@ static inline ExpressionTokenType* ExpressionSimplifyLog(ExpressionTokenType* to
     if (rightIsValue && DoubleEqual(right->value.value, 1))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnConstToken(token, 0);
+        return ExpressionSimplifyReturnConstToken(token, 0, outTex);
     }
 
     return token;
@@ -602,9 +614,12 @@ static inline ExpressionTokenType* ExpressionSimplifyLog(ExpressionTokenType* to
 
 //---------------------------------------------------------------------------------------
 
-static inline ExpressionTokenType* ExpressionSimplifyReturnLeftToken(ExpressionTokenType* token)
+static inline ExpressionTokenType* ExpressionSimplifyReturnLeftToken(ExpressionTokenType* token,
+                                                                     FILE* outTex)
 {
     assert(token);
+
+    TokenPrintChangeToTex(token, token->left, outTex, "Даже не буду ничего говорить, ");
 
     ExpressionTokenDtor(token->right);
 
@@ -617,9 +632,13 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnLeftToken(ExpressionT
 }
 
 static inline ExpressionTokenType* ExpressionSimplifyReturnRightToken(
-                                                                ExpressionTokenType* token)
+                                                                ExpressionTokenType* token,
+                                                                FILE* outTex)
 {
     assert(token);
+
+    TokenPrintChangeToTex(token, token->right, outTex, 
+                                            "В качестве упражнения можно показать этот переход");
 
     ExpressionTokenDtor(token->left);
 
@@ -633,8 +652,14 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnRightToken(
 
 static inline ExpressionTokenType* ExpressionSimplifyReturnConstToken(
                                                                 ExpressionTokenType* token,
-                                                                double value)
+                                                                double value,
+                                                                FILE* outTex)
 {
+    ExpressionTokenType* constToken = NUM_TOKEN(value);
+    
+    TokenPrintChangeToTex(token, constToken, outTex,
+                                            "Воспользуемся теоремой, доказанной нами когда-то");
+    
     ExpressionTokenDtor(token->right);
     ExpressionTokenDtor(token->left);
 
@@ -666,37 +691,42 @@ static bool ExpressionTokenContainVariable(const ExpressionTokenType* token)
 
 //---------------------------------------------------------------------------------------
 
-ExpressionType ExpressionTaylorize(const ExpressionType* expression, const int n)
+ExpressionType ExpressionMacloren(const ExpressionType* expression, const int n)
 {
     assert(expression);
     assert(expression->variables.size == 1);
     assert(n >= 0);
 
-    ExpressionType taylorSeries = ExpressionCopy(expression);
     ExpressionType tmpDiffExpr  = ExpressionCopy(expression);
+    ExpressionVariableSet(&tmpDiffExpr, tmpDiffExpr.variables.data[0].variableName, 0);
 
-    ExpressionTokenType* xMinusX0Token = _SUB(VAR_TOKEN(&taylorSeries.variables, 
-                                                    taylorSeries.variables.data[0].variableName),
-                                                    VAR_TOKEN(&taylorSeries.variables, "x_0"));
+    ExpressionType maclorenSeries = {};
+    ExpressionCtor(&maclorenSeries);
+    ExpressionsCopyVariables(&maclorenSeries, expression);
+
+    maclorenSeries.root = NUM_TOKEN(ExpressionCalculate(&tmpDiffExpr));
+    ExpressionTokenType* xToken = VAR_TOKEN(&maclorenSeries.variables, 
+                                             maclorenSeries.variables.data[0].variableName);
 
     for (size_t i = 1; i <= n; ++i)
     {
         ExpressionType tmp = ExpressionDifferentiate(&tmpDiffExpr);
         ExpressionDtor(&tmpDiffExpr);
 
-        taylorSeries.root = _ADD(taylorSeries.root, 
-                                _MUL(C(tmp.root), _POW(C(xMinusX0Token), NUM_TOKEN(i))));
+        maclorenSeries.root = _ADD(maclorenSeries.root, 
+                                 _MUL(NUM_TOKEN(ExpressionCalculate(tmp.root)), 
+                                     _POW(C(xToken), NUM_TOKEN(i))));
 
         tmpDiffExpr = tmp;
     }
 
     ExpressionDtor(&tmpDiffExpr);
-    ExpressionTokenDtor(xMinusX0Token);
-    xMinusX0Token = nullptr;
+    ExpressionTokenDtor(xToken);
+    xToken = nullptr;
 
-    ExpressionSimplify(&taylorSeries);
+    ExpressionSimplify(&maclorenSeries);
 
-    return taylorSeries;
+    return maclorenSeries;
 }
 
 //---------------------------------------------------------------------------------------
