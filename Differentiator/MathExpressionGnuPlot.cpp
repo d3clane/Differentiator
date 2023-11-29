@@ -167,7 +167,6 @@ const char* GnuPlotFileCreate(char** outImgName)
     else
         free(imgName);  
     
-    printf("img index - %zu\n", imgIndex);
     return gnuPlotFileName;
 }
 

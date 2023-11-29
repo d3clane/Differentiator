@@ -6,3 +6,5 @@ imgs/
 .DS_Store
 *.tex
 *.exe
+*.png
+*.gpi

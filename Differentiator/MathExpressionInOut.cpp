@@ -7,10 +7,6 @@
 #include "FastInput/InputOutput.h"
 #include "Common/StringFuncs.h"
 
-static const char* ExpressionOperationGetTexName (const ExpressionOperationId operation);
-static bool ExpressionOperationNeedTexRightBraces(const ExpressionOperationId operation);
-static bool ExpressionOperationNeedTexLeftBraces (const ExpressionOperationId operation);
-
 static bool ExpressionOperationIsPrefix(const ExpressionOperationId operation);
 
 static ExpressionErrors ExpressionPrintPrefixFormat     (
@@ -138,6 +134,7 @@ static ExpressionErrors ExpressionPrintEquationFormat(
                                     ExpressionOperationGetShortName(token->value.operation));
 
     bool needLeftBrackets = HaveToPutBrackets(token, token->left);
+
     if (needLeftBrackets) PRINT(outStream, "(");
 
     ExpressionErrors err = ExpressionErrors::NO_ERR;
@@ -152,6 +149,7 @@ static ExpressionErrors ExpressionPrintEquationFormat(
         return err;
 
     bool needRightBrackets = HaveToPutBrackets(token, token->right);
+
     if (needRightBrackets) PRINT(outStream, "(");
 
     err = ExpressionPrintEquationFormat(token->right, outStream);
