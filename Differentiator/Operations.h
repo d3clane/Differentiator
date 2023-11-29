@@ -150,7 +150,7 @@ GENERATE_OPERATION_CMD(LOG, PREFIX, PREFIX, false, "log", "\\log_", true, false,
 
     return _DIV(D(token->left), C(token->left));
 },
-nullptr, PREFIX)
+"log", PREFIX)
 
 GENERATE_OPERATION_CMD(LN,  PREFIX, PREFIX, true,  "ln",  "\\ln",   false, false,
 {
@@ -234,7 +234,7 @@ GENERATE_OPERATION_CMD(COT, PREFIX, PREFIX, true, "cot", "\\cot", false, false,
                       _DIV(D(token->left), 
                                  _POW(_SIN(C(token->left)), NUM_TOKEN(2))));
 },
-nullptr, PREFIX)
+"1 / tan", PREFIX)
 
 GENERATE_OPERATION_CMD(ARCSIN, PREFIX, PREFIX, true, "arcsin", "\\arcsin", false, false,
 {
@@ -306,4 +306,4 @@ GENERATE_OPERATION_CMD(ARCCOT, PREFIX, PREFIX, true, "arccot", "\\arccot", false
                                  _ADD(NUM_TOKEN(1),
                                             _POW(C(token->left), NUM_TOKEN(2)))));
 },
-nullptr, PREFIX)
+"pi / 2 - atan", PREFIX)

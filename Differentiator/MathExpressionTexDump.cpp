@@ -9,7 +9,7 @@ static const char* ExpressionOperationGetTexName        (const ExpressionOperati
 
 static bool HaveToPutBrackets(const ExpressionTokenType* parent, 
                               const ExpressionTokenType* son);
-                              
+
 static void ExpressionTokenPrintValue   (const ExpressionTokenType* token, 
                                          FILE* outStream);
 ExpressionErrors ExpressionPrintTex     (const ExpressionType* expression, 
@@ -259,4 +259,16 @@ static bool ExpressionOperationIsPrefix(const ExpressionOperationId operation)
     #undef  GENERATE_OPERATION_CMD
 
     return false;
+}
+
+void TexInsertImg(const char* imgName, FILE* outStream, const char* string)
+{
+    assert(imgName);
+    assert(outStream);
+
+    fprintf(outStream, "%s\n", string);
+    fprintf(outStream, "\\begin{figure}[H]\n"
+                       "\\centering\n"
+                       "\\includegraphics[scale=0.6]{%s}\n"
+                       "\\end{figure}\n", imgName);
 }

@@ -15,4 +15,6 @@ ExpressionErrors ExpressionTokenPrintTexWithTrollString(
 ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token, 
                                          FILE* outStream);
 
+void TexInsertImg(const char* imgName, FILE* outStream, const char* stringToPrint = nullptr);
+
 #endif

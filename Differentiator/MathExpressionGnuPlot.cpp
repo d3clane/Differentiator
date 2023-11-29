@@ -8,6 +8,8 @@ static void ExpressionTokenPrintValue(const ExpressionTokenType* token, FILE* ou
 static bool        ExpressionOperationIsPrefix      (const ExpressionOperationId operation);
 static const char* ExpressionOperationGetGnuPlotName(const ExpressionOperationId operation);
 
+static char* CreateImgName(const size_t imgIndex);
+
 ExpressionErrors ExpressionPrintGnuPlotFormat(ExpressionTokenType* token, FILE* outStream)
 {
     assert(token);
@@ -55,7 +57,7 @@ ExpressionErrors ExpressionPrintGnuPlotFormat (ExpressionType* expression, FILE*
 
 static char* CreateImgName(const size_t imgIndex)
 {
-    static const size_t maxImgNameLength  = 64;
+    static const size_t maxImgNameLength  = 256;
     static char imgName[maxImgNameLength] = "";
     snprintf(imgName, maxImgNameLength, "Graphs/graph_%zu_time_%s.png", imgIndex, __TIME__);
 
@@ -66,7 +68,7 @@ void GnuPlotImgCreate(const char* plotFileName)
 {
     assert(plotFileName);
 
-    static const size_t maxCommandLen = 64;
+    static const size_t maxCommandLen = 256;
     static char  commandName[]        = "";
 
     snprintf(commandName, maxCommandLen, "chmod +x %s", plotFileName);
@@ -146,13 +148,15 @@ const char* GnuPlotFileCreate(char** outImgName)
     static const char* gnuPlotFilePrefix = "#! /opt/homebrew/bin/gnuplot -persist\n"
                                            "set xlabel \"X\"\n" 
                                            "set ylabel \"Y\"\n"
-                                           "set xrange[-0.5:0.5]\n"
+                                           "set xrange[-0.6:0.6]\n"
                                            "set terminal png size 800, 600\n";
 
     fprintf(outStream, "%s\n", gnuPlotFilePrefix);
 
-    static size_t imgIndex = 0;
-    char* imgName = CreateImgName(imgIndex++);
+    static size_t imgIndex = 1337;
+    char* imgName = CreateImgName(imgIndex);
+    imgIndex++;
+
     fprintf(outStream, "set output \"%s\"\n", imgName);
 
     fprintf(outStream, "plot ");
@@ -163,6 +167,7 @@ const char* GnuPlotFileCreate(char** outImgName)
     else
         free(imgName);  
     
+    printf("img index - %zu\n", imgIndex);
     return gnuPlotFileName;
 }
 
@@ -180,20 +185,21 @@ ExpressionErrors ExpressionGnuPlotAddFunc(const char* plotFileName,  ExpressionT
     return err;
 }
 
-ExpressionErrors ExpressionPlotFuncAndMacloren(ExpressionType* func, ExpressionType* macloren)
+ExpressionErrors ExpressionPlotFuncAndMacloren(ExpressionType* func, ExpressionType* macloren,
+                                               char** outImgName)
 {
     assert(func);
     assert(macloren);
 
-    char* outImgName = nullptr;
+    char* imgName = nullptr;
 
-    const char* gnuPlotFileName = GnuPlotFileCreate(&outImgName);
+    const char* gnuPlotFileName = GnuPlotFileCreate(&imgName);
     ExpressionErrors err = ExpressionGnuPlotAddFunc(gnuPlotFileName, func, "main function", "red");
 
     if (err != ExpressionErrors::NO_ERR)
     {
-        assert(outImgName);
-        free(outImgName);
+        assert(imgName);
+        free  (imgName);
 
         return err;
     }
@@ -202,7 +208,41 @@ ExpressionErrors ExpressionPlotFuncAndMacloren(ExpressionType* func, ExpressionT
 
     GnuPlotImgCreate(gnuPlotFileName);
 
-    free(outImgName);
+    if (outImgName == nullptr)
+        free(imgName);
+    else
+        *outImgName = imgName;
+
+    return err;
+}
+
+ExpressionErrors ExpressionPlotFunc(ExpressionType* func, const char* funcTitle, 
+                                                          const char* funcColor, 
+                                                          char** outImgName)
+{
+    assert(func);
+    assert(funcTitle);
+    assert(funcColor);
+    
+    char* imgName = nullptr;
+
+    const char* gnuPlotFileName = GnuPlotFileCreate(&imgName);
+    ExpressionErrors err = ExpressionGnuPlotAddFunc(gnuPlotFileName, func, funcTitle, funcColor);
+
+    if (err != ExpressionErrors::NO_ERR)
+    {
+        assert(imgName);
+        free  (imgName);
+
+        return err;
+    }
+
+    GnuPlotImgCreate(gnuPlotFileName);
+
+    if (outImgName == nullptr)
+        free(imgName);
+    else
+        *outImgName = imgName;
 
     return err;
 }

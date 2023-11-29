@@ -9,7 +9,12 @@ ExpressionErrors ExpressionPrintGnuPlotFormat (ExpressionType* expression, FILE*
 ExpressionErrors ExpressionGnuPlotAddFunc(const char* plotFileName,  ExpressionType* expression, 
                                                                      const char* funcTitle, 
                                                                      const char* funcColor);
-ExpressionErrors ExpressionPlotFuncAndMacloren(ExpressionType* func, ExpressionType* macloren);
+ExpressionErrors ExpressionPlotFuncAndMacloren(ExpressionType* func, ExpressionType* macloren,
+                                               char** outImgName = nullptr);
+
+ExpressionErrors ExpressionPlotFunc(ExpressionType* func, const char* funcTitle, 
+                                                          const char* funcColor, 
+                                                          char** outImgName = nullptr);
 
 void        GnuPlotImgCreate (const char* plotFileName);
 const char* GnuPlotFileCreate(char** outImgName = nullptr);

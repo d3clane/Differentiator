@@ -732,6 +732,26 @@ ExpressionType ExpressionMacloren(const ExpressionType* expression, const int n)
 
 //---------------------------------------------------------------------------------------
 
+ExpressionType ExpressionSubTwoExpressions(const ExpressionType* expr1, 
+                                           const ExpressionType* expr2)
+{
+    assert(expr1);
+    assert(expr2);
+
+
+    ExpressionTokenType* root = _SUB(expr1->root, expr2->root);
+
+    ExpressionType subExpr = {};
+    ExpressionCtor(&subExpr);
+    subExpr.root = root;
+
+    ExpressionsCopyVariables(&subExpr, expr1);
+
+    return subExpr;
+}
+
+//---------------------------------------------------------------------------------------
+
 #undef C
 #undef D
 #undef CONST_TOKEN

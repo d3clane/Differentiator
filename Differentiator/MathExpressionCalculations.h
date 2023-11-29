@@ -5,6 +5,9 @@
 
 double ExpressionCalculate(const ExpressionType* expression);
 
+ExpressionType ExpressionSubTwoExpressions(const ExpressionType* expr1, 
+                                           const ExpressionType* expr2);
+
 void ExpressionSimplify(ExpressionType* expression, FILE* outTex = nullptr);
 
 ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
