@@ -11,7 +11,7 @@ ExpressionErrors ExpressionGnuPlotAddFunc(const char* plotFileName,  ExpressionT
                                                                      const char* funcColor);
 ExpressionErrors ExpressionPlotFuncAndMacloren(ExpressionType* func, ExpressionType* macloren);
 
-void GnuPlotImgCreate(const char* plotFileName);
+void        GnuPlotImgCreate (const char* plotFileName);
 const char* GnuPlotFileCreate(char** outImgName = nullptr);
 
 #endif
