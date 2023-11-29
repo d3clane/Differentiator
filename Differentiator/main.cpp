@@ -2,6 +2,7 @@
 #include "MathExpressionInOut.h"
 #include "MathExpressionCalculations.h"
 #include "MathExpressionGnuPlot.h"
+#include "MathExpressionTexDump.h"
 
 #include "Common/Log.h"
 
@@ -28,17 +29,17 @@ int main(const int argc, const char* argv[])
 
     printf("Calculation result: %lf\n\n\n", ExpressionCalculate(&expression));
 
-    ExpressionType ExpressionDiff =  ExpressionDifferentiate(&expression, outputTex);
+    ExpressionType expressionDiff =  ExpressionDifferentiate(&expression, outputTex);
 
-    ExpressionPrintTex   (&ExpressionDiff, outputTex, "Итоговый ответ: ");
-    ExpressionGraphicDump(&ExpressionDiff);
+    ExpressionPrintTex   (&expressionDiff, outputTex, "Итоговый ответ: ");
+    ExpressionGraphicDump(&expressionDiff);
 
-    ExpressionType taylorSeries = ExpressionMacloren(&expression, 10);
+    ExpressionType maclorenSeries = ExpressionMacloren(&expression, 10);
 
-    //ExpressionGraphicDump(&taylorSeries);
-    ExpressionPrintTex   (&taylorSeries, outputTex, "Разложение по маклорену: ");
-    ExpressionPrintEquationFormat(&taylorSeries, output);
-    printf("Diff result in x: %lf\n\n\n", ExpressionCalculate(&ExpressionDiff));
+    //ExpressionGraphicDump(&maclorenSeries);
+    ExpressionPrintTex   (&maclorenSeries, outputTex, "Разложение по маклорену: ");
+    ExpressionPrintEquationFormat(&maclorenSeries, output);
+    printf("Diff result in x: %lf\n\n\n", ExpressionCalculate(&expressionDiff));
 
-    ExpressionPlotFuncAndMacloren(&expression, &taylorSeries);
+    ExpressionPlotFuncAndMacloren(&expression, &maclorenSeries);
 }

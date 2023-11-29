@@ -4,6 +4,7 @@
 #include "MathExpressionCalculations.h"
 #include "MathExpressionInOut.h"
 #include "Common/DoubleFuncs.h"
+#include "MathExpressionTexDump.h"
 
 //---------------Calculation-------------------
 
@@ -340,8 +341,8 @@ static inline void TokenPrintChangeToTex(const ExpressionTokenType* prevToken,
 
     if (outTex)
     {
-        ExpressionTokenPrintTexTrollString(prevToken, outTex, stringToPrint);
-        ExpressionTokenPrintTexTrollString(newToken, outTex);
+        ExpressionTokenPrintTexWithTrollString(prevToken, outTex, stringToPrint);
+        ExpressionTokenPrintTexWithTrollString(newToken, outTex);
     }
 }
 

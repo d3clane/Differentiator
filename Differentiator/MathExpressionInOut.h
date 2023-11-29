@@ -9,17 +9,6 @@ ExpressionErrors ExpressionPrintPrefixFormat     (const ExpressionType* expressi
                                                           FILE* outStream = stdout);
 ExpressionErrors ExpressionPrintEquationFormat   (const ExpressionType* expression, 
                                                           FILE* outStream = stdout);
-ExpressionErrors ExpressionPrintTex(const ExpressionType* expression,
-                                                          FILE* outStream = stdout, 
-                                                          const char* funnyString = nullptr);
-
-ExpressionErrors ExpressionTokenPrintTexTrollString(
-                                                const ExpressionTokenType* rootToken,
-                                                FILE* outStream,
-                                                const char* string = nullptr);
-
-ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token, 
-                                         FILE* outStream);
 
 ExpressionErrors ExpressionReadPrefixFormat(ExpressionType* expression, 
                                             FILE* inStream = stdin);
