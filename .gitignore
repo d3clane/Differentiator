@@ -4,4 +4,5 @@ imgs/
 *.txt
 *.html
 .DS_Store
-Differentiator/differentiator
+*.tex
+*.exe
