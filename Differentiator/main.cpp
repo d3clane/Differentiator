@@ -40,6 +40,5 @@ int main(const int argc, const char* argv[])
     ExpressionPrintEquationFormat(&taylorSeries, output);
     printf("Diff result in x: %lf\n\n\n", ExpressionCalculate(&ExpressionDiff));
 
-    ExpressionPrintGnuPlot(&expression, stdout);
-    ExpressionPrintGnuPlot(&taylorSeries, stdout);
+    ExpressionPlotFuncAndMacloren(&expression, &taylorSeries);
 }

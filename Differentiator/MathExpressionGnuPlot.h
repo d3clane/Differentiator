@@ -3,8 +3,15 @@
 
 #include "MathExpressionsMain.h"
 
-ExpressionErrors ExpressionPrintGnuPlot     (ExpressionTokenType* token, FILE* outStream);
-ExpressionErrors ExpressionPrintGnuPlot     (ExpressionType* expression, FILE* outStream);
-void ExpressionCreatePlotImg    (ExpressionType* expression);
+ExpressionErrors ExpressionPrintGnuPlotFormat (ExpressionTokenType* token, FILE* outStream);
+ExpressionErrors ExpressionPrintGnuPlotFormat (ExpressionType* expression, FILE* outStream);
+
+ExpressionErrors ExpressionGnuPlotAddFunc(const char* plotFileName,  ExpressionType* expression, 
+                                                                     const char* funcTitle, 
+                                                                     const char* funcColor);
+ExpressionErrors ExpressionPlotFuncAndMacloren(ExpressionType* func, ExpressionType* macloren);
+
+void GnuPlotImgCreate(const char* plotFileName);
+const char* GnuPlotFileCreate(char** outImgName = nullptr);
 
 #endif
