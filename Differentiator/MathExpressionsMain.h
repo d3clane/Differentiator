@@ -80,10 +80,11 @@ enum class ExpressionErrors
 ExpressionErrors ExpressionCtor(ExpressionType* expression);
 ExpressionErrors ExpressionDtor(ExpressionType* expression);
 
-ExpressionTokenType* ExpressionTokenCtor(ExpressionTokenValue value, 
-                                                        ExpressionTokenValueTypeof valueType,
-                                                        ExpressionTokenType* left  = nullptr,
-                                                        ExpressionTokenType* right = nullptr);
+ExpressionTokenType* ExpressionTokenCreate(ExpressionTokenValue value, 
+                                            ExpressionTokenValueTypeof valueType,
+                                            ExpressionTokenType* left  = nullptr,
+                                            ExpressionTokenType* right = nullptr);
+
 void ExpressionTokenDtor(ExpressionTokenType* token);
 
 ExpressionTokenValue ExpressionTokenValueСreate(double value);
@@ -133,7 +134,7 @@ ExpressionVariableType* ExpressionVariableChangeName(ExpressionVariablesArrayTyp
                                                      const char* prevName,
                                                      const char* newName);
 
-void ExpressionsCopyVariables(ExpressionType* target, const ExpressionType* source);
+void ExpressionCopyVariables(ExpressionType* target, const ExpressionType* source);
 
 //-------------Operations funcs-----------
 

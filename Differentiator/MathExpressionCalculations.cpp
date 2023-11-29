@@ -26,7 +26,7 @@ static double CalculateUsingOperation(const ExpressionOperationId operation,
     static inline ExpressionTokenType* _##NAME(ExpressionTokenType* left,                   \
                                                ExpressionTokenType* right = nullptr)        \
     {                                                                                       \
-        return ExpressionTokenCtor(ExpressionTokenValueСreate(ExpressionOperationId::NAME), \
+        return ExpressionTokenCreate(ExpressionTokenValueСreate(ExpressionOperationId::NAME), \
                                    ExpressionTokenValueTypeof::OPERATION,                   \
                                    left, right);                                            \
     }
@@ -154,7 +154,8 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
     
     if (outTex)
         ExpressionPrintTex(expression, outTex, 
-                                "Ящеры нападают, нужно срочно взять эту производную ради победы");
+            "according to legend, the ancient Rus were able to defeat the lizards"
+            "by taking this derivative:");
 
     ExpressionTokenType* diffRootToken = ExpressionDifferentiate(expression->root, 
                                                                  outTex);
@@ -164,12 +165,14 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
 
     diffExpression.root = diffRootToken;
 
-    ExpressionsCopyVariables(&diffExpression, expression);
+    ExpressionCopyVariables(&diffExpression, expression);
 
     if (outTex)
     {
-        ExpressionPrintTex(&diffExpression, outTex, "Выражение после взятия производной:\n");
-        fprintf(outTex, "***** не понятно, но очень интересно. Сделаем выражение более понятным\n");
+        ExpressionPrintTex(&diffExpression, outTex, "the ancient Rus, like us, got this result\n");
+        fprintf(outTex, "no one gives a **** what's going on here, "
+                        "but according to the standards I have to say it - "
+                        "\"Ya sobirayus uprostit virazhenie))))\".");
     }
 
     ExpressionSimplify(&diffExpression, outTex);
@@ -189,11 +192,11 @@ static ExpressionTokenType* ExpressionDifferentiate(const ExpressionTokenType* t
     {
         case ExpressionTokenValueTypeof::VALUE:
             val.value = 0;
-            diffToken =  ExpressionTokenCtor(val, ExpressionTokenValueTypeof::VALUE);
+            diffToken =  ExpressionTokenCreate(val, ExpressionTokenValueTypeof::VALUE);
             break;
         case ExpressionTokenValueTypeof::VARIABLE:
             val.value = 1;
-            diffToken =  ExpressionTokenCtor(val, ExpressionTokenValueTypeof::VALUE);
+            diffToken =  ExpressionTokenCreate(val, ExpressionTokenValueTypeof::VALUE);
             break;
 
         case ExpressionTokenValueTypeof::OPERATION:
@@ -204,7 +207,7 @@ static ExpressionTokenType* ExpressionDifferentiate(const ExpressionTokenType* t
             break;
     }
 
-    TokenPrintChangeToTex(token, diffToken, outTex, "Возьмем производную от: ");
+    TokenPrintChangeToTex(token, diffToken, outTex, "Let's take the derivative of: ");
 
     return diffToken;  
 }
@@ -248,14 +251,13 @@ void ExpressionSimplify(ExpressionType* expression,
     do
     {
         simplifiesCount = 0;
-        //TODO: подумать над сменой местами последних двух параметров в simplify constants
         expression->root = ExpressionSimplifyConstants(expression->root, &simplifiesCount, 
                                                        nullptr, outTex);
         expression->root = ExpressionSimplifyNeutralTokens(expression->root, &simplifiesCount,
                                                            outTex);
     } while (simplifiesCount != 0);
 
-    if (outTex) ExpressionPrintTex(expression, outTex, "Итоговое выражение после упрощений:");
+    if (outTex) ExpressionPrintTex(expression, outTex, "Final expression after simplifications:");
 }
 
 static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* token,
@@ -323,7 +325,7 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
                                     CalculateUsingOperation(token->value.operation, leftVal, 
                                                                                     rightVal));
 
-        TokenPrintChangeToTex(token, simplifiedToken, outTex, "Упростим это выражение: "); 
+        TokenPrintChangeToTex(token, simplifiedToken, outTex, "Let's simplify this expression: "); 
 
         return simplifiedToken;
     }
@@ -620,7 +622,7 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnLeftToken(ExpressionT
 {
     assert(token);
 
-    TokenPrintChangeToTex(token, token->left, outTex, "Даже не буду ничего говорить, ");
+    TokenPrintChangeToTex(token, token->left, outTex, "Slozhno ne ponyat, сhto I mean: ");
 
     ExpressionTokenDtor(token->right);
 
@@ -639,7 +641,7 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnRightToken(
     assert(token);
 
     TokenPrintChangeToTex(token, token->right, outTex, 
-                                            "В качестве упражнения можно показать этот переход");
+                        "Avtor ne smog perevesti chto bilo napisano v originalnoi stat'e(");
 
     ExpressionTokenDtor(token->left);
 
@@ -659,7 +661,9 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnConstToken(
     ExpressionTokenType* constToken = NUM_TOKEN(value);
     
     TokenPrintChangeToTex(token, constToken, outTex,
-                                            "Воспользуемся теоремой, доказанной нами когда-то");
+                        "Let's use the theorem ..."
+                        "(The author of the ranslation does not know which theorem is used, "
+                        "you are left to guess for yourself");
     
     ExpressionTokenDtor(token->right);
     ExpressionTokenDtor(token->left);
@@ -703,7 +707,7 @@ ExpressionType ExpressionMacloren(const ExpressionType* expression, const int n)
 
     ExpressionType maclorenSeries = {};
     ExpressionCtor(&maclorenSeries);
-    ExpressionsCopyVariables(&maclorenSeries, expression);
+    ExpressionCopyVariables(&maclorenSeries, expression);
 
     maclorenSeries.root = NUM_TOKEN(ExpressionCalculate(&tmpDiffExpr));
     ExpressionTokenType* xToken = VAR_TOKEN(&maclorenSeries.variables, 
@@ -745,7 +749,7 @@ ExpressionType ExpressionSubTwoExpressions(const ExpressionType* expr1,
     ExpressionCtor(&subExpr);
     subExpr.root = root;
 
-    ExpressionsCopyVariables(&subExpr, expr1);
+    ExpressionCopyVariables(&subExpr, expr1);
 
     return subExpr;
 }

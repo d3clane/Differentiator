@@ -94,7 +94,7 @@ static void ExpressionVariableValuesDtor(ExpressionVariableType* varPtr)
 
 //---------------------------------------------------------------------------------------
 
-ExpressionTokenType* ExpressionTokenCtor(ExpressionTokenValue value, 
+ExpressionTokenType* ExpressionTokenCreate(ExpressionTokenValue value, 
                                          ExpressionTokenValueTypeof valueType,
                                          ExpressionTokenType* left,
                                          ExpressionTokenType* right)
@@ -270,7 +270,7 @@ void ExpressionDump(const ExpressionType* expression, const char* fileName,
 
 //---------------------------------------------------------------------------------------
 
-void ExpressionsCopyVariables(      ExpressionType* target, 
+void ExpressionCopyVariables(      ExpressionType* target, 
                               const ExpressionType* source)
 {
     assert(target);
@@ -397,7 +397,7 @@ ExpressionType ExpressionCopy(const ExpressionType* expression)
 {
     ExpressionType copyExpr = {};
     ExpressionCtor(&copyExpr);
-    ExpressionsCopyVariables(&copyExpr, expression);
+    ExpressionCopyVariables(&copyExpr, expression);
 
     ExpressionTokenType* copyExprRoot = ExpressionTokenCopy(expression->root);
 
@@ -414,7 +414,7 @@ ExpressionTokenType* ExpressionTokenCopy(const ExpressionTokenType* token)
     ExpressionTokenType* left  = ExpressionTokenCopy(token->left);
     ExpressionTokenType* right = ExpressionTokenCopy(token->right);
 
-    return ExpressionTokenCtor(token->value, token->valueType, left, right);
+    return ExpressionTokenCreate(token->value, token->valueType, left, right);
 }
 
 //---------------------------------------------------------------------------------------
@@ -457,7 +457,7 @@ ExpressionTokenType* ExpressionNumericTokenCreate(double value)
 {
     ExpressionTokenValue tokenVal = ExpressionTokenValueСreate(value);
 
-    return ExpressionTokenCtor(tokenVal, ExpressionTokenValueTypeof::VALUE);
+    return ExpressionTokenCreate(tokenVal, ExpressionTokenValueTypeof::VALUE);
 }
 
 ExpressionTokenType* ExpressionVariableTokenCreate(ExpressionVariablesArrayType* varsArr,
@@ -469,7 +469,7 @@ ExpressionTokenType* ExpressionVariableTokenCreate(ExpressionVariablesArrayType*
     ExpressionVariableType* varPtr = ExpressionVariableSet(varsArr, varName);
     ExpressionTokenValue tokenVal  = ExpressionTokenValueСreate(varPtr);
 
-    return ExpressionTokenCtor(tokenVal, ExpressionTokenValueTypeof::VARIABLE);
+    return ExpressionTokenCreate(tokenVal, ExpressionTokenValueTypeof::VARIABLE);
 }
 
 //---------------------------------------------------------------------------------------

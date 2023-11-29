@@ -252,7 +252,7 @@ static ExpressionTokenType* ExpressionReadPrefixFormat(
     ExpressionTokenValueTypeof valueType;
 
     stringPtr = ExpressionReadTokenValue(&value, &valueType, varsArr, stringPtr);
-    ExpressionTokenType* token = ExpressionTokenCtor(value, valueType);
+    ExpressionTokenType* token = ExpressionTokenCreate(value, valueType);
     
     ExpressionTokenType* left  = ExpressionReadPrefixFormat(stringPtr, &stringPtr, varsArr);
 
@@ -316,7 +316,7 @@ static ExpressionTokenType* ExpressionReadInfixFormat(
         --stringPtr;
 
         stringPtr = ExpressionReadTokenValue(&value, &valueType, varsArr, stringPtr);
-        ExpressionTokenType* token = ExpressionTokenCtor(value, valueType);
+        ExpressionTokenType* token = ExpressionTokenCreate(value, valueType);
 
         *stringEndPtr = stringPtr;
         return token;
@@ -325,7 +325,7 @@ static ExpressionTokenType* ExpressionReadInfixFormat(
     ExpressionTokenType* left  = ExpressionReadInfixFormat(stringPtr, &stringPtr, varsArr);
 
     stringPtr = ExpressionReadTokenValue(&value, &valueType, varsArr, stringPtr);
-    ExpressionTokenType* token = ExpressionTokenCtor(value, valueType);
+    ExpressionTokenType* token = ExpressionTokenCreate(value, valueType);
     ExpressionTokenType* right = ExpressionReadInfixFormat(stringPtr, &stringPtr, varsArr);
 
     ExpressionTokenSetEdges(token, left, right);

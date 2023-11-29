@@ -1,84 +1,190 @@
-Ребят, вы че издеваетесь?Я понимаю, что вам хочется просто расслабиться и наслаждаться жизнью.И не думать о дифференцировании, решении уравнений.У меня просто завален весь direct"Арман, ты же умеешь дифференцировать, продифференцируй, тебе жалко что ли?"Мне не сложно, но я не могу дифференцировать просто так! Поэтому давайте поступим так.Целый год мои дифференциалы были платными.Для того, чтобы получить дифференцирование, нужно было заплатить.Сегодня мне захотелось, чтобы через мой продукт смог пройти каждый.Чтобы у каждого была возможность не отчислиться.Потому что не каждый может позволить себе дифференциал, когда в приоритете по расходам сначала идёт семья/кредиты/ипотеки.Не упусти свой шанс! Бесплатное дифференцирование: 
+\documentclass[12pt,a4paper]{extreport}
+\usepackage[l2tabu,orthodox]{nag}
+
+\usepackage{indentfirst}
+\usepackage[labelsep=period]{caption}
+\usepackage{amssymb,amsmath,amsthm}
+\usepackage{fontspec}
+\usepackage{float}
+
+\setmainfont[Ligatures=TeX]{STIX}
+\newfontfamily{\cyrillicfont}[Ligatures=TeX]{STIX}
+\setmonofont{Fira Mono}
+\newfontfamily{\cyrillicfonttt}{Fira Mono}
+
+\usepackage{polyglossia}
+\setdefaultlanguage{russian}
+\setotherlanguage{english}
+
+\usepackage{subcaption}
+\usepackage{graphicx}
+\graphicspath{img/}
+\DeclareGraphicsExtensions{.pdf,.png,.jpg}
+
+\usepackage{color}
+\definecolor{darkblue}{rgb}{0,0,.75}
+\definecolor{darkred}{rgb}{.7,0,0}
+\definecolor{darkgreen}{rgb}{0,.7,0}
+
+\usepackage[normalem]{ulem}
+\setlength{\marginparwidth}{2cm}
+\usepackage[textwidth=4cm,textsize=tiny]{todonotes}
+\newcommand{\fix}[2]{{\textcolor{red}{\uwave{#1}}\todo[fancyline]{#2}}}
+\newcommand{\hl}[1]{{\textcolor{red}{#1}}}
+\newcommand{\cmd}[1]{{\ttfamily{\textbackslash #1}}}
+
+\newcommand{\vrb}[1]{\PVerb{#1}}
+\newcommand{\vrbb}[1]{\texttt{\textbackslash}\PVerb{#1}}
+
+\usepackage[
+    draft = false,
+    unicode = true,
+    colorlinks = true,
+    allcolors = blue,
+    hyperfootnotes = true
+]{hyperref}
+
+\usepackage{tikz}
+\usetikzlibrary{graphs, quotes}
+\usepackage{relsize}
+\usepackage{ytableau}
+
+%\usepackage{titlesec}
+%\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection.}{\smallskip}{}
+\renewcommand \thesection{\Roman{section}}
+\renewcommand \thesubsection{\arabic{subsection}}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Теорема}
+\newtheorem{lemma}{Лемма}
+\newtheorem{proposition}{Утверждение}
+\newtheorem{corollary}{Следствие}
+\theoremstyle{definition}
+\newtheorem{definition}{Определение}
+\newtheorem{notation}{Обозначение}
+\newtheorem{example}{Пример}
+
+\newcounter{homework}
+\setcounter{homework}{0}
+\newenvironment{homework}[2][\thehomework+1]%
+{\setcounter{homework}{#1}\addtocounter{homework}{-1}\refstepcounter{homework}
+\setcounter{subsection}{\thehomework-1}%
+\subsection{#2}}%
+{\newpage}
+\newenvironment{homework*}[1]%
+{\subsection*{#1}}%
+{\newpage}
+
+\newcounter{task}
+\counterwithin{task}{homework}
+\newenvironment{task}[1]%
+{\setcounter{task}{#1}\addtocounter{task}{-1}\refstepcounter{task}%
+\par\noindent\textbf{Задача~\thetask. }}%
+{\smallskip}
+
+\newenvironment{solution}%
+{\par\noindent\textbf{Решение. }}%
+{\bigskip}
+
+\newcommand\abs[1]{\left\lvert #1 \right\rvert}
+\newcommand\ceil[1]{\left\lceil{#1}\right\rceil}
+\newcommand\floor[1]{\left\lfloor{#1}\right\rfloor}
+\newcommand{\divby}{\;\raisebox{-0.4ex}{\vdots}\;} 
+
+
+\title{<<Математические основания алгоритмов и сложность вычислений>>}
+\author{Овакимян Арман Б05-332}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\begin{solution}
+
+Автор данной статьи решил одну из важнейших задач последнего тысячелетия. В связи с этим он хотел нанять профессионального переводчика, который сделал бы эту статью подходящей для публикации в популярном научном журнале. Автор надеялся заработать много денег, чтобы прожить жизнь безбедно, но на данный момент у него нет денег даже на переводчика, поэтому была совершенна отчаянная попытка перевести самому. Автор надеется, что мировое сообщество математиков примет данную статью, поймет ее и заплатит ему много денег.
+
+Отдельные благодарности от автора за помощь в создании статьи 
+\begin{enumerate}
+    \item Перуну - великому богу-громовержцу                                                                   \
+    \item Байкальской водице, выпив которую автор преисполнился в своем познании математического анализа.      \
+    \item Лечащему врачу в психиатрическое больнице №7, который ухаживал за автором во время написания статьи. \
+\end{enumerate}
+
+Перейдем к самой статье. \\
+according to legend, the ancient Rus were able to defeat the lizardsby taking this derivative:
 \begin{gather}
 \end{gather}
 \begin{math}
 2.00 ^ {\sin x }\\
 \end{math}
-Ящеры нападают, нужно срочно взять эту производную ради победы
-\begin{gather}
-\end{gather}
-\begin{math}
-2.00 ^ {\sin x }\\
-\end{math}
-Возьмем производную от: 
+Let's take the derivative of: 
 \begin{gather}
 \end{gather}
 \begin{math}
 x \\
 \end{math}
-Несложно заметить это преобразование
+Nikto ne zametit, chto ya ne smog perevesti eto dlya svoe' stat'i: 
 \begin{gather}
 \end{gather}
 \begin{math}
 1.00 \\
 \end{math}
-Возьмем производную от: 
+Let's take the derivative of: 
 \begin{gather}
 \end{gather}
 \begin{math}
 \sin x \\
 \end{math}
-Несложно заметить это преобразование
+Don't ask me to prove this: 
 \begin{gather}
 \end{gather}
 \begin{math}
 \cos x \cdot 1.00 \\
 \end{math}
-Возьмем производную от: 
+Let's take the derivative of: 
 \begin{gather}
 \end{gather}
 \begin{math}
 2.00 ^ {\sin x }\\
 \end{math}
-Любопытный читатель может показать этот переход самостоятельно, 
+Perun sent me the solution and I don't have no right to not to believe: 
 \begin{gather}
 \end{gather}
 \begin{math}
 2.00 ^ {\sin x }\cdot \ln 2.00 \cdot \cos x \cdot 1.00 \\
 \end{math}
-Выражение после взятия производной:
+the ancient Rus, like us, got this result
 
 \begin{gather}
 \end{gather}
 \begin{math}
 2.00 ^ {\sin x }\cdot \ln 2.00 \cdot \cos x \cdot 1.00 \\
 \end{math}
-***** не понятно, но очень интересно. Сделаем выражение более понятным
-Упростим это выражение: 
+no one gives a **** what's going on here, but according to the standards I have to say it - "Ya sobirayus uprostit virazhenie))))".Let's simplify this expression: 
 \begin{gather}
 \end{gather}
 \begin{math}
 \ln 2.00 \\
 \end{math}
-Любопытный читатель может показать этот переход самостоятельно, 
+Even a monkey can learn to differentiate, why won't you do it by yourself?
 \begin{gather}
 \end{gather}
 \begin{math}
 0.69 \\
 \end{math}
-Даже не буду ничего говорить, 
+Slozhno ne ponyat, сhto I mean: 
 \begin{gather}
 \end{gather}
 \begin{math}
 \cos x \cdot 1.00 \\
 \end{math}
-Очевидно, что это преобразование верно
+I have a proof of this theorem, but there is not enough space in this margin: 
 \begin{gather}
 \end{gather}
 \begin{math}
 \cos x \\
 \end{math}
-Итоговое выражение после упрощений:
+Final expression after simplifications:
 \begin{gather}
 \end{gather}
 \begin{math}
@@ -100,23 +206,26 @@ x \\
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.6]{Graphs/graph_1337_time_23:25:19.png}
+\includegraphics[scale=0.6]{Graphs/graph_1337_time_02:20:09.png}
 \end{figure}
 График разложение по маклорену:
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.6]{Graphs/graph_1338_time_23:25:19.png}
+\includegraphics[scale=0.6]{Graphs/graph_1338_time_02:20:09.png}
 \end{figure}
 Сравнение графиков функции и маклорена в окрестности нуля:
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.6]{Graphs/graph_1339_time_23:25:19.png}
+\includegraphics[scale=0.6]{Graphs/graph_1339_time_02:20:09.png}
 \end{figure}
 График разницы между функцией и разложение по маклорену:
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.6]{Graphs/graph_1340_time_23:25:19.png}
+\includegraphics[scale=0.6]{Graphs/graph_1340_time_02:20:09.png}
 \end{figure}
+\end{solution}
+
+\end{document}

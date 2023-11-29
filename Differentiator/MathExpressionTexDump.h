@@ -3,6 +3,9 @@
 
 #include "MathExpressionsMain.h"
 
+void LatexFileTrollingStart(FILE* outTex);
+void LatexFileTrollingEnd  (FILE* outTex);
+
 ExpressionErrors ExpressionPrintTex(const ExpressionType* expression,
                                                           FILE* outStream = stdout, 
                                                           const char* funnyString = nullptr);

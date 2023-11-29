@@ -1,6 +1,9 @@
 #include <assert.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "MathExpressionTexDump.h"
+#include "FastInput/InputOutput.h"
 
 static bool        ExpressionOperationIsPrefix          (const ExpressionOperationId operation);
 static bool        ExpressionOperationNeedTexRightBraces(const ExpressionOperationId operation);
@@ -25,37 +28,34 @@ ExpressionErrors ExpressionPrintTex     (const ExpressionType* expression,
 //TODO: pdftex latexmk
 
 ExpressionErrors ExpressionTokenPrintTexWithTrollString(const ExpressionTokenType* rootToken,
-                                                    FILE* outStream,
-                                                    const char* string)
+                                                        FILE* outStream,
+                                                        const char* string)
 {
     assert(rootToken);
     assert(outStream);
 
-    static const size_t            numberOfRoflStrings  = 8;
-    static const char* roflStrings[numberOfRoflStrings] = 
-    {
-        "Очевидно, что это преобразование верно",
-        "Несложно заметить это преобразование", 
-        "Любопытный читатель может показать этот переход самостоятельно, ",
-        "Не буду утруждать себя доказательством, что",
-        "Я нашел удивительное решение, но здесь маловато места, чтобы его поместить, ",
-        "Оставим переход без комментариев, ",
-        "Это же не рокет саенс, поэтому легко видеть, что",
+    static const char* assertFileName = "trollingAssets.h";
 
-        "Ребят, вы че издеваетесь?"
-        "Я понимаю, что вам хочется просто расслабиться и наслаждаться жизнью."
-        "И не думать о дифференцировании, решении уравнений."
-        "У меня просто завален весь direct"
-        "\"Арман, ты же умеешь дифференцировать, продифференцируй, тебе жалко что ли?\""
-        "Мне не сложно, но я не могу дифференцировать просто так! Поэтому давайте поступим так."
-        "Целый год мои дифференциалы были платными."
-        "Для того, чтобы получить дифференцирование, нужно было заплатить." 
-        "Сегодня мне захотелось, чтобы через мой продукт смог пройти каждый."
-        "Чтобы у каждого была возможность не отчислиться."
-        "Потому что не каждый может позволить себе дифференциал, "
-        "когда в приоритете по расходам сначала идёт семья/кредиты/ипотеки."
-        "Не упусти свой шанс! Бесплатное дифференцирование: "
+    static const char* roflStrings[] = 
+    {
+        "Kind of obvious expression transformation: ",
+        "Easy to see that it's equal to: ", 
+        "Lubopitniy chitatel can show this perehod by himself: ",
+        "I have a proof of this theorem, but there is not enough space in this margin: ",
+        "Don't ask me to prove this: ",
+        "Perun sent me the solution and I don't have no right to not to believe: ",
+        "C'mon guys, it's not rocket science: ",
+        "Bez kommentariev: ",
+        "No one is reading, so I'm gonna say that I hate calculus.",
+        "If you're reading this - why?",
+        "Even a monkey can learn how to do it, why won't you do it by yourself?",
+        "Nikto ne zametit, chto ya ne smog perevesti eto dlya svoe' stat'i: ",
+
+        "Explanation is available only for premium subscribers."
+        "You can become one of them - it costs only 5 bucks a week",
     };
+
+    static const size_t numberOfRoflStrings = sizeof(roflStrings) / sizeof(*roflStrings);
 
     if (string == nullptr)
         fprintf(outStream, "%s\n", roflStrings[rand() % numberOfRoflStrings]);
@@ -273,4 +273,38 @@ void TexInsertImg(const char* imgName, FILE* outStream, const char* string)
                        "\\centering\n"
                        "\\includegraphics[scale=0.6]{%s}\n"
                        "\\end{figure}\n", imgName);
+}
+
+void LatexFileTrollingStart(FILE* outTex)
+{
+    assert(outTex);
+
+    static const char* inAssetFileName = "latexStartAsset.txt";
+    FILE* inAssetStream = fopen(inAssetFileName, "r");
+
+    if (inAssetStream == nullptr)
+        return;
+    
+    char* text = ReadText(inAssetStream);
+
+    PrintText(text, strlen(text), outTex);
+
+    free(text);
+}
+
+void LatexFileTrollingEnd  (FILE* outTex)
+{
+    assert(outTex);
+
+    static const char* inAssetFileName = "latexEndAsset.txt";
+    FILE* inAssetStream = fopen(inAssetFileName, "r");
+
+    if (inAssetStream == nullptr)
+        return;
+    
+    char* text = ReadText(inAssetStream);
+
+    PrintText(text, strlen(text), outTex);
+
+    free(text);
 }

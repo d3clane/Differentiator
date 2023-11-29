@@ -26,14 +26,13 @@ int main(const int argc, const char* argv[])
     FILE* inStream  = fopen("input.txt",  "r");
     FILE* outputTex = fopen("output.tex", "w");
 
+    LatexFileTrollingStart(outputTex);
+
     err = ExpressionReadPrefixFormat(&expression, inStream);
     IF_ERR_RETURN(err);
     err = ExpressionReadVariables(&expression);
     IF_ERR_RETURN(err);
 
-    err = ExpressionPrintTex(&expression, outputTex);
-
-    IF_ERR_RETURN(err);
     //-----------------------DIFFERENTIATE------------
 
     ExpressionType expressionDifferentiate =  ExpressionDifferentiate(&expression, outputTex);
@@ -45,8 +44,9 @@ int main(const int argc, const char* argv[])
 
     ExpressionType maclorenSeries = ExpressionMacloren(&expression, 10);
     err = ExpressionPrintTex   (&maclorenSeries, outputTex, "Разложение по маклорену: ");
-
     IF_ERR_RETURN(err);
+
+    //-----------------------Graphs--------------
 
     char* imgFuncName        = nullptr;
     err = ExpressionPlotFunc(&expression, "main func", "red", &imgFuncName);
@@ -67,10 +67,6 @@ int main(const int argc, const char* argv[])
                              &imgFuncAndMaclorenDifference);
     IF_ERR_RETURN(err);
 
-    assert(imgMaclorenName);
-    assert(imgFuncName);
-    assert(imgFuncAndMacloren);
-    assert(imgFuncAndMaclorenDifference);
     //--------------------PRINT GRAPHS TO LATEX--------------------
 
     TexInsertImg(imgFuncName, outputTex, "График функции:\n");
@@ -83,9 +79,12 @@ int main(const int argc, const char* argv[])
     TexInsertImg(imgFuncAndMaclorenDifference, outputTex,
                             "График разницы между функцией и разложение по маклорену:\n");
 
+    LatexFileTrollingEnd(outputTex);
+
     fclose(outputTex);
     free(imgFuncName);
     free(imgMaclorenName);
     free(imgFuncAndMacloren);
     free(imgFuncAndMaclorenDifference);
+
 }
