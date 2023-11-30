@@ -92,9 +92,9 @@ static bool ExpressionTokenContainVariable(const ExpressionTokenType* token);
 
 //---------------------------------------------------------------------------------------
 
-static inline void TokenPrintChangeToTex(const ExpressionTokenType* prevToken, 
-                                         const ExpressionTokenType* newToken, FILE* outTex, 
-                                         const char* stringToPrint);
+static inline void TokenPrintDifferenceToTex(const ExpressionTokenType* prevToken, 
+                                             const ExpressionTokenType* newToken, FILE* outTex, 
+                                             const char* stringToPrint);
 
 //---------------------------------------------------------------------------------------
 
@@ -211,7 +211,7 @@ static ExpressionTokenType* ExpressionDifferentiate(const ExpressionTokenType* t
             break;
     }
 
-    TokenPrintChangeToTex(token, diffToken, outTex, "Let's take the derivative of: ");
+    TokenPrintDifferenceToTex(token, diffToken, outTex, "Let's take the derivative of: ");
 
     return diffToken;  
 }
@@ -329,7 +329,7 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
                                     CalculateUsingOperation(token->value.operation, leftVal, 
                                                                                     rightVal));
 
-        TokenPrintChangeToTex(token, simplifiedToken, outTex, "Let's simplify this expression: "); 
+        TokenPrintDifferenceToTex(token, simplifiedToken, outTex, "Let's simplify this expression: "); 
 
         return simplifiedToken;
     }
@@ -338,7 +338,7 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
 
 //---------------------------------------------------------------------------------------
 
-static inline void TokenPrintChangeToTex(const ExpressionTokenType* prevToken, 
+static inline void TokenPrintDifferenceToTex(const ExpressionTokenType* prevToken, 
                                          const ExpressionTokenType* newToken, FILE* outTex, 
                                          const char* stringToPrint)
 {
@@ -626,7 +626,7 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnLeftToken(ExpressionT
 {
     assert(token);
 
-    TokenPrintChangeToTex(token, token->left, outTex, "Slozhno ne ponyat, chto delat s etim:");
+    TokenPrintDifferenceToTex(token, token->left, outTex, "Slozhno ne ponyat, chto delat s etim:");
 
     ExpressionTokenDtor(token->right);
 
@@ -644,7 +644,7 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnRightToken(
 {
     assert(token);
 
-    TokenPrintChangeToTex(token, token->right, outTex, 
+    TokenPrintDifferenceToTex(token, token->right, outTex, 
                         "Avtor ne smog perevesti na english(");
 
     ExpressionTokenDtor(token->left);
@@ -664,7 +664,7 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnConstToken(
 {
     ExpressionTokenType* constToken = NUM_TOKEN(value);
     
-    TokenPrintChangeToTex(token, constToken, outTex,
+    TokenPrintDifferenceToTex(token, constToken, outTex,
                         "Let's use the theorem ..."
                         "(The author of the ranslation does not know which theorem is used, "
                         "you are left to guess for yourself");
@@ -739,6 +739,39 @@ ExpressionType ExpressionMacloren(const ExpressionType* expression, const int n)
 }
 
 //---------------------------------------------------------------------------------------
+
+ExpressionType ExpressionTangent(ExpressionType* expression, const int x)
+{
+    assert(expression);
+    assert(expression->variables.size == 1);
+
+    const char* varName = expression->variables.data[0].variableName;
+
+    ExpressionType exprDiff = ExpressionDifferentiate(expression);
+    ExpressionVariableSet(&exprDiff, varName, x);
+
+    double prevVal = expression->variables.data[0].variableValue;
+    ExpressionVariableSet(expression, varName, x);
+
+    double diffValInX = ExpressionCalculate(&exprDiff);
+    double exprValInX = ExpressionCalculate(expression);
+    ExpressionVariableSet(expression, varName, prevVal);
+
+    ExpressionDtor(&exprDiff);
+
+    ExpressionType tangent = {};
+    ExpressionCtor(&tangent);
+    ExpressionCopyVariables(&tangent, expression);
+
+    ExpressionTokenType* xToken = VAR_TOKEN(&tangent.variables, varName);
+
+    tangent.root = _ADD(_MUL(NUM_TOKEN(diffValInX), C(xToken)), 
+                        _SUB(NUM_TOKEN(exprValInX), _MUL(NUM_TOKEN(diffValInX), NUM_TOKEN(x))));
+
+    ExpressionSimplify(&tangent);
+    
+    return tangent;
+}
 
 ExpressionType ExpressionSubTwoExpressions(const ExpressionType* expr1, 
                                            const ExpressionType* expr2)

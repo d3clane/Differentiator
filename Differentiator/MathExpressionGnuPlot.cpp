@@ -184,16 +184,23 @@ ExpressionErrors ExpressionGnuPlotAddFunc(const char* plotFileName,  ExpressionT
     return err;
 }
 
-ExpressionErrors ExpressionPlotFuncAndMacloren(ExpressionType* func, ExpressionType* macloren,
-                                               char** outImgName)
+ExpressionErrors ExpressionPlotTwoFuncs(ExpressionType* func1, 
+                                        const char* title1,  const char* color1, 
+                                        ExpressionType* func2,
+                                        const char* title2, const char* color2,
+                                        char** outImgName)
 {
-    assert(func);
-    assert(macloren);
+    assert(func1);
+    assert(func2);
+    assert(title1);
+    assert(title2);
+    assert(color1);
+    assert(color2);
 
     char* imgName = nullptr;
 
     const char* gnuPlotFileName = GnuPlotFileCreate(&imgName);
-    ExpressionErrors err = ExpressionGnuPlotAddFunc(gnuPlotFileName, func, "main function", "red");
+    ExpressionErrors err = ExpressionGnuPlotAddFunc(gnuPlotFileName, func1, title1, color1);
 
     if (err != ExpressionErrors::NO_ERR)
     {
@@ -203,7 +210,7 @@ ExpressionErrors ExpressionPlotFuncAndMacloren(ExpressionType* func, ExpressionT
         return err;
     }
 
-    err = ExpressionGnuPlotAddFunc(gnuPlotFileName, macloren, "macloren", "green");
+    err = ExpressionGnuPlotAddFunc(gnuPlotFileName, func2, title2, color2);
 
     GnuPlotImgCreate(gnuPlotFileName);
 

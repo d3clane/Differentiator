@@ -39,30 +39,44 @@ int main(const int argc, const char* argv[])
     //-----------------------DIFFERENTIATE------------
 
     ExpressionType expressionDifferentiate =  ExpressionDifferentiate(&expression, outputTex);
-    err = ExpressionPrintTex   (&expressionDifferentiate, outputTex, "Итоговый ответ: ");
-
+    err = ExpressionPrintTex   (&expressionDifferentiate, outputTex, 
+                                                    "Result differentiate answer: ");
     IF_ERR_RETURN(err);
     
-    //------------------------MACLOREN------------
+    //-----------------------TANGENT--------------------
+
+    ExpressionType tangent = ExpressionTangent(&expression, 0);
+    err = ExpressionPrintTex(&tangent, outputTex, "Derivative in 0: ");
+    IF_ERR_RETURN(err);
+
+    //------------------------MACLOREN------------------
 
     ExpressionType maclorenSeries = ExpressionMacloren(&expression, 5);
-    err = ExpressionPrintTex   (&maclorenSeries, outputTex, "Разложение по маклорену: ");
+    err = ExpressionPrintTex   (&maclorenSeries, outputTex, "Macloren series: ");
     IF_ERR_RETURN(err);
 
     //-----------------------Graphs--------------
 
-    char* imgFuncName        = nullptr;
-    err = ExpressionPlotFunc(&expression, "main func", "red", &imgFuncName);
+    char* imgFunc        = nullptr;
+    err = ExpressionPlotFunc(&expression, "main func", "red", &imgFunc);
     IF_ERR_RETURN(err);
 
-    char* imgMaclorenName    = nullptr;
-    err = ExpressionPlotFunc(&maclorenSeries, "macloren", "green", &imgMaclorenName);
+    char* imgMacloren    = nullptr;
+    err = ExpressionPlotFunc(&maclorenSeries, "macloren", "green", &imgMacloren);
     IF_ERR_RETURN(err);
 
     char* imgFuncAndMacloren = nullptr;
-    err = ExpressionPlotFuncAndMacloren(&expression, &maclorenSeries, &imgFuncAndMacloren);
+    err = ExpressionPlotTwoFuncs(&expression, "main func", "red", 
+                                 &maclorenSeries, "macloren", "green", 
+                                 &imgFuncAndMacloren);
     IF_ERR_RETURN(err);
 
+    char* imgFuncAndTangent = nullptr;
+    err = ExpressionPlotTwoFuncs(&expression, "main func", "red",
+                                 &tangent, "tangent", "green", 
+                                 &imgFuncAndTangent);
+    IF_ERR_RETURN(err);   
+    
     char* imgFuncAndMaclorenDifference = nullptr;
     ExpressionType expressionDifference = ExpressionSubTwoExpressions(&expression, 
                                                                       &maclorenSeries);
@@ -72,22 +86,24 @@ int main(const int argc, const char* argv[])
 
     //--------------------PRINT GRAPHS TO LATEX--------------------
 
-    TexInsertImg(imgFuncName, outputTex, "График функции:\n");
+    TexInsertImg(imgFunc, outputTex, "Function graph:\n");
 
-    TexInsertImg(imgMaclorenName, outputTex, "График разложение по маклорену:\n");
+    TexInsertImg(imgMacloren, outputTex, "Macloren series graph:\n");
+
+    TexInsertImg(imgFuncAndTangent, outputTex, "Main graph and tangent:\n");
 
     TexInsertImg(imgFuncAndMacloren, outputTex, 
-                            "Сравнение графиков функции и маклорена в окрестности нуля:\n");
+                            "Comparing func graph and macloren's series graph:\n");
 
     TexInsertImg(imgFuncAndMaclorenDifference, outputTex,
-                            "График разницы между функцией и разложение по маклорену:\n");
+                            "Graph of the difference between main and macloren:\n");
 
     LatexFileTrollingEnd(outputTex);
     fclose(outputTex);
     LatexCreatePdf(outputTexFileName);
 
-    free(imgFuncName);
-    free(imgMaclorenName);
+    free(imgFunc);
+    free(imgMacloren);
     free(imgFuncAndMacloren);
     free(imgFuncAndMaclorenDifference);
     

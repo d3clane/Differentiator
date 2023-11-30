@@ -13,6 +13,7 @@ void ExpressionSimplify(ExpressionType* expression, FILE* outTex = nullptr);
 ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
                                                FILE* outTex = nullptr);
 
+ExpressionType ExpressionTangent (ExpressionType* expression, const int x);
 ExpressionType ExpressionMacloren(const ExpressionType* expression, const int n);
 
 #endif

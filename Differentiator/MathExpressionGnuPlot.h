@@ -9,8 +9,11 @@ ExpressionErrors ExpressionPrintGnuPlotFormat (ExpressionType* expression, FILE*
 ExpressionErrors ExpressionGnuPlotAddFunc(const char* plotFileName,  ExpressionType* expression, 
                                                                      const char* funcTitle, 
                                                                      const char* funcColor);
-ExpressionErrors ExpressionPlotFuncAndMacloren(ExpressionType* func, ExpressionType* macloren,
-                                               char** outImgName = nullptr);
+ExpressionErrors ExpressionPlotTwoFuncs(ExpressionType* func1, 
+                                        const char* title1,  const char* color1, 
+                                        ExpressionType* func2,
+                                        const char* title2, const char* color2,
+                                        char** outImgName = nullptr);
 
 ExpressionErrors ExpressionPlotFunc(ExpressionType* func, const char* funcTitle, 
                                                           const char* funcColor, 
