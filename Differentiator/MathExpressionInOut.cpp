@@ -115,7 +115,6 @@ ExpressionErrors ExpressionPrintEquationFormat(const ExpressionType* expression,
 
 //---------------------------------------------------------------------------------------
 
-//TODO: переписать функции принтов на адекватный вид, где нормально проверяется IsUnary и все подобное, а не просто где-то в центре
 static ExpressionErrors ExpressionPrintEquationFormat(
                                           const ExpressionTokenType* token, 
                                           FILE* outStream)

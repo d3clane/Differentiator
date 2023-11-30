@@ -25,8 +25,6 @@ ExpressionErrors ExpressionPrintTex     (const ExpressionType* expression,
     return ExpressionTokenPrintTexWithTrollString(expression->root, outStream, string);
 }
 
-//TODO: pdftex latexmk
-
 ExpressionErrors ExpressionTokenPrintTexWithTrollString(const ExpressionTokenType* rootToken,
                                                         FILE* outStream,
                                                         const char* string)
