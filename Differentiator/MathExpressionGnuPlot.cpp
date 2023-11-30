@@ -86,7 +86,7 @@ static void ExpressionTokenPrintValue(const ExpressionTokenType* token,
     switch (token->valueType)
     {
         case ExpressionTokenValueTypeof::VALUE:
-            fprintf(outStream, "%.2lf ", token->value.value);
+            fprintf(outStream, "%lg ", token->value.value);
             break;
         
         case ExpressionTokenValueTypeof::VARIABLE:

@@ -6,6 +6,8 @@
 void LatexFileTrollingStart(FILE* outTex);
 void LatexFileTrollingEnd  (FILE* outTex);
 void LatexCreatePdf(const char* fileName);
+void LaTexStartNewSection(const char* sectionName, FILE* outStream);
+void LaTexInsertImg(const char* imgName, FILE* outStream, const char* stringToPrint = nullptr);
 
 ExpressionErrors ExpressionPrintTex(const ExpressionType* expression,
                                                           FILE* outStream = stdout, 
@@ -18,7 +20,5 @@ ExpressionErrors ExpressionTokenPrintTexWithTrollString(
 
 ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token, 
                                          FILE* outStream);
-
-void TexInsertImg(const char* imgName, FILE* outStream, const char* stringToPrint = nullptr);
 
 #endif

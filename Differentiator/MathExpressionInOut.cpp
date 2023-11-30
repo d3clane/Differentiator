@@ -78,7 +78,7 @@ static ExpressionErrors ExpressionPrintPrefixFormat(
     PRINT(outStream, "(");
     
     if (token->valueType == ExpressionTokenValueTypeof::VALUE)
-        PRINT(outStream, "%.2lf ", token->value.value);
+        PRINT(outStream, "%.2lg ", token->value.value);
     else if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
         PRINT(outStream, "%s ", token->value.varPtr->variableName);
     else
@@ -396,7 +396,7 @@ static void ExpressionTokenPrintValue(const ExpressionTokenType* token,
     switch (token->valueType)
     {
         case ExpressionTokenValueTypeof::VALUE:
-            PRINT(outStream, "%.2lf ", token->value.value);
+            PRINT(outStream, "%lg ", token->value.value);
             break;
         
         case ExpressionTokenValueTypeof::VARIABLE:

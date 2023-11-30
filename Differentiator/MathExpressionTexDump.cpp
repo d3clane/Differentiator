@@ -34,35 +34,35 @@ ExpressionErrors ExpressionTokenPrintTexWithTrollString(const ExpressionTokenTyp
 
     static const char* roflStrings[] = 
     {
-        "Kind of obvious expression transformation ",
-        "Easy to see that it's equal to ", 
-        "Lubopitniy chitatel can show this perehod by himself ",
-        "I have a proof of this transformation, but there is not enough space in this margin ",
-        "Don't ask me to prove this ",
-        "Perun sent me the solution and I don't have no right to not to believe ",
-        "C'mon guys, it's not rocket science ",
-        "Bez kommentariev ",
-        "No one is reading, so I'm gonna say that I hate calculus ",
+        "Kind of obvious expression transformation. ",
+        "Easy to see that it's equal to. ", 
+        "Lubopitniy chitatel can show this perehod by himself. ",
+        "I have a proof of this transformation, but there is not enough space in this margin. ",
+        "Don't ask me to prove this. ",
+        "Perun sent me the solution and I have no right to believe or not to believe. ",
+        "C'mon guys, it's not rocket science. ",
+        "Bez kommentariev. ",
+        "No one is reading, so I'm gonna say that I hate calculus. ",
         "If you're reading this - why?",
         "Even a monkey can learn how to do it, why won't you do it by yourself?",
-        "Nikto ne zametit, chto ya ne smog perevesti eto dlya svoe' stat'i ",
+        "Nikto ne zametit, chto ya ne smog perevesti eto dlya svoe' stat'i. ",
 
         "Explanation is available only for premium subscribers."
-        "You can become one of them - it costs only 5 bucks a week",
+        "You can become one of them - it costs only 5 bucks a week.",
     };
 
     static const size_t numberOfRoflStrings = sizeof(roflStrings) / sizeof(*roflStrings);
 
     if (string == nullptr)
-        fprintf(outStream, "%s. It is:\n", roflStrings[rand() % numberOfRoflStrings]);
+        fprintf(outStream, "%s It is:\n", roflStrings[rand() % numberOfRoflStrings]);
     else
         fprintf(outStream, "%s\n", string);
     
-    fprintf(outStream, "\\begin{gather}\n\\end{gather}\n\\begin{math}\n");
+    fprintf(outStream, "\\begin{gather}\n");
 
     ExpressionErrors err = ExpressionTokenPrintTex(rootToken, outStream);
 
-    fprintf(outStream, "\\\\\n\\end{math}\n");
+    fprintf(outStream, "\n\\end{gather}\n");
 
     return err;
 }
@@ -185,7 +185,7 @@ static void ExpressionTokenPrintValue(const ExpressionTokenType* token,
     switch (token->valueType)
     {
         case ExpressionTokenValueTypeof::VALUE:
-            fprintf(outStream, "%.2lf ", token->value.value);
+            fprintf(outStream, "%lg ", token->value.value);
             break;
         
         case ExpressionTokenValueTypeof::VARIABLE:
@@ -263,7 +263,7 @@ static bool ExpressionOperationIsPrefix(const ExpressionOperationId operation)
     return false;
 }
 
-void TexInsertImg(const char* imgName, FILE* outStream, const char* string)
+void LaTexInsertImg(const char* imgName, FILE* outStream, const char* string)
 {
     assert(imgName);
     assert(outStream);
@@ -319,4 +319,12 @@ void LatexCreatePdf(const char* fileName)
     snprintf(command, maxCommandLength, "lualatex %s", fileName);
 
     system(command);
+}
+
+void LaTexStartNewSection(const char* sectionName, FILE* outStream)
+{
+    assert(sectionName);
+    assert(outStream);
+
+    fprintf(outStream, "\\section{%s}\n", sectionName);
 }

@@ -269,7 +269,7 @@ static void DotFileCreateTokens(const ExpressionTokenType* token,
         fprintf(outDotFile, "fillcolor=\"#89AC76\", label = \"%s\", ", 
                             ExpressionOperationGetLongName(token->value.operation));
     else if (token->valueType == ExpressionTokenValueTypeof::VALUE)
-        fprintf(outDotFile, "fillcolor=\"#7293ba\", label = \"%.2lf\", ", token->value.value);
+        fprintf(outDotFile, "fillcolor=\"#7293ba\", label = \"%lg\", ", token->value.value);
     else if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
         fprintf(outDotFile, "fillcolor=\"#78DBE2\", label = \"%s\", ",
                             token->value.varPtr->variableName);

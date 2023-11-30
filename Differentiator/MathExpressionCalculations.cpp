@@ -129,7 +129,6 @@ static double ExpressionCalculate(const ExpressionTokenType* token)
 static double CalculateUsingOperation(const ExpressionOperationId operation, 
                                       const double val1, const double val2)
 {
-    //printf("operationType - %d, Val2 - %lf\n", operation, val2);
     #define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, v4, v5, v6, v7, CALCULATE_CODE, ...)   \
         case ExpressionOperationId::NAME:                                                   \
         {                                                                                   \
@@ -159,7 +158,7 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
     
     if (outTex)
         ExpressionPrintTex(expression, outTex, 
-            "According to legend, the ancient Rus were able to defeat the lizards"
+            "According to legend, the ancient Ruses were able to defeat the Raptors "
             "by taking this derivative:");
 
     ExpressionTokenType* diffRootToken = ExpressionDifferentiate(expression->root, 

@@ -38,6 +38,7 @@ int main(const int argc, const char* argv[])
 
     //-----------------------DIFFERENTIATE------------
 
+    LaTexStartNewSection("Derivative", outputTex);
     ExpressionType expressionDifferentiate =  ExpressionDifferentiate(&expression, outputTex);
     err = ExpressionPrintTex   (&expressionDifferentiate, outputTex, 
                                                     "Result differentiate answer: ");
@@ -45,14 +46,16 @@ int main(const int argc, const char* argv[])
     
     //-----------------------TANGENT--------------------
 
+    LaTexStartNewSection("Tangent", outputTex);
     ExpressionType tangent = ExpressionTangent(&expression, 0);
-    err = ExpressionPrintTex(&tangent, outputTex, "Derivative in 0: ");
+    err = ExpressionPrintTex(&tangent, outputTex, "Tangent in 0: ");
     IF_ERR_RETURN(err);
 
     //------------------------MACLOREN------------------
 
+    LaTexStartNewSection("Macloren", outputTex);
     ExpressionType taylorSeries = ExpressionTaylor(&expression, 5, 0);
-    err = ExpressionPrintTex   (&taylorSeries, outputTex, "Macloren series: ");
+    err = ExpressionPrintTex(&taylorSeries, outputTex, "Macloren series: ");
     IF_ERR_RETURN(err);
 
     //-----------------------Graphs--------------
@@ -86,16 +89,18 @@ int main(const int argc, const char* argv[])
 
     //--------------------PRINT GRAPHS TO LATEX--------------------
 
-    TexInsertImg(imgFunc, outputTex, "Function graph:\n");
+    LaTexStartNewSection("Graphs", outputTex);
+    
+    LaTexInsertImg(imgFunc, outputTex, "Function graph:\n");
 
-    TexInsertImg(imgMacloren, outputTex, "Macloren series graph:\n");
+    LaTexInsertImg(imgMacloren, outputTex, "Macloren series graph:\n");
 
-    TexInsertImg(imgFuncAndTangent, outputTex, "Main graph and tangent:\n");
+    LaTexInsertImg(imgFuncAndTangent, outputTex, "Main graph and tangent:\n");
 
-    TexInsertImg(imgFuncAndMacloren, outputTex, 
+    LaTexInsertImg(imgFuncAndMacloren, outputTex, 
                             "Comparing func graph and macloren's series graph:\n");
 
-    TexInsertImg(imgFuncAndMaclorenDifference, outputTex,
+    LaTexInsertImg(imgFuncAndMaclorenDifference, outputTex,
                             "Graph of the difference between main and macloren:\n");
 
     LatexFileTrollingEnd(outputTex);
