@@ -5,6 +5,7 @@
 
 void LatexFileTrollingStart(FILE* outTex);
 void LatexFileTrollingEnd  (FILE* outTex);
+void LatexCreatePdf(const char* fileName);
 
 ExpressionErrors ExpressionPrintTex(const ExpressionType* expression,
                                                           FILE* outStream = stdout, 

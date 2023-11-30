@@ -111,10 +111,14 @@ static double ExpressionCalculate(const ExpressionTokenType* token)
         return NAN;
     
     if (token->valueType == ExpressionTokenValueTypeof::VALUE)
+    {
         return token->value.value;
+    }
 
     if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
+    {
         return token->value.varPtr->variableValue;
+    }
 
     double firstVal  = ExpressionCalculate(token->left);
     double secondVal = ExpressionCalculate(token->right);
@@ -125,6 +129,7 @@ static double ExpressionCalculate(const ExpressionTokenType* token)
 static double CalculateUsingOperation(const ExpressionOperationId operation, 
                                       const double val1, const double val2)
 {
+    //printf("operationType - %d, Val2 - %lf\n", operation, val2);
     #define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, v4, v5, v6, v7, CALCULATE_CODE, ...)   \
         case ExpressionOperationId::NAME:                                                   \
         {                                                                                   \
@@ -154,12 +159,11 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
     
     if (outTex)
         ExpressionPrintTex(expression, outTex, 
-            "according to legend, the ancient Rus were able to defeat the lizards"
+            "According to legend, the ancient Rus were able to defeat the lizards"
             "by taking this derivative:");
 
     ExpressionTokenType* diffRootToken = ExpressionDifferentiate(expression->root, 
                                                                  outTex);
-
     ExpressionType diffExpression = {};
     ExpressionCtor(&diffExpression);
 
@@ -169,8 +173,8 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
 
     if (outTex)
     {
-        ExpressionPrintTex(&diffExpression, outTex, "the ancient Rus, like us, got this result\n");
-        fprintf(outTex, "no one gives a **** what's going on here, "
+        ExpressionPrintTex(&diffExpression, outTex, "The ancient Rus, like us, got this result\n");
+        fprintf(outTex, "No one gives a **** what's going on here, "
                         "but according to the standards I have to say it - "
                         "\"Ya sobirayus uprostit virazhenie))))\".");
     }
@@ -622,7 +626,7 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnLeftToken(ExpressionT
 {
     assert(token);
 
-    TokenPrintChangeToTex(token, token->left, outTex, "Slozhno ne ponyat, сhto I mean: ");
+    TokenPrintChangeToTex(token, token->left, outTex, "Slozhno ne ponyat, chto delat s etim:");
 
     ExpressionTokenDtor(token->right);
 
@@ -641,7 +645,7 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnRightToken(
     assert(token);
 
     TokenPrintChangeToTex(token, token->right, outTex, 
-                        "Avtor ne smog perevesti chto bilo napisano v originalnoi stat'e(");
+                        "Avtor ne smog perevesti na english(");
 
     ExpressionTokenDtor(token->left);
 

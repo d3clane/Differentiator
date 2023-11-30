@@ -23,8 +23,11 @@ int main(const int argc, const char* argv[])
 
     IF_ERR_RETURN(err);
 
-    FILE* inStream  = fopen("input.txt",  "r");
-    FILE* outputTex = fopen("output.tex", "w");
+    static const char* outputTexFileName = "PHD.tex";
+    static const char* inputFileName     = "input.txt";
+
+    FILE* inStream  = fopen(inputFileName,     "r");
+    FILE* outputTex = fopen(outputTexFileName, "w");
 
     LatexFileTrollingStart(outputTex);
 
@@ -39,10 +42,10 @@ int main(const int argc, const char* argv[])
     err = ExpressionPrintTex   (&expressionDifferentiate, outputTex, "Итоговый ответ: ");
 
     IF_ERR_RETURN(err);
-
+    
     //------------------------MACLOREN------------
 
-    ExpressionType maclorenSeries = ExpressionMacloren(&expression, 10);
+    ExpressionType maclorenSeries = ExpressionMacloren(&expression, 5);
     err = ExpressionPrintTex   (&maclorenSeries, outputTex, "Разложение по маклорену: ");
     IF_ERR_RETURN(err);
 
@@ -80,11 +83,12 @@ int main(const int argc, const char* argv[])
                             "График разницы между функцией и разложение по маклорену:\n");
 
     LatexFileTrollingEnd(outputTex);
-
     fclose(outputTex);
+    LatexCreatePdf(outputTexFileName);
+
     free(imgFuncName);
     free(imgMaclorenName);
     free(imgFuncAndMacloren);
     free(imgFuncAndMaclorenDifference);
-
+    
 }

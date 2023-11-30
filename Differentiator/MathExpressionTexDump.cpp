@@ -38,18 +38,18 @@ ExpressionErrors ExpressionTokenPrintTexWithTrollString(const ExpressionTokenTyp
 
     static const char* roflStrings[] = 
     {
-        "Kind of obvious expression transformation: ",
-        "Easy to see that it's equal to: ", 
-        "Lubopitniy chitatel can show this perehod by himself: ",
-        "I have a proof of this theorem, but there is not enough space in this margin: ",
-        "Don't ask me to prove this: ",
-        "Perun sent me the solution and I don't have no right to not to believe: ",
-        "C'mon guys, it's not rocket science: ",
-        "Bez kommentariev: ",
-        "No one is reading, so I'm gonna say that I hate calculus.",
+        "Kind of obvious expression transformation ",
+        "Easy to see that it's equal to ", 
+        "Lubopitniy chitatel can show this perehod by himself ",
+        "I have a proof of this transformation, but there is not enough space in this margin ",
+        "Don't ask me to prove this ",
+        "Perun sent me the solution and I don't have no right to not to believe ",
+        "C'mon guys, it's not rocket science ",
+        "Bez kommentariev ",
+        "No one is reading, so I'm gonna say that I hate calculus ",
         "If you're reading this - why?",
         "Even a monkey can learn how to do it, why won't you do it by yourself?",
-        "Nikto ne zametit, chto ya ne smog perevesti eto dlya svoe' stat'i: ",
+        "Nikto ne zametit, chto ya ne smog perevesti eto dlya svoe' stat'i ",
 
         "Explanation is available only for premium subscribers."
         "You can become one of them - it costs only 5 bucks a week",
@@ -58,7 +58,7 @@ ExpressionErrors ExpressionTokenPrintTexWithTrollString(const ExpressionTokenTyp
     static const size_t numberOfRoflStrings = sizeof(roflStrings) / sizeof(*roflStrings);
 
     if (string == nullptr)
-        fprintf(outStream, "%s\n", roflStrings[rand() % numberOfRoflStrings]);
+        fprintf(outStream, "%s. It is:\n", roflStrings[rand() % numberOfRoflStrings]);
     else
         fprintf(outStream, "%s\n", string);
     
@@ -307,4 +307,16 @@ void LatexFileTrollingEnd  (FILE* outTex)
     PrintText(text, strlen(text), outTex);
 
     free(text);
+}
+
+void LatexCreatePdf(const char* fileName)
+{
+    assert(fileName);
+
+    static const size_t maxCommandLength  = 512;
+    static char command[maxCommandLength]  = "";
+
+    snprintf(command, maxCommandLength, "lualatex %s", fileName);
+
+    system(command);
 }
