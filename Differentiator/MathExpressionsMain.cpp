@@ -24,7 +24,7 @@ static void DotFileCreateTokens(const ExpressionTokenType* token,
 
 static inline void CreateImgInLogFile(const size_t imgIndex, bool openImg);
 static inline void DotFileBegin(FILE* outDotFile);
-static inline void DotFileEnd(FILE* outDotFile);
+static inline void DotFileEnd  (FILE* outDotFile);
 
 #define EXPRESSION_CHECK(expression)                        \
 do                                                          \
@@ -144,7 +144,7 @@ ExpressionErrors ExpressionVerify(const ExpressionType* expression)
     return ExpressionVerify(expression->root);
 }
 
-ExpressionErrors ExpressionVerify     (const ExpressionTokenType* token)
+ExpressionErrors ExpressionVerify(const ExpressionTokenType* token)
 {
     if (token == nullptr)
         return ExpressionErrors::NO_ERR;
@@ -164,7 +164,7 @@ ExpressionErrors ExpressionVerify     (const ExpressionTokenType* token)
     return ExpressionErrors::NO_ERR;
 }
 
-ExpressionErrors ExpressionVariablesArrayVerify(ExpressionVariablesArrayType* varsArr)
+ExpressionErrors ExpressionVariablesArrayVerify(const ExpressionVariablesArrayType* varsArr)
 {
     assert(varsArr);
 
@@ -357,6 +357,8 @@ ExpressionErrors ExpressionCopyVariables(      ExpressionType* target,
 
     target->variables.size      = source->variables.size;
     target->variables.capacity  = source->variables.capacity;
+
+    return ExpressionErrors::NO_ERR;
 }
 
 //---------------------------------------------------------------------------------------
