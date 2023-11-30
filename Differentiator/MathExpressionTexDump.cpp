@@ -32,8 +32,6 @@ ExpressionErrors ExpressionTokenPrintTexWithTrollString(const ExpressionTokenTyp
     assert(rootToken);
     assert(outStream);
 
-    static const char* assertFileName = "trollingAssets.h";
-
     static const char* roflStrings[] = 
     {
         "Kind of obvious expression transformation ",
