@@ -127,7 +127,7 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
 static const char* ExpressionOperationGetTexName(const ExpressionOperationId operation)
 {
     #define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, v4, TEX_NAME, ...) \
-        case ExpressionOperationId::NAME:                            \
+        case ExpressionOperationId::NAME:                               \
             return TEX_NAME;
 
     switch(operation)
@@ -217,6 +217,10 @@ static bool HaveToPutBrackets(const ExpressionTokenType* parent,
 
     ExpressionOperationId parentOperation = parent->value.operation;
     ExpressionOperationId sonOperation    = son->value.operation;
+
+    if (parentOperation == ExpressionOperationId::POW && 
+        sonOperation    == ExpressionOperationId::DIV)
+        return true;
 
     if (sonOperation == ExpressionOperationId::POW && sonOperation == parentOperation)
         return true;
