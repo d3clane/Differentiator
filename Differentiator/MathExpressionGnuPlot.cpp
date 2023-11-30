@@ -149,7 +149,8 @@ const char* GnuPlotFileCreate(char** outImgName)
                                            "set xlabel \"X\"\n" 
                                            "set ylabel \"Y\"\n"
                                            "set xrange[-0.6:0.6]\n"
-                                           "set terminal png size 800, 600\n";
+                                           "set terminal png size 800, 600\n"
+                                           "set grid";
 
     fprintf(outStream, "%s\n", gnuPlotFilePrefix);
 

@@ -176,7 +176,7 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
         ExpressionPrintTex(&diffExpression, outTex, "The ancient Rus, like us, got this result\n");
         fprintf(outTex, "No one gives a **** what's going on here, "
                         "but according to the standards I have to say it - "
-                        "\"Ya sobirayus uprostit virazhenie))))\".");
+                        "\"***********************\".");
     }
 
     ExpressionSimplify(&diffExpression, outTex);
@@ -666,8 +666,8 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnConstToken(
     
     TokenPrintDifferenceToTex(token, constToken, outTex,
                         "Let's use the theorem ..."
-                        "(The author of the ranslation does not know which theorem is used, "
-                        "you are left to guess for yourself");
+                        "(The author doesn't know how this theorem is called in English, "
+                        "you are left to guess for yourself)");
     
     ExpressionTokenDtor(token->right);
     ExpressionTokenDtor(token->left);
@@ -700,29 +700,29 @@ static bool ExpressionTokenContainVariable(const ExpressionTokenType* token)
 
 //---------------------------------------------------------------------------------------
 
-ExpressionType ExpressionMacloren(const ExpressionType* expression, const int n)
+ExpressionType ExpressionTaylor(const ExpressionType* expression, const int n, const double x)
 {
     assert(expression);
     assert(expression->variables.size == 1);
     assert(n >= 0);
 
     ExpressionType tmpDiffExpr  = ExpressionCopy(expression);
-    ExpressionVariableSet(&tmpDiffExpr, tmpDiffExpr.variables.data[0].variableName, 0);
+    ExpressionVariableSet(&tmpDiffExpr, tmpDiffExpr.variables.data[0].variableName, x);
 
-    ExpressionType maclorenSeries = {};
-    ExpressionCtor(&maclorenSeries);
-    ExpressionCopyVariables(&maclorenSeries, expression);
+    ExpressionType taylorSeries = {};
+    ExpressionCtor(&taylorSeries);
+    ExpressionCopyVariables(&taylorSeries, expression);
 
-    maclorenSeries.root = NUM_TOKEN(ExpressionCalculate(&tmpDiffExpr));
-    ExpressionTokenType* xToken = VAR_TOKEN(&maclorenSeries.variables, 
-                                             maclorenSeries.variables.data[0].variableName);
+    taylorSeries.root = NUM_TOKEN(ExpressionCalculate(&tmpDiffExpr));
+    ExpressionTokenType* xToken = VAR_TOKEN(&taylorSeries.variables, 
+                                             taylorSeries.variables.data[0].variableName);
 
     for (size_t i = 1; i <= n; ++i)
     {
         ExpressionType tmp = ExpressionDifferentiate(&tmpDiffExpr);
         ExpressionDtor(&tmpDiffExpr);
 
-        maclorenSeries.root = _ADD(maclorenSeries.root, 
+        taylorSeries.root = _ADD(taylorSeries.root, 
                                  _MUL(NUM_TOKEN(ExpressionCalculate(tmp.root)), 
                                      _POW(C(xToken), NUM_TOKEN(i))));
 
@@ -733,14 +733,14 @@ ExpressionType ExpressionMacloren(const ExpressionType* expression, const int n)
     ExpressionTokenDtor(xToken);
     xToken = nullptr;
 
-    ExpressionSimplify(&maclorenSeries);
+    ExpressionSimplify(&taylorSeries);
 
-    return maclorenSeries;
+    return taylorSeries;
 }
 
 //---------------------------------------------------------------------------------------
 
-ExpressionType ExpressionTangent(ExpressionType* expression, const int x)
+ExpressionType ExpressionTangent(ExpressionType* expression, const double x)
 {
     assert(expression);
     assert(expression->variables.size == 1);

@@ -51,8 +51,8 @@ int main(const int argc, const char* argv[])
 
     //------------------------MACLOREN------------------
 
-    ExpressionType maclorenSeries = ExpressionMacloren(&expression, 5);
-    err = ExpressionPrintTex   (&maclorenSeries, outputTex, "Macloren series: ");
+    ExpressionType taylorSeries = ExpressionTaylor(&expression, 5, 0);
+    err = ExpressionPrintTex   (&taylorSeries, outputTex, "Macloren series: ");
     IF_ERR_RETURN(err);
 
     //-----------------------Graphs--------------
@@ -62,12 +62,12 @@ int main(const int argc, const char* argv[])
     IF_ERR_RETURN(err);
 
     char* imgMacloren    = nullptr;
-    err = ExpressionPlotFunc(&maclorenSeries, "macloren", "green", &imgMacloren);
+    err = ExpressionPlotFunc(&taylorSeries, "macloren", "green", &imgMacloren);
     IF_ERR_RETURN(err);
 
     char* imgFuncAndMacloren = nullptr;
     err = ExpressionPlotTwoFuncs(&expression, "main func", "red", 
-                                 &maclorenSeries, "macloren", "green", 
+                                 &taylorSeries, "macloren", "green", 
                                  &imgFuncAndMacloren);
     IF_ERR_RETURN(err);
 
@@ -79,7 +79,7 @@ int main(const int argc, const char* argv[])
     
     char* imgFuncAndMaclorenDifference = nullptr;
     ExpressionType expressionDifference = ExpressionSubTwoExpressions(&expression, 
-                                                                      &maclorenSeries);
+                                                                      &taylorSeries);
     err = ExpressionPlotFunc(&expressionDifference, "difference function", "blue", 
                              &imgFuncAndMaclorenDifference);
     IF_ERR_RETURN(err);
