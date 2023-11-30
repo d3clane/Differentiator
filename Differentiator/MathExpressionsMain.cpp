@@ -26,6 +26,15 @@ static inline void CreateImgInLogFile(const size_t imgIndex, bool openImg);
 static inline void DotFileBegin(FILE* outDotFile);
 static inline void DotFileEnd(FILE* outDotFile);
 
+#define EXPRESSION_CHECK(expression)                        \
+do                                                          \
+{                                                           \
+    ExpressionErrors err = ExpressionVerify(expression);    \
+                                                            \
+    if (err != ExpressionErrors::NO_ERR)                    \
+        return err;                                         \
+} while (0)
+
 //---------------------------------------------------------------------------------------
 
 ExpressionErrors ExpressionCtor(ExpressionType* expression)
@@ -40,6 +49,8 @@ ExpressionErrors ExpressionCtor(ExpressionType* expression)
                                         calloc(expression->variables.capacity, 
                                                sizeof(*(expression->variables.data)));
     
+    EXPRESSION_CHECK(expression);
+
     return ExpressionErrors::NO_ERR;
 }
 
@@ -95,9 +106,9 @@ static void ExpressionVariableValuesDtor(ExpressionVariableType* varPtr)
 //---------------------------------------------------------------------------------------
 
 ExpressionTokenType* ExpressionTokenCreate(ExpressionTokenValue value, 
-                                         ExpressionTokenValueTypeof valueType,
-                                         ExpressionTokenType* left,
-                                         ExpressionTokenType* right)
+                                            ExpressionTokenValueTypeof valueType,
+                                            ExpressionTokenType* left,
+                                            ExpressionTokenType* right)
 {   
     ExpressionTokenType* token = (ExpressionTokenType*)calloc(1, sizeof(*token));
     token->left      = left;
@@ -117,6 +128,62 @@ void ExpressionTokenDtor(ExpressionTokenType* token)
     token->value.varPtr = nullptr;
 
     free(token);
+}
+
+//---------------------------------------------------------------------------------------
+
+ExpressionErrors ExpressionVerify(const ExpressionType* expression)
+{
+    assert(expression);
+
+    ExpressionErrors err = ExpressionVariablesArrayVerify(&expression->variables);
+
+    if (err != ExpressionErrors::NO_ERR)    
+        return err;
+    
+    return ExpressionVerify(expression->root);
+}
+
+ExpressionErrors ExpressionVerify     (const ExpressionTokenType* token)
+{
+    if (token == nullptr)
+        return ExpressionErrors::NO_ERR;
+
+    ExpressionErrors err = ExpressionVerify(token->left);
+    if (err != ExpressionErrors::NO_ERR) return err;
+
+    err = ExpressionVerify(token->right);
+    if (err != ExpressionErrors::NO_ERR) return err;
+
+    if (token->left == token->right && token->left != nullptr)
+        return ExpressionErrors::TOKEN_EDGES_ERR;
+    
+    if (token->left == token || token->right == token)
+        return ExpressionErrors::TOKEN_EDGES_ERR;
+
+    return ExpressionErrors::NO_ERR;
+}
+
+ExpressionErrors ExpressionVariablesArrayVerify(ExpressionVariablesArrayType* varsArr)
+{
+    assert(varsArr);
+
+    if (varsArr->size > varsArr->capacity)
+        return ExpressionErrors::CAPACITY_ERR;
+    
+    if (varsArr->data == nullptr)
+        return ExpressionErrors::VARIABLES_DATA_ERR;
+
+    for (size_t i = 0; i < varsArr->size; ++i)
+    {
+        if (varsArr->data[i].variableName == nullptr)
+            return ExpressionErrors::VARIABLE_NAME_ERR;
+        
+        if (varsArr->data[i].variableValue == NAN)
+            return ExpressionErrors::VARIABLE_VAL_ERR;
+    }
+
+    return ExpressionErrors::NO_ERR;
 }
 
 //---------------------------------------------------------------------------------------
@@ -270,14 +337,17 @@ void ExpressionDump(const ExpressionType* expression, const char* fileName,
 
 //---------------------------------------------------------------------------------------
 
-void ExpressionCopyVariables(      ExpressionType* target, 
-                              const ExpressionType* source)
+ExpressionErrors ExpressionCopyVariables(      ExpressionType* target, 
+                                         const ExpressionType* source)
 {
     assert(target);
     assert(source);
 
     assert(target->variables.capacity == source->variables.capacity);
     assert(target->variables.size == 0);
+
+    EXPRESSION_CHECK(target);
+    EXPRESSION_CHECK(source);
 
     for (size_t i = 0; i < source->variables.size; ++i)
     {
@@ -437,8 +507,6 @@ ExpressionTokenValue ExpressionTokenValueСreate(ExpressionOperationId operation
     };
 
     return value;
-    
-    //проблема - я не умею подставлять как бы одну переменную
 }
 
 ExpressionTokenValue ExpressionTokenValueСreate(ExpressionVariableType* varPtr)

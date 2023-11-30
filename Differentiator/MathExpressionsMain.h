@@ -73,6 +73,13 @@ enum class ExpressionErrors
     MEM_ERR,
 
     READING_ERR,
+
+    CAPACITY_ERR,
+    VARIABLE_NAME_ERR, 
+    VARIABLE_VAL_ERR,
+    VARIABLES_DATA_ERR,
+
+    TOKEN_EDGES_ERR,
 };
 
 //-------------Expression main funcs----------
@@ -84,8 +91,11 @@ ExpressionTokenType* ExpressionTokenCreate(ExpressionTokenValue value,
                                             ExpressionTokenValueTypeof valueType,
                                             ExpressionTokenType* left  = nullptr,
                                             ExpressionTokenType* right = nullptr);
-
 void ExpressionTokenDtor(ExpressionTokenType* token);
+
+ExpressionErrors ExpressionVerify     (const ExpressionType*      expression);
+ExpressionErrors ExpressionVerify     (const ExpressionTokenType* token);
+ExpressionErrors ExpressionVariablesArrayVerify(const ExpressionVariablesArrayType* varsArr);
 
 ExpressionTokenValue ExpressionTokenValueСreate(double value);
 ExpressionTokenValue ExpressionTokenValueСreate(ExpressionOperationId operationId);
@@ -134,7 +144,7 @@ ExpressionVariableType* ExpressionVariableChangeName(ExpressionVariablesArrayTyp
                                                      const char* prevName,
                                                      const char* newName);
 
-void ExpressionCopyVariables(ExpressionType* target, const ExpressionType* source);
+ExpressionErrors ExpressionCopyVariables(ExpressionType* target, const ExpressionType* source);
 
 //-------------Operations funcs-----------
 
