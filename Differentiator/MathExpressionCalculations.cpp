@@ -16,11 +16,15 @@ static double CalculateUsingOperation(const ExpressionOperationId operation,
 
 //--------------------DSL-----------------------------
 
+#include "MathExpressionsMain.h"
+
+#define DSL_H
+
 #define D(TOKEN) ExpressionDifferentiate(TOKEN, outTex)
 #define C(TOKEN) ExpressionTokenCopy(TOKEN)                                     
 
-#define NUM_TOKEN(VALUE)    ExpressionNumericTokenCreate(VALUE)
-#define VAR_TOKEN(VARS_ARR, VAR_NAME) ExpressionVariableTokenCreate(VARS_ARR, VAR_NAME)
+#define NUM(VALUE)    ExpressionNumericTokenCreate(VALUE)
+#define VAR(VARS_ARR, VAR_NAME) ExpressionVariableTokenCreate(VARS_ARR, VAR_NAME)
 
 #define GENERATE_OPERATION_CMD(NAME, ...)                                                   \
     static inline ExpressionTokenType* _##NAME(ExpressionTokenType* left,                   \
@@ -35,6 +39,13 @@ static double CalculateUsingOperation(const ExpressionOperationId operation,
 #include "Operations.h"
 
 #undef GENERATE_OPERATION_CMD
+
+#define TOKEN_VAL_TYPE(token) token->valueType
+#define  OP_TYPE ExpressionTokenValueTypeof::OPERATION
+#define VAR_TYPE ExpressionTokenValueTypeof::VARIABLE
+#define VAL_TYPE ExpressionTokenValueTypeof::VALUE
+
+#define OP(token) token->value.operation
 
 //-------------------Differentiate---------------
 
@@ -158,7 +169,7 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
     
     if (outTex)
         ExpressionPrintTex(expression, outTex, 
-            "According to legend, the ancient Ruses were able to defeat the Raptors "
+            "According to the legend, the ancient Ruses were able to defeat the Raptors "
             "by taking this derivative:");
 
     ExpressionTokenType* diffRootToken = ExpressionDifferentiate(expression->root, 
@@ -172,10 +183,10 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
 
     if (outTex)
     {
-        ExpressionPrintTex(&diffExpression, outTex, "The ancient Rus, like us, got this result\n");
+        ExpressionPrintTex(&diffExpression, outTex, "The ancient Ruses got this result\n");
         fprintf(outTex, "No one gives a **** what's going on here, "
                         "but according to the standards I have to say it - "
-                        "\"***********************\".");
+                        "\"gksjfpejdsifljdkfjsefijdsflfj\".\\\\\n");
     }
 
     ExpressionSimplify(&diffExpression, outTex);
@@ -324,7 +335,7 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
         leftVal = token->left->value.value;
         if (token->right) rightVal = token->right->value.value;
 
-        ExpressionTokenType* simplifiedToken = NUM_TOKEN(
+        ExpressionTokenType* simplifiedToken = NUM(
                                     CalculateUsingOperation(token->value.operation, leftVal, 
                                                                                     rightVal));
 
@@ -476,7 +487,7 @@ static inline ExpressionTokenType* ExpressionSimplifySub(ExpressionTokenType* to
         ExpressionTokenDtor(token->left);
         token->left = nullptr;
 
-        ExpressionTokenType* simpledToken = _MUL(NUM_TOKEN(-1), token->right);
+        ExpressionTokenType* simpledToken = _MUL(NUM(-1), token->right);
         token->right = nullptr;
 
         return simpledToken;
@@ -661,7 +672,7 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnConstToken(
                                                                 double value,
                                                                 FILE* outTex)
 {
-    ExpressionTokenType* constToken = NUM_TOKEN(value);
+    ExpressionTokenType* constToken = NUM(value);
     
     TokenPrintDifferenceToTex(token, constToken, outTex,
                         "Let's use the theorem ..."
@@ -674,7 +685,7 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnConstToken(
     token->left  = nullptr;
     token->right = nullptr;
 
-    return NUM_TOKEN(value);
+    return NUM(value);
 }
 
 //---------------------------------------------------------------------------------------
@@ -712,8 +723,8 @@ ExpressionType ExpressionTaylor(const ExpressionType* expression, const int n, c
     ExpressionCtor(&taylorSeries);
     ExpressionCopyVariables(&taylorSeries, expression);
 
-    taylorSeries.root = NUM_TOKEN(ExpressionCalculate(&tmpDiffExpr));
-    ExpressionTokenType* xToken = VAR_TOKEN(&taylorSeries.variables, 
+    taylorSeries.root = NUM(ExpressionCalculate(&tmpDiffExpr));
+    ExpressionTokenType* xToken = VAR(&taylorSeries.variables, 
                                              taylorSeries.variables.data[0].variableName);
 
     for (size_t i = 1; i <= n; ++i)
@@ -722,8 +733,8 @@ ExpressionType ExpressionTaylor(const ExpressionType* expression, const int n, c
         ExpressionDtor(&tmpDiffExpr);
 
         taylorSeries.root = _ADD(taylorSeries.root, 
-                                 _MUL(NUM_TOKEN(ExpressionCalculate(tmp.root)), 
-                                     _POW(C(xToken), NUM_TOKEN(i))));
+                                 _MUL(NUM(ExpressionCalculate(tmp.root)), 
+                                     _POW(C(xToken), NUM(i))));
 
         tmpDiffExpr = tmp;
     }
@@ -762,10 +773,10 @@ ExpressionType ExpressionTangent(ExpressionType* expression, const double x)
     ExpressionCtor(&tangent);
     ExpressionCopyVariables(&tangent, expression);
 
-    ExpressionTokenType* xToken = VAR_TOKEN(&tangent.variables, varName);
+    ExpressionTokenType* xToken = VAR(&tangent.variables, varName);
 
-    tangent.root = _ADD(_MUL(NUM_TOKEN(diffValInX), C(xToken)), 
-                        _SUB(NUM_TOKEN(exprValInX), _MUL(NUM_TOKEN(diffValInX), NUM_TOKEN(x))));
+    tangent.root = _ADD(_MUL(NUM(diffValInX), C(xToken)), 
+                        _SUB(NUM(exprValInX), _MUL(NUM(diffValInX), NUM(x))));
 
     ExpressionSimplify(&tangent);
     
@@ -796,4 +807,5 @@ ExpressionType ExpressionSubTwoExpressions(const ExpressionType* expr1,
 #undef D
 #undef CONST_TOKEN
 
+#undef DSL_H
 //---------------------------------------------------------------------------------------
