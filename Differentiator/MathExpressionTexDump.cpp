@@ -35,7 +35,7 @@ ExpressionErrors ExpressionTokenPrintTexWithTrollString(const ExpressionTokenTyp
     static const char* roflStrings[] = 
     {
         "Kind of obvious expression transformation. ",
-        "Easy to see that it's equal to. ", 
+        "Easy to see that it's equal. ", 
         "Lubopitniy chitatel can show this perehod by himself. ",
         "I have a proof of this transformation, but there is not enough space in this margin. ",
         "Don't ask me to prove this. ",
@@ -83,7 +83,7 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
     ExpressionErrors err = ExpressionErrors::NO_ERR;
     assert((token->valueType == ExpressionTokenValueTypeof::OPERATION));
 
-    bool isPrefixOperation    = ExpressionOperationIsPrefix(token->value.operation);
+    bool isPrefixOperation = ExpressionOperationIsPrefix(token->value.operation);
 
     if (isPrefixOperation) fprintf(outStream, "%s ", 
                                     ExpressionOperationGetTexName(token->value.operation));
@@ -105,8 +105,8 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
     if (ExpressionOperationIsUnary(token->value.operation))
         return err;
 
-    bool needTexRightBraces   = ExpressionOperationNeedTexRightBraces(token->value.operation);
-    bool needRightBrackets    = HaveToPutBrackets(token, token->right);
+    bool needTexRightBraces = ExpressionOperationNeedTexRightBraces(token->value.operation);
+    bool needRightBrackets  = HaveToPutBrackets(token, token->right);
     
     if (needTexRightBraces)                       fprintf(outStream, "{");
     if (!needTexRightBraces && needRightBrackets) fprintf(outStream, "(");
@@ -177,8 +177,7 @@ static bool ExpressionOperationNeedTexLeftBraces(const ExpressionOperationId ope
     return false;
 }
 
-static void ExpressionTokenPrintValue(const ExpressionTokenType* token, 
-                                      FILE* outStream)
+static void ExpressionTokenPrintValue(const ExpressionTokenType* token, FILE* outStream)
 {
     assert(token->valueType != ExpressionTokenValueTypeof::OPERATION);
 

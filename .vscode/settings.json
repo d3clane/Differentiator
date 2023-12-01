@@ -19,7 +19,12 @@
         "iosfwd": "cpp",
         "ios": "cpp",
         "__locale": "cpp",
-        "array": "cpp"
+        "array": "cpp",
+        "deque": "cpp",
+        "charconv": "cpp",
+        "functional": "cpp",
+        "utility": "cpp",
+        "format": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

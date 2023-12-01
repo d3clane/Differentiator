@@ -13,13 +13,15 @@ ExpressionErrors ExpressionPlotTwoFuncs(ExpressionType* func1,
                                         const char* title1,  const char* color1, 
                                         ExpressionType* func2,
                                         const char* title2, const char* color2,
+                                        double xRangeLeft, double xRangeRight,
                                         char** outImgName = nullptr);
 
-ExpressionErrors ExpressionPlotFunc(ExpressionType* func, const char* funcTitle, 
-                                                          const char* funcColor, 
-                                                          char** outImgName = nullptr);
+ExpressionErrors ExpressionPlotFunc(ExpressionType* func, 
+                                    const char* funcTitle, const char* funcColor, 
+                                    double xRangeLeft,     double xRangeRight,     
+                                    char** outImgName = nullptr);
 
 void        GnuPlotImgCreate (const char* plotFileName);
-const char* GnuPlotFileCreate(char** outImgName = nullptr);
+const char* GnuPlotFileCreate(double xRangeLeft, double xRangeRight, char** outImgName = nullptr);
 
 #endif

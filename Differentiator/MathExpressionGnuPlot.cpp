@@ -139,8 +139,10 @@ static bool ExpressionOperationIsPrefix(const ExpressionOperationId operation)
     return false;
 }
 
-const char* GnuPlotFileCreate(char** outImgName)
+const char* GnuPlotFileCreate(double xRangeLeft, double xRangeRight, char** outImgName)
 {
+    assert(xRangeLeft < xRangeRight);
+    
     static const char* gnuPlotFileName = "expressionsTmpPlot.gpi";
 
     FILE* outStream = fopen(gnuPlotFileName, "w");
@@ -148,12 +150,12 @@ const char* GnuPlotFileCreate(char** outImgName)
     static const char* gnuPlotFilePrefix = "#! /opt/homebrew/bin/gnuplot -persist\n"
                                            "set xlabel \"X\"\n" 
                                            "set ylabel \"Y\"\n"
-                                           "set xrange[-0.6:0.6]\n"
                                            "set terminal png size 800, 600\n"
                                            "set grid";
 
     fprintf(outStream, "%s\n", gnuPlotFilePrefix);
-
+    
+    fprintf(outStream, "set xrange[%lg:%lg]\n", xRangeLeft, xRangeRight);
     static size_t imgIndex = 1337;
     char* imgName = CreateImgName(imgIndex);
     imgIndex++;
@@ -189,6 +191,7 @@ ExpressionErrors ExpressionPlotTwoFuncs(ExpressionType* func1,
                                         const char* title1,  const char* color1, 
                                         ExpressionType* func2,
                                         const char* title2, const char* color2,
+                                        double xRangeLeft, double xRangeRight,
                                         char** outImgName)
 {
     assert(func1);
@@ -200,7 +203,7 @@ ExpressionErrors ExpressionPlotTwoFuncs(ExpressionType* func1,
 
     char* imgName = nullptr;
 
-    const char* gnuPlotFileName = GnuPlotFileCreate(&imgName);
+    const char* gnuPlotFileName = GnuPlotFileCreate(xRangeLeft, xRangeRight, &imgName);
     ExpressionErrors err = ExpressionGnuPlotAddFunc(gnuPlotFileName, func1, title1, color1);
 
     if (err != ExpressionErrors::NO_ERR)
@@ -223,9 +226,10 @@ ExpressionErrors ExpressionPlotTwoFuncs(ExpressionType* func1,
     return err;
 }
 
-ExpressionErrors ExpressionPlotFunc(ExpressionType* func, const char* funcTitle, 
-                                                          const char* funcColor, 
-                                                          char** outImgName)
+ExpressionErrors ExpressionPlotFunc(ExpressionType* func, 
+                                    const char* funcTitle, const char* funcColor, 
+                                    double xRangeLeft,     double xRangeRight,     
+                                    char** outImgName)
 {
     assert(func);
     assert(funcTitle);
@@ -233,7 +237,7 @@ ExpressionErrors ExpressionPlotFunc(ExpressionType* func, const char* funcTitle,
     
     char* imgName = nullptr;
 
-    const char* gnuPlotFileName = GnuPlotFileCreate(&imgName);
+    const char* gnuPlotFileName = GnuPlotFileCreate(xRangeLeft, xRangeRight, &imgName);
     ExpressionErrors err = ExpressionGnuPlotAddFunc(gnuPlotFileName, func, funcTitle, funcColor);
 
     if (err != ExpressionErrors::NO_ERR)

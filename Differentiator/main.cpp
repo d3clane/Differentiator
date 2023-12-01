@@ -54,36 +54,46 @@ int main(const int argc, const char* argv[])
     //------------------------MACLOREN------------------
 
     LaTexStartNewSection("Macloren", outputTex);
-    ExpressionType taylorSeries = ExpressionTaylor(&expression, 5, 0);
-    err = ExpressionPrintTex(&taylorSeries, outputTex, "Macloren series: ");
+    ExpressionType maclorenSeries = ExpressionTaylor(&expression, 5, 0);
+    err = ExpressionPrintTex(&maclorenSeries, outputTex, "Macloren series: ");
     IF_ERR_RETURN(err);
 
     //-----------------------Graphs--------------
 
     char* imgFunc        = nullptr;
-    err = ExpressionPlotFunc(&expression, "main func", "red", &imgFunc);
+    err = ExpressionPlotFunc(&expression, "main func", "red", -1.3, 1.3, &imgFunc);
     IF_ERR_RETURN(err);
-
+    
     char* imgMacloren    = nullptr;
-    err = ExpressionPlotFunc(&taylorSeries, "macloren", "green", &imgMacloren);
-    IF_ERR_RETURN(err);
-
-    char* imgFuncAndMacloren = nullptr;
-    err = ExpressionPlotTwoFuncs(&expression, "main func", "red", 
-                                 &taylorSeries, "macloren", "green", 
-                                 &imgFuncAndMacloren);
+    err = ExpressionPlotFunc(&maclorenSeries, "macloren", "green", -2, 2, &imgMacloren);
     IF_ERR_RETURN(err);
 
     char* imgFuncAndTangent = nullptr;
     err = ExpressionPlotTwoFuncs(&expression, "main func", "red",
-                                 &tangent, "tangent", "green", 
+                                 &tangent, "tangent", "green",
+                                 -1.3, 1.3, 
                                  &imgFuncAndTangent);
     IF_ERR_RETURN(err);   
+
+    char* imgFuncAndMaclorenSmallRange = nullptr;
+    err = ExpressionPlotTwoFuncs(&expression, "main func", "red", 
+                                 &maclorenSeries, "macloren", "green", 
+                                 -0.6, 0.6,
+                                 &imgFuncAndMaclorenSmallRange);
+    IF_ERR_RETURN(err);
+
+    char* imgFuncAndMaclorenLargeRange = nullptr;
+    err = ExpressionPlotTwoFuncs(&expression, "main func", "red", 
+                                 &maclorenSeries, "macloren", "green", 
+                                 -1.3, 1.3,
+                                 &imgFuncAndMaclorenLargeRange);
+    IF_ERR_RETURN(err);
     
     char* imgFuncAndMaclorenDifference = nullptr;
     ExpressionType expressionDifference = ExpressionSubTwoExpressions(&expression, 
-                                                                      &taylorSeries);
+                                                                      &maclorenSeries);
     err = ExpressionPlotFunc(&expressionDifference, "difference function", "blue", 
+                             -1.3, 1.3,
                              &imgFuncAndMaclorenDifference);
     IF_ERR_RETURN(err);
 
@@ -97,8 +107,11 @@ int main(const int argc, const char* argv[])
 
     LaTexInsertImg(imgFuncAndTangent, outputTex, "Main graph and tangent:\n");
 
-    LaTexInsertImg(imgFuncAndMacloren, outputTex, 
-                            "Comparing func graph and macloren's series graph:\n");
+    LaTexInsertImg(imgFuncAndMaclorenSmallRange, outputTex, 
+                            "Comparing func graph and macloren's series graph, small range:\n");
+
+    LaTexInsertImg(imgFuncAndMaclorenLargeRange, outputTex, 
+                            "Comparing func graph and macloren's series graph, big range:\n");
 
     LaTexInsertImg(imgFuncAndMaclorenDifference, outputTex,
                             "Graph of the difference between main and macloren:\n");
@@ -109,7 +122,7 @@ int main(const int argc, const char* argv[])
 
     free(imgFunc);
     free(imgMacloren);
-    free(imgFuncAndMacloren);
+    free(imgFuncAndMaclorenSmallRange);
+    free(imgFuncAndMaclorenLargeRange);
     free(imgFuncAndMaclorenDifference);
-    
 }

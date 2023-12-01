@@ -12,23 +12,7 @@
 
 /*
 
-#include "DSL.h"
-
-#ifndef TOKEN
-#define TOKEN(...)
-#endif
-
-#ifndef D
-#define D(...)
-#endif
-
-#ifndef C
-#define C(...)
-#endif
-
-#ifndef GENERATE_OPERATION_CMD
-#define GENERATE_OPERATION_CMD(...)
-#endif
+NEED_DSL
 
 */
 
@@ -39,21 +23,13 @@ do                              \
     assert(isfinite(val2));     \
 } while (0)
 
-#ifdef DSL_H
-
 #define DIFF_CHECK(NAME)                                    \
 do                                                          \
 {                                                           \
     assert(token);                                          \
-    assert(TOKEN_VAL_TYPE(token) == OP_TYPE)                \
-    assert(TOKEN_OP(token) == ExpressionOperationId::NAME)  \
+    assert(IS_OP(token));                                   \
+    assert(TOKEN_OP(token) == ExpressionOperationId::NAME); \
 } while (0)
-
-#else
-
-#define DIFF_CHECK(NAME) 
-
-#endif
 
 GENERATE_OPERATION_CMD(ADD, INFIX,  INFIX, false, "+", "+", false, false,
 {
@@ -107,7 +83,7 @@ GENERATE_OPERATION_CMD(DIV, INFIX, PREFIX, false, "/", "\\frac", true,  true,
 
     return _DIV(_SUB(_MUL(D(token->left), C(token->right)), 
                                  _MUL(C(token->left), D(token->right))),
-                      _POW(C(token->right), NUM(2)));
+                      _POW(C(token->right), CRT_NUM(2)));
 },
 "/", INFIX)
 
@@ -124,12 +100,12 @@ GENERATE_OPERATION_CMD(POW, INFIX, INFIX, false,     "^",     "^",  false, true,
     bool powerContainVar = ExpressionTokenContainVariable(token->right);
 
     if (!baseContainVar && !powerContainVar)
-        return NUM(0);
+        return CRT_NUM(0);
 
     if (baseContainVar && !powerContainVar)
         return _MUL(_MUL(C(token->right), D(token->left)), 
                           _POW(C(token->left), 
-                                     _SUB(C(token->right), NUM(1))));
+                                     _SUB(C(token->right), CRT_NUM(1))));
                         
     if (!baseContainVar && powerContainVar)
         return _MUL(_POW(C(token->left), C(token->right)),
@@ -202,7 +178,7 @@ GENERATE_OPERATION_CMD(COS, PREFIX, PREFIX, true, "cos", "\\cos", false, false,
 {
     DIFF_CHECK(COS);
 
-    return _MUL(NUM(-1), 
+    return _MUL(CRT_NUM(-1), 
                       _MUL(_SIN(C(token->left)), D(token->left)));
 },
 "cos", PREFIX)
@@ -217,7 +193,7 @@ GENERATE_OPERATION_CMD(TAN, PREFIX, PREFIX, true, "tan", "\\tan", false, false,
     DIFF_CHECK(TAN);
 
     return _DIV(D(token->left), 
-                      _POW(_COS(C(token->left)), NUM(2)));
+                      _POW(_COS(C(token->left)), CRT_NUM(2)));
 },
 "tan", PREFIX)
 
@@ -235,9 +211,9 @@ GENERATE_OPERATION_CMD(COT, PREFIX, PREFIX, true, "cot", "\\cot", false, false,
 {
     DIFF_CHECK(COT);
 
-    return _MUL(NUM(-1), 
+    return _MUL(CRT_NUM(-1), 
                       _DIV(D(token->left), 
-                                 _POW(_SIN(C(token->left)), NUM(2))));
+                                 _POW(_SIN(C(token->left)), CRT_NUM(2))));
 },
 "1 / tan", PREFIX)
 
@@ -251,9 +227,9 @@ GENERATE_OPERATION_CMD(ARCSIN, PREFIX, PREFIX, true, "arcsin", "\\arcsin", false
     DIFF_CHECK(ARCSIN);
 
     return _DIV(D(token->left),
-                      _POW(_SUB(NUM(1), 
-                                            _POW(C(token->left), NUM(2))),
-                                 NUM(0.5)));
+                      _POW(_SUB(CRT_NUM(1), 
+                                            _POW(C(token->left), CRT_NUM(2))),
+                                 CRT_NUM(0.5)));
 },
 "asin", PREFIX)
 
@@ -266,11 +242,11 @@ GENERATE_OPERATION_CMD(ARCCOS, PREFIX, PREFIX, true, "arccos", "\\arccos", false
 {
     DIFF_CHECK(ARCCOS);
 
-    return _DIV(NUM(-1),
+    return _DIV(CRT_NUM(-1),
                       _MUL(D(token->left),
-                                 _POW(_SUB(NUM(1), 
-                                                       _POW(C(token->left), NUM(2))),
-                                            NUM(0.5))));
+                                 _POW(_SUB(CRT_NUM(1), 
+                                                       _POW(C(token->left), CRT_NUM(2))),
+                                            CRT_NUM(0.5))));
 },
 "acos", PREFIX)
 
@@ -284,8 +260,8 @@ GENERATE_OPERATION_CMD(ARCTAN, PREFIX, PREFIX, true, "arctan", "\\arctan", false
     DIFF_CHECK(ARCTAN);
 
     return _DIV(D(token->left), 
-                      _ADD(NUM(1),
-                                 _POW(C(token->left), NUM(2))));
+                      _ADD(CRT_NUM(1),
+                                 _POW(C(token->left), CRT_NUM(2))));
 },
 "atan", PREFIX)
 
@@ -298,10 +274,10 @@ GENERATE_OPERATION_CMD(ARCCOT, PREFIX, PREFIX, true, "arccot", "\\arccot", false
 {
     DIFF_CHECK(ARCCOT);
 
-    return _MUL(NUM(-1),
+    return _MUL(CRT_NUM(-1),
                       _DIV(D(token->left),
-                                 _ADD(NUM(1),
-                                            _POW(C(token->left), NUM(2)))));
+                                 _ADD(CRT_NUM(1),
+                                            _POW(C(token->left), CRT_NUM(2)))));
 },
 "pi / 2 - atan", PREFIX)
 

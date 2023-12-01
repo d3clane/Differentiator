@@ -16,36 +16,54 @@ static double CalculateUsingOperation(const ExpressionOperationId operation,
 
 //--------------------DSL-----------------------------
 
-#include "MathExpressionsMain.h"
-
-#define DSL_H
-
 #define D(TOKEN) ExpressionDifferentiate(TOKEN, outTex)
-#define C(TOKEN) ExpressionTokenCopy(TOKEN)                                     
+#define C(TOKEN) ExpressionTokenCopy(TOKEN)    
 
-#define NUM(VALUE)    ExpressionNumericTokenCreate(VALUE)
-#define VAR(VARS_ARR, VAR_NAME) ExpressionVariableTokenCreate(VARS_ARR, VAR_NAME)
+#define  OP_TYPE_CNST ExpressionTokenValueTypeof::OPERATION
+#define VAR_TYPE_CNST ExpressionTokenValueTypeof::VARIABLE
+#define VAL_TYPE_CNST ExpressionTokenValueTypeof::VALUE
+#define TOKEN_OP(token) token->value.operation
 
-#define GENERATE_OPERATION_CMD(NAME, ...)                                                   \
-    static inline ExpressionTokenType* _##NAME(ExpressionTokenType* left,                   \
-                                               ExpressionTokenType* right = nullptr)        \
-    {                                                                                       \
-        return ExpressionTokenCreate(ExpressionTokenValueСreate(ExpressionOperationId::NAME), \
-                                   ExpressionTokenValueTypeof::OPERATION,                   \
-                                   left, right);                                            \
+#define VAL_TYPE(token) token->valueType
+#define VAL(token)      token->value.value
+#define VAR(token)      token->value.varPtr
+#define  OP(token)      token->value.operation
+#define   L(token)      token->left
+#define   R(token)      token->right
+
+#define L_VAL(token) token->left->value.value
+#define R_VAL(token) token->right->value.value
+#define L_VAR(token) token->left->value.varPtr
+#define R_VAR(token) token->right->value.varPtr
+#define  L_OP(token) token->left->value.operation
+#define  R_OP(token) token->right->value.operation
+
+#define   IS_VAL(token) (token->valueType        == VAL_TYPE_CNST)
+#define L_IS_VAL(token) (token->left->valueType  == VAL_TYPE_CNST)
+#define R_IS_VAL(token) (token->right->valueType == VAL_TYPE_CNST)
+#define   IS_VAR(token) (token->valueType        == VAR_TYPE_CNST)
+#define L_IS_VAR(token) (token->left->valueType  == VAR_TYPE_CNST)
+#define R_IS_VAR(token) (token->right->valueType == VAR_TYPE_CNST)
+#define    IS_OP(token) (token->valueType        ==  OP_TYPE_CNST)
+#define  L_IS_OP(token) (token->left->valueType  ==  OP_TYPE_CNST)
+#define  R_IS_OP(token) (token->right->valueType ==  OP_TYPE_CNST)
+
+#define CRT_NUM(VALUE)    ExpressionNumericTokenCreate(VALUE)
+#define CRT_VAR(VARS_ARR, VAR_NAME) ExpressionVariableTokenCreate(VARS_ARR, VAR_NAME)
+
+#define GENERATE_OPERATION_CMD(NAME, ...)                                                       \
+    static inline ExpressionTokenType* _##NAME(ExpressionTokenType* left,                       \
+                                               ExpressionTokenType* right = nullptr)            \
+    {                                                                                           \
+        return ExpressionTokenCreate(ExpressionTokenValueСreate(ExpressionOperationId::NAME),   \
+                                   ExpressionTokenValueTypeof::OPERATION,                       \
+                                   left, right);                                                \
     }
 
 //GENERATING DSL _ADD, _MUL, _SUB, ...
 #include "Operations.h"
 
 #undef GENERATE_OPERATION_CMD
-
-#define TOKEN_VAL_TYPE(token) token->valueType
-#define  OP_TYPE ExpressionTokenValueTypeof::OPERATION
-#define VAR_TYPE ExpressionTokenValueTypeof::VARIABLE
-#define VAL_TYPE ExpressionTokenValueTypeof::VALUE
-
-#define OP(token) token->value.operation
 
 //-------------------Differentiate---------------
 
@@ -121,20 +139,16 @@ static double ExpressionCalculate(const ExpressionTokenType* token)
     if (token == nullptr)
         return NAN;
     
-    if (token->valueType == ExpressionTokenValueTypeof::VALUE)
-    {
-        return token->value.value;
-    }
+    if (IS_VAL(token))
+        return VAL(token);
 
-    if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
-    {
+    if (IS_VAR(token))
         return token->value.varPtr->variableValue;
-    }
 
-    double firstVal  = ExpressionCalculate(token->left);
-    double secondVal = ExpressionCalculate(token->right);
+    double firstVal  = ExpressionCalculate(L(token));
+    double secondVal = ExpressionCalculate(R(token));
     
-    return CalculateUsingOperation(token->value.operation, firstVal, secondVal);
+    return CalculateUsingOperation(OP(token), firstVal, secondVal);
 }
 
 static double CalculateUsingOperation(const ExpressionOperationId operation, 
@@ -242,9 +256,9 @@ static ExpressionTokenType* ExpressionDiffOperation(const ExpressionTokenType* t
 
     switch(token->value.operation)
     {
+        //THERE IS RECURSION TO ExpressionDifferentiate inside include
         #include "Operations.h"
 
-        //THERE IS RECURSION TO ExpressionDifferentiate inside include
         default:
             break;
     }
@@ -281,7 +295,7 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
 {
     assert(simplifiesCount);
 
-    if (token == nullptr || token->valueType == ExpressionTokenValueTypeof::VALUE)
+    if (token == nullptr || IS_VAL(token))
     {
         if (haveVariables != nullptr)
             *haveVariables = false;
@@ -289,7 +303,7 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
         return token;
     }
 
-    if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
+    if (IS_VAR(token))
     {
         if (haveVariables != nullptr)
             *haveVariables = true;
@@ -299,24 +313,24 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
 
     bool leftTokenHaveVariables  = false;
     bool rightTokenHaveVariables = false;
-    ExpressionTokenType* left  = ExpressionSimplifyConstants(token->left,  
+    ExpressionTokenType* left  = ExpressionSimplifyConstants(L(token),  
                                                              simplifiesCount,
                                                              &leftTokenHaveVariables,
                                                              outTex);
-    ExpressionTokenType* right = ExpressionSimplifyConstants(token->right, 
+    ExpressionTokenType* right = ExpressionSimplifyConstants(R(token), 
                                                              simplifiesCount,
                                                              &rightTokenHaveVariables,
                                                              outTex);
 
-    if (token->left != left)
+    if (L(token) != left)
     {
-        ExpressionTokenDtor(token->left);
+        ExpressionTokenDtor(L(token));
         token->left = left;
     }
 
-    if (token->right != right)
+    if (R(token) != right)
     {
-        ExpressionTokenDtor(token->right);
+        ExpressionTokenDtor(R(token));
         token->right = right;
     }
 
@@ -330,14 +344,13 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
         
         double leftVal = NAN, rightVal = NAN;
 
-        assert(token->left);
+        assert(L(token));
 
-        leftVal = token->left->value.value;
-        if (token->right) rightVal = token->right->value.value;
+        leftVal = L_VAL(token);
+        if (R(token)) rightVal = R_VAL(token);
 
-        ExpressionTokenType* simplifiedToken = NUM(
-                                    CalculateUsingOperation(token->value.operation, leftVal, 
-                                                                                    rightVal));
+        ExpressionTokenType* simplifiedToken = CRT_NUM(
+                                    CalculateUsingOperation(OP(token), leftVal, rightVal));
 
         TokenPrintDifferenceToTex(token, simplifiedToken, outTex, "Let's simplify this expression: "); 
 
@@ -366,45 +379,40 @@ static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType*
                                                             int* simplifiesCount,
                                                             FILE* outTex)
 {
-    if (token == nullptr || token->valueType != ExpressionTokenValueTypeof::OPERATION)
+    if (token == nullptr || !IS_OP(token))
         return token;
     
-    ExpressionTokenType* left  = ExpressionSimplifyNeutralTokens(token->left, simplifiesCount,
+    ExpressionTokenType* left  = ExpressionSimplifyNeutralTokens(L(token), simplifiesCount,
                                                                  outTex);
-    ExpressionTokenType* right = ExpressionSimplifyNeutralTokens(token->right, simplifiesCount,
+    ExpressionTokenType* right = ExpressionSimplifyNeutralTokens(R(token), simplifiesCount,
                                                                  outTex);
     
-    if (token->left != left)
+    if (L(token) != left)
     {
-        ExpressionTokenDtor(token->left);
-        token->left = left;
+        ExpressionTokenDtor(L(token));
+        token->left = left;        
     }
 
-    if (token->right != right)
+    if (R(token) != right)
     {
-        ExpressionTokenDtor(token->right);
+        ExpressionTokenDtor(R(token));
         token->right = right;
     }
 
     if (left == nullptr || right == nullptr)
         return token;
     
-    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
+    assert(IS_OP(token));
 
-    if (((right->valueType == ExpressionTokenValueTypeof::VARIABLE)  &&
-         (left->valueType  == ExpressionTokenValueTypeof::VARIABLE)) &&
-        (right->value.varPtr == left->value.varPtr))
+    if (IS_VAR(right) && IS_VAR(left) && VAR(left) == VAR(right))
         return ExpressionSimplifyReturnConstToken(token, 0, outTex);
 
-    bool rightIsValue = (right->valueType == ExpressionTokenValueTypeof::VALUE);
-    bool leftIsValue  = (left->valueType  == ExpressionTokenValueTypeof::VALUE);
-
-    if (!leftIsValue && !rightIsValue)
+    if (!IS_VAL(left) && !IS_VAL(right))
         return token;
 
-    assert(token->left  == left);
-    assert(token->right == right);
-    switch (token->value.operation)
+    assert(L(token)  == left);
+    assert(R(token) == right);
+    switch (OP(token))
     {
         case ExpressionOperationId::ADD:
             return ExpressionSimplifyAdd(token, simplifiesCount, outTex);
@@ -429,29 +437,29 @@ static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType*
 
 //---------------------------------------------------------------------------------------
 
+#define CHECK()                 \
+do                              \
+{                               \
+    assert(simplifiesCount);    \
+    assert(token);              \
+    assert(L(token));           \
+    assert(R(token));           \
+} while (0)
+
+
 static inline ExpressionTokenType* ExpressionSimplifyAdd(ExpressionTokenType* token,   
                                                          int* simplifiesCount,
                                                          FILE* outTex)
 {
-    
-    assert(simplifiesCount);
-    assert(token);
-    assert(token->left);
-    assert(token->right);
+    CHECK();
 
-    ExpressionTokenType* left  = token->left;
-    ExpressionTokenType* right = token->right;
-
-    bool rightIsValue = (right->valueType == ExpressionTokenValueTypeof::VALUE);
-    bool leftIsValue  = (left->valueType  == ExpressionTokenValueTypeof::VALUE);
-
-    if (rightIsValue && DoubleEqual(right->value.value, 0))
+    if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 0))
     {
         (*simplifiesCount)++;
         return ExpressionSimplifyReturnLeftToken(token, outTex);
     }
 
-    if (leftIsValue && DoubleEqual(left->value.value, 0))
+    if (L_IS_VAL(token) && DoubleEqual(L_VAL(token), 0))
     {
         (*simplifiesCount)++;
         return ExpressionSimplifyReturnRightToken(token, outTex);
@@ -464,30 +472,22 @@ static inline ExpressionTokenType* ExpressionSimplifySub(ExpressionTokenType* to
                                                           int* simplifiesCount,
                                                          FILE* outTex)
 {
-    assert(token);
-    assert(token->left);
-    assert(token->right);
+    CHECK();
 
-    ExpressionTokenType* left  = token->left;
-    ExpressionTokenType* right = token->right;
-
-    bool rightIsValue = (right->valueType == ExpressionTokenValueTypeof::VALUE);
-    bool leftIsValue  = (left->valueType  == ExpressionTokenValueTypeof::VALUE);
-
-    if (rightIsValue && DoubleEqual(right->value.value, 0))
+    if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 0))
     {    
         (*simplifiesCount)++;
         return ExpressionSimplifyReturnLeftToken(token, outTex);
     }
 
-    if (leftIsValue && DoubleEqual(left->value.value, 0))
+    if (L_IS_VAL(token) && DoubleEqual(L_VAL(token), 0))
     {
         (*simplifiesCount)++;
 
-        ExpressionTokenDtor(token->left);
+        ExpressionTokenDtor(L(token));
         token->left = nullptr;
 
-        ExpressionTokenType* simpledToken = _MUL(NUM(-1), token->right);
+        ExpressionTokenType* simpledToken = _MUL(CRT_NUM(-1), R(token));
         token->right = nullptr;
 
         return simpledToken;
@@ -500,35 +500,27 @@ static inline ExpressionTokenType* ExpressionSimplifyMul(ExpressionTokenType* to
                                                           int* simplifiesCount,
                                                          FILE* outTex)
 {
-    assert(token);
-    assert(token->left);
-    assert(token->right);
+    CHECK();
 
-    ExpressionTokenType* left  = token->left;
-    ExpressionTokenType* right = token->right;
-
-    bool rightIsValue = (right->valueType == ExpressionTokenValueTypeof::VALUE);
-    bool leftIsValue  = (left->valueType  == ExpressionTokenValueTypeof::VALUE);
-
-    if (rightIsValue && DoubleEqual(right->value.value, 0))
+    if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 0))
     {
         (*simplifiesCount)++;
         return ExpressionSimplifyReturnConstToken(token, 0, outTex);
     }
 
-    if (leftIsValue && DoubleEqual(left->value.value, 0))
+    if (L_IS_VAL(token) && DoubleEqual(L_VAL(token), 0))
     {
         (*simplifiesCount)++;
         return ExpressionSimplifyReturnConstToken(token, 0, outTex);
     }
 
-    if (rightIsValue && DoubleEqual(right->value.value, 1))
+    if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 1))
     {
         (*simplifiesCount)++;
         return ExpressionSimplifyReturnLeftToken(token, outTex);
     }
 
-    if (leftIsValue && DoubleEqual(left->value.value, 1))
+    if (L_IS_VAL(token) && DoubleEqual(L_VAL(token), 1))
     {
         (*simplifiesCount)++;
         return ExpressionSimplifyReturnRightToken(token, outTex);
@@ -538,26 +530,18 @@ static inline ExpressionTokenType* ExpressionSimplifyMul(ExpressionTokenType* to
 }
 
 static inline ExpressionTokenType* ExpressionSimplifyDiv(ExpressionTokenType* token,   
-                                                          int* simplifiesCount,
+                                                         int* simplifiesCount,
                                                          FILE* outTex)
 {
-    assert(token);
-    assert(token->left);
-    assert(token->right);
+    CHECK();
 
-    ExpressionTokenType* left  = token->left;
-    ExpressionTokenType* right = token->right;
-
-    bool rightIsValue = (right->valueType == ExpressionTokenValueTypeof::VALUE);
-    bool leftIsValue  = (left->valueType  == ExpressionTokenValueTypeof::VALUE);
-
-    if (leftIsValue && DoubleEqual(left->value.value, 0))
+    if (L_IS_VAL(token) && DoubleEqual(L_VAL(token), 0))
     {
         (*simplifiesCount)++;
         return ExpressionSimplifyReturnConstToken(token, 0, outTex);
     }
 
-    if (rightIsValue && DoubleEqual(right->value.value, 1))
+    if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 1))
     {
         (*simplifiesCount)++;
         return ExpressionSimplifyReturnLeftToken(token, outTex);
@@ -570,35 +554,27 @@ static inline ExpressionTokenType* ExpressionSimplifyPow(ExpressionTokenType* to
                                                           int* simplifiesCount,
                                                          FILE* outTex)
 {
-    assert(token);
-    assert(token->left);
-    assert(token->right);
+    CHECK();
 
-    ExpressionTokenType* left  = token->left;
-    ExpressionTokenType* right = token->right;
-
-    bool rightIsValue = (right->valueType == ExpressionTokenValueTypeof::VALUE);
-    bool leftIsValue  = (left->valueType  == ExpressionTokenValueTypeof::VALUE);
-
-    if (rightIsValue && DoubleEqual(right->value.value, 0))
+    if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 0))
     {
         (*simplifiesCount)++;
         return ExpressionSimplifyReturnConstToken(token, 1, outTex);
     }
 
-    if (leftIsValue && DoubleEqual(left->value.value, 0))
+    if (L_IS_VAL(token) && DoubleEqual(L_VAL(token), 0))
     {
         (*simplifiesCount)++;
         return ExpressionSimplifyReturnConstToken(token, 0, outTex);
     }
 
-    if (rightIsValue && DoubleEqual(right->value.value, 1))
+    if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 1))
     {
         (*simplifiesCount)++;
         return ExpressionSimplifyReturnLeftToken(token, outTex);
     }
 
-    if (leftIsValue && DoubleEqual(left->value.value, 1))
+    if (L_IS_VAL(token) && DoubleEqual(L_VAL(token), 1))
     {
         (*simplifiesCount)++;
         return ExpressionSimplifyReturnConstToken(token, 1, outTex);
@@ -611,16 +587,9 @@ static inline ExpressionTokenType* ExpressionSimplifyLog(ExpressionTokenType* to
                                                           int* simplifiesCount,
                                                          FILE* outTex)
 {
-    assert(token);
-    assert(token->left);
-    assert(token->right);
+    CHECK();
 
-    ExpressionTokenType* left  = token->left;
-    ExpressionTokenType* right = token->right;
-
-    bool rightIsValue = (right->valueType == ExpressionTokenValueTypeof::VALUE);
-
-    if (rightIsValue && DoubleEqual(right->value.value, 1))
+    if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 1))
     {
         (*simplifiesCount)++;
         return ExpressionSimplifyReturnConstToken(token, 0, outTex);
@@ -629,6 +598,7 @@ static inline ExpressionTokenType* ExpressionSimplifyLog(ExpressionTokenType* to
     return token;
 }
 
+#undef CHECK
 //---------------------------------------------------------------------------------------
 
 static inline ExpressionTokenType* ExpressionSimplifyReturnLeftToken(ExpressionTokenType* token,
@@ -636,11 +606,11 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnLeftToken(ExpressionT
 {
     assert(token);
 
-    TokenPrintDifferenceToTex(token, token->left, outTex, "Slozhno ne ponyat, chto delat s etim:");
+    TokenPrintDifferenceToTex(token, L(token), outTex, "Slozhno ne ponyat, chto delat s etim:");
 
     ExpressionTokenDtor(token->right);
 
-    ExpressionTokenType* left = token->left;
+    ExpressionTokenType* left = L(token);
 
     token->left  = nullptr;
     token->right = nullptr;
@@ -654,12 +624,12 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnRightToken(
 {
     assert(token);
 
-    TokenPrintDifferenceToTex(token, token->right, outTex, 
+    TokenPrintDifferenceToTex(token, R(token), outTex, 
                         "Avtor ne smog perevesti na english(");
 
     ExpressionTokenDtor(token->left);
 
-    ExpressionTokenType* right = token->right;
+    ExpressionTokenType* right = R(token);
     
     token->left  = nullptr;
     token->right = nullptr;
@@ -672,20 +642,20 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnConstToken(
                                                                 double value,
                                                                 FILE* outTex)
 {
-    ExpressionTokenType* constToken = NUM(value);
+    ExpressionTokenType* constToken = CRT_NUM(value);
     
     TokenPrintDifferenceToTex(token, constToken, outTex,
                         "Let's use the theorem ..."
                         "(The author doesn't know how this theorem is called in English, "
                         "you are left to guess for yourself)");
     
-    ExpressionTokenDtor(token->right);
-    ExpressionTokenDtor(token->left);
+    ExpressionTokenDtor(R(token));
+    ExpressionTokenDtor(L(token));
 
     token->left  = nullptr;
     token->right = nullptr;
 
-    return NUM(value);
+    return CRT_NUM(value);
 }
 
 //---------------------------------------------------------------------------------------
@@ -695,15 +665,15 @@ static bool ExpressionTokenContainVariable(const ExpressionTokenType* token)
     if (token == nullptr)
         return false;
     
-    if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
+    if (IS_VAR(token))
         return true;
 
-    bool containVariable  = ExpressionTokenContainVariable(token->left);
+    bool containVariable  = ExpressionTokenContainVariable(L(token));
 
     if (containVariable)
         return containVariable;
     
-    containVariable = ExpressionTokenContainVariable(token->right);
+    containVariable = ExpressionTokenContainVariable(R(token));
 
     return containVariable;
 }
@@ -723,8 +693,8 @@ ExpressionType ExpressionTaylor(const ExpressionType* expression, const int n, c
     ExpressionCtor(&taylorSeries);
     ExpressionCopyVariables(&taylorSeries, expression);
 
-    taylorSeries.root = NUM(ExpressionCalculate(&tmpDiffExpr));
-    ExpressionTokenType* xToken = VAR(&taylorSeries.variables, 
+    taylorSeries.root = CRT_NUM(ExpressionCalculate(&tmpDiffExpr));
+    ExpressionTokenType* xToken = CRT_VAR(&taylorSeries.variables, 
                                              taylorSeries.variables.data[0].variableName);
 
     for (size_t i = 1; i <= n; ++i)
@@ -733,8 +703,8 @@ ExpressionType ExpressionTaylor(const ExpressionType* expression, const int n, c
         ExpressionDtor(&tmpDiffExpr);
 
         taylorSeries.root = _ADD(taylorSeries.root, 
-                                 _MUL(NUM(ExpressionCalculate(tmp.root)), 
-                                     _POW(C(xToken), NUM(i))));
+                                 _MUL(CRT_NUM(ExpressionCalculate(tmp.root)), 
+                                     _POW(C(xToken), CRT_NUM(i))));
 
         tmpDiffExpr = tmp;
     }
@@ -773,10 +743,10 @@ ExpressionType ExpressionTangent(ExpressionType* expression, const double x)
     ExpressionCtor(&tangent);
     ExpressionCopyVariables(&tangent, expression);
 
-    ExpressionTokenType* xToken = VAR(&tangent.variables, varName);
+    ExpressionTokenType* xToken = CRT_VAR(&tangent.variables, varName);
 
-    tangent.root = _ADD(_MUL(NUM(diffValInX), C(xToken)), 
-                        _SUB(NUM(exprValInX), _MUL(NUM(diffValInX), NUM(x))));
+    tangent.root = _ADD(_MUL(CRT_NUM(diffValInX), C(xToken)), 
+                        _SUB(CRT_NUM(exprValInX), _MUL(CRT_NUM(diffValInX), CRT_NUM(x))));
 
     ExpressionSimplify(&tangent);
     
@@ -803,9 +773,39 @@ ExpressionType ExpressionSubTwoExpressions(const ExpressionType* expr1,
 
 //---------------------------------------------------------------------------------------
 
-#undef C
 #undef D
-#undef CONST_TOKEN
+#undef C
 
-#undef DSL_H
+#undef  OP_TYPE_CNST
+#undef VAR_TYPE_CNST
+#undef VAL_TYPE_CNST
+#undef TOKEN_OP
+
+#undef VAL_TYPE
+#undef VAL      
+#undef VAR      
+#undef OP      
+#undef L
+#undef R
+
+#undef L_VAL
+#undef R_VAL
+#undef L_VAR
+#undef R_VAR
+#undef  L_OP
+#undef  R_OP
+
+#undef   IS_VAL
+#undef L_IS_VAL
+#undef R_IS_VAL
+#undef   IS_VAR
+#undef L_IS_VAR
+#undef R_IS_VAR
+#undef    IS_OP
+#undef  L_IS_OP
+#undef  R_IS_OP
+
+#undef CRT_NUM
+#undef CRT_VAR
+
 //---------------------------------------------------------------------------------------
