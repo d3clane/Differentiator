@@ -220,7 +220,7 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
                         "\"gksjfpejdsifljdkfjsefijdsflfj\".\\\\\n");
     }
 
-    //ExpressionLatexReplacementArrayDtor(&replacementsArr);
+    ExpressionLatexReplacementArrayDtor(&replacementsArr);
 
     ExpressionSimplify(&diffExpression, outTex);
 
@@ -312,7 +312,7 @@ void ExpressionSimplify(ExpressionType* expression,
         ExpressionPrintTex(expression, outTex, "Final expression after simplifications:", 
                                                                          &replacementsArr);
 
-    //ExpressionLatexReplacementArrayDtor(&replacementsArr);
+    ExpressionLatexReplacementArrayDtor(&replacementsArr);
 }
 
 static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* token,

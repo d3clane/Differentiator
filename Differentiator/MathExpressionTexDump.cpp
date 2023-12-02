@@ -453,7 +453,7 @@ void ExpressionLatexReplacementArrayDtor(LatexReplacementArrType* arr)
 
     arr->capacity = 0;
     arr->size     = 0;
-    free(arr);
+    free(arr->data);
 }
 
 size_t ExpressionLatexReplacementArrayInit(const ExpressionTokenType* token, 

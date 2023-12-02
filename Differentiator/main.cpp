@@ -52,8 +52,10 @@ int main(const int argc, const char* argv[])
     //------------------------MACLOREN------------------
 
     LaTexStartNewSection("Macloren", outputTex);
-    ExpressionType maclorenSeries = ExpressionTaylor(&expression, 5, 0);
-    err = ExpressionPrintTex(&maclorenSeries, outputTex, "Macloren series: ");
+    ExpressionType maclorenSeries1 = ExpressionTaylor(&expression, 1, 0);
+    ExpressionType maclorenSeries3 = ExpressionTaylor(&expression, 3, 0);
+    ExpressionType maclorenSeries5 = ExpressionTaylor(&expression, 5, 0);
+    err = ExpressionPrintTex(&maclorenSeries5, outputTex, "Macloren series: ");
     IF_ERR_RETURN(err);
 
     //-----------------------Graphs--------------
@@ -63,7 +65,7 @@ int main(const int argc, const char* argv[])
     IF_ERR_RETURN(err);
     
     char* imgMacloren    = nullptr;
-    err = ExpressionPlotFunc(&maclorenSeries, "macloren", "green", -2, 2, &imgMacloren);
+    err = ExpressionPlotFunc(&maclorenSeries5, "macloren o(x^5)", "green", -2, 2, &imgMacloren);
     IF_ERR_RETURN(err);
 
     char* imgFuncAndTangent = nullptr;
@@ -73,25 +75,67 @@ int main(const int argc, const char* argv[])
                                  &imgFuncAndTangent);
     IF_ERR_RETURN(err);   
 
+    //--------------------Macloren small range graph--------------------
+
     char* imgFuncAndMaclorenSmallRange = nullptr;
-    err = ExpressionPlotTwoFuncs(&expression, "main func", "red", 
-                                 &maclorenSeries, "macloren", "green", 
-                                 -0.6, 0.6,
-                                 &imgFuncAndMaclorenSmallRange);
-    IF_ERR_RETURN(err);
+    double xRangeLeft  = -0.6;
+    double xRangeRight =  0.6;
+
+    char *imgFuncAndMacloren1SmallRange = nullptr;
+    char *imgFuncAndMacloren3SmallRange = nullptr;
+    char *imgFuncAndMacloren5SmallRange = nullptr;
+    ExpressionPlotTwoFuncs(&expression, "main func", "red", 
+                           &maclorenSeries1, "macloren o(x)", "green",
+                           xRangeLeft, xRangeRight, &imgFuncAndMacloren1SmallRange);
+    ExpressionPlotTwoFuncs(&expression, "main func", "red", 
+                           &maclorenSeries3, "macloren o(x^3)", "green",
+                           xRangeLeft, xRangeRight, &imgFuncAndMacloren3SmallRange);
+    ExpressionPlotTwoFuncs(&expression, "main func", "red", 
+                           &maclorenSeries5, "macloren o(x^5)", "green",
+                           xRangeLeft, xRangeRight, &imgFuncAndMacloren5SmallRange);
+
+    const char* plotFileName = GnuPlotFileCreate(xRangeLeft, xRangeRight, 
+                                                 &imgFuncAndMaclorenSmallRange);
+    ExpressionGnuPlotAddFunc(plotFileName, &expression,      "main func",           "red");
+    ExpressionGnuPlotAddFunc(plotFileName, &maclorenSeries1, "macloren o(x)",    "orange");
+    ExpressionGnuPlotAddFunc(plotFileName, &maclorenSeries3, "macloren o(x^3)",   "green");
+    ExpressionGnuPlotAddFunc(plotFileName, &maclorenSeries5, "macloren o(x^5)",    "blue");
+    GnuPlotImgCreate(plotFileName);
+
+    //------------------Macloren large range graph-----------------
 
     char* imgFuncAndMaclorenLargeRange = nullptr;
-    err = ExpressionPlotTwoFuncs(&expression, "main func", "red", 
-                                 &maclorenSeries, "macloren", "green", 
-                                 -1.3, 1.3,
-                                 &imgFuncAndMaclorenLargeRange);
-    IF_ERR_RETURN(err);
+    xRangeLeft  = -1.3;
+    xRangeRight =  1.3;
+
+    char *imgFuncAndMacloren1LargeRange = nullptr;
+    char *imgFuncAndMacloren3LargeRange = nullptr;
+    char *imgFuncAndMacloren5LargeRange = nullptr;
+    ExpressionPlotTwoFuncs(&expression, "main func", "red", 
+                           &maclorenSeries1, "macloren o(x)", "green",
+                           xRangeLeft, xRangeRight, &imgFuncAndMacloren1LargeRange);
+    ExpressionPlotTwoFuncs(&expression, "main func", "red", 
+                           &maclorenSeries3, "macloren o(x^3)", "green",
+                           xRangeLeft, xRangeRight, &imgFuncAndMacloren3LargeRange);
+    ExpressionPlotTwoFuncs(&expression, "main func", "red", 
+                           &maclorenSeries5, "macloren o(x^5)", "green",
+                           xRangeLeft, xRangeRight, &imgFuncAndMacloren5LargeRange);
+
+    plotFileName = GnuPlotFileCreate(xRangeLeft, xRangeRight, 
+                                     &imgFuncAndMaclorenLargeRange);
+    ExpressionGnuPlotAddFunc(plotFileName, &expression,      "main func",           "red");
+    ExpressionGnuPlotAddFunc(plotFileName, &maclorenSeries1, "macloren o(x)",    "orange");
+    ExpressionGnuPlotAddFunc(plotFileName, &maclorenSeries3, "macloren o(x^3)",   "green");
+    ExpressionGnuPlotAddFunc(plotFileName, &maclorenSeries5, "macloren o(x^5)",    "blue");
+    GnuPlotImgCreate(plotFileName);
+    
+    //--------------------Difference func and macloren graph----------------
     
     char* imgFuncAndMaclorenDifference = nullptr;
     ExpressionType expressionDifference = ExpressionSubTwoExpressions(&expression, 
-                                                                      &maclorenSeries);
-    err = ExpressionPlotFunc(&expressionDifference, "difference function", "blue", 
-                             -1.3, 1.3,
+                                                                      &maclorenSeries5);
+    err = ExpressionPlotFunc(&expressionDifference, "difference function and macloren o(x^5)", 
+                            "blue", -1.3, 1.3,
                              &imgFuncAndMaclorenDifference);
     IF_ERR_RETURN(err);
 
@@ -105,9 +149,22 @@ int main(const int argc, const char* argv[])
 
     LaTexInsertImg(imgFuncAndTangent, outputTex, "Main graph and tangent:\n");
 
-    LaTexInsertImg(imgFuncAndMaclorenSmallRange, outputTex, 
-                            "Comparing func graph and macloren's series graph, small range:\n");
 
+    LaTexInsertImg(imgFuncAndMacloren1SmallRange, outputTex, 
+                        "Comparing func graph and macloren's series o(x) graph, small range:\n");
+    LaTexInsertImg(imgFuncAndMacloren3SmallRange, outputTex, 
+                        "Comparing func graph and macloren's series o(x**3) graph, small range:\n");
+    LaTexInsertImg(imgFuncAndMacloren5SmallRange, outputTex, 
+                        "Comparing func graph and macloren's series o(x**5) graph, small range:\n");
+    LaTexInsertImg(imgFuncAndMaclorenSmallRange, outputTex, 
+                        "Comparing func graph and macloren's series graph, small range:\n");
+
+    LaTexInsertImg(imgFuncAndMacloren1LargeRange, outputTex, 
+                        "Comparing func graph and macloren's series o(x) graph, large range:\n");
+    LaTexInsertImg(imgFuncAndMacloren3LargeRange, outputTex, 
+                        "Comparing func graph and macloren's series o(x**3) graph, large range:\n");
+    LaTexInsertImg(imgFuncAndMacloren5LargeRange, outputTex, 
+                        "Comparing func graph and macloren's series o(x**5) graph, large range:\n");
     LaTexInsertImg(imgFuncAndMaclorenLargeRange, outputTex, 
                             "Comparing func graph and macloren's series graph, big range:\n");
 
