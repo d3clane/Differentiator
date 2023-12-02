@@ -80,6 +80,8 @@ enum class ExpressionErrors
     VARIABLES_DATA_ERR,
 
     TOKEN_EDGES_ERR,
+
+    NO_REPLACEMENT,
 };
 
 //-------------Expression main funcs----------

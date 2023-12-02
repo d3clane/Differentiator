@@ -10,24 +10,37 @@ static bool        ExpressionOperationNeedTexRightBraces(const ExpressionOperati
 static bool        ExpressionOperationNeedTexLeftBraces (const ExpressionOperationId operation);
 static const char* ExpressionOperationGetTexName        (const ExpressionOperationId operation);
 
+static LatexReplacementType* ExpressionLatexFindReplacement(const LatexReplacementArrType* arr,
+                                                            const ExpressionTokenType* token);
+static LatexReplacementType* ExpressionLatexAddReplacement(LatexReplacementArrType* arr,
+                                                           const ExpressionTokenType* token);
+static char* ExpressionLatexReplacementCreateName();
+static size_t ExpressionLatexGetLen(ExpressionOperationId operation, const size_t leftSz, 
+                                                                     const size_t rightSz);
+
 static bool HaveToPutBrackets(const ExpressionTokenType* parent, 
                               const ExpressionTokenType* son);
 
 static void ExpressionTokenPrintValue   (const ExpressionTokenType* token, 
                                          FILE* outStream);
-ExpressionErrors ExpressionPrintTex     (const ExpressionType* expression, 
-                                         FILE* outStream,
-                                         const char* string)
+
+ExpressionErrors ExpressionPrintTex(const ExpressionType* expression,
+                                    FILE* outStream,
+                                    const char* string,
+                                    LatexReplacementArrType* replacementArr)
 {
     assert(expression);
     assert(outStream);
 
-    return ExpressionTokenPrintTexWithTrollString(expression->root, outStream, string);
+    return ExpressionTokenPrintTexWithTrollString(expression->root, outStream, string, 
+                                                  replacementArr);
 }
 
-ExpressionErrors ExpressionTokenPrintTexWithTrollString(const ExpressionTokenType* rootToken,
-                                                        FILE* outStream,
-                                                        const char* string)
+ExpressionErrors ExpressionTokenPrintTexWithTrollString(
+                                                const ExpressionTokenType* rootToken,
+                                                FILE* outStream,
+                                                const char* string,
+                                                LatexReplacementArrType* replacementArr)
 {
     assert(rootToken);
     assert(outStream);
@@ -58,17 +71,36 @@ ExpressionErrors ExpressionTokenPrintTexWithTrollString(const ExpressionTokenTyp
     else
         fprintf(outStream, "%s\n", string);
     
+
+    size_t prevArrSize = 0;
+    if (replacementArr)
+    {
+        prevArrSize = replacementArr->size;
+        ExpressionLatexReplacementArrayInit(rootToken, replacementArr);
+    }
+
     fprintf(outStream, "\\begin{gather}\n");
 
-    ExpressionErrors err = ExpressionTokenPrintTex(rootToken, outStream);
+    ExpressionErrors err = ExpressionTokenPrintTex(rootToken, outStream, replacementArr);
 
     fprintf(outStream, "\n\\end{gather}\n");
+
+    if (replacementArr && prevArrSize < replacementArr->size)
+    {
+        fprintf(outStream, "Using these replacements: \n");
+        for (size_t i = prevArrSize; i < replacementArr->size; ++i)
+        {
+            ExpressionLatexReplacementPrint(replacementArr, replacementArr->data[i].token, 
+                                                                                outStream);
+        }                                                                                
+    }
 
     return err;
 }
 
 ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token, 
-                                         FILE* outStream)
+                                         FILE* outStream,
+                                         const LatexReplacementArrType* replacementArr)
 {
     assert(token);
     assert(outStream);
@@ -77,6 +109,13 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
     {
         ExpressionTokenPrintValue(token, outStream);
 
+        return ExpressionErrors::NO_ERR;
+    }
+
+    LatexReplacementType* replacement = ExpressionLatexFindReplacement(replacementArr, token);
+    if (replacement != nullptr)
+    {
+        fprintf(outStream, "%s", replacement->replacementStr);
         return ExpressionErrors::NO_ERR;
     }
 
@@ -94,7 +133,7 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
     if (needTexLeftBraces)                      fprintf(outStream, "{");
     if (!needTexLeftBraces && needLeftBrackets) fprintf(outStream, "(");
 
-    err = ExpressionTokenPrintTex(token->left, outStream);
+    err = ExpressionTokenPrintTex(token->left, outStream, replacementArr);
 
     if (!needTexLeftBraces && needLeftBrackets) fprintf(outStream, ")");
     if (needTexLeftBraces)                      fprintf(outStream, "}");
@@ -110,7 +149,9 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
     
     if (needTexRightBraces)                       fprintf(outStream, "{");
     if (!needTexRightBraces && needRightBrackets) fprintf(outStream, "(");
-    err = ExpressionTokenPrintTex(token->right, outStream);
+
+    err = ExpressionTokenPrintTex(token->right, outStream, replacementArr);
+
     if (!needTexRightBraces && needRightBrackets) fprintf(outStream, ")");
     if (needTexRightBraces)                       fprintf(outStream, "}");
 
@@ -326,4 +367,196 @@ void LaTexStartNewSection(const char* sectionName, FILE* outStream)
     assert(outStream);
 
     fprintf(outStream, "\\section{%s}\n", sectionName);
+}
+
+static LatexReplacementType* ExpressionLatexFindReplacement(const LatexReplacementArrType* arr,
+                                                            const ExpressionTokenType* token)
+{
+    assert(token);
+
+    if (arr == nullptr)
+        return nullptr;
+
+    for (size_t i = 0; i < arr->size; ++i)
+    {
+        if (arr->data[i].token == token)
+            return arr->data + i;
+    }
+    
+    return nullptr;
+}
+
+static LatexReplacementType* ExpressionLatexAddReplacement(LatexReplacementArrType* arr,
+                                                           const ExpressionTokenType* token)
+{
+    assert(token);
+
+    if (arr == nullptr)
+        return nullptr;
+
+    if (arr->size >= arr->capacity)
+        return nullptr;
+
+    LatexReplacementType* replacement = ExpressionLatexFindReplacement(arr, token);
+
+    if (replacement != nullptr)
+        return replacement;
+
+    char* replaceName = ExpressionLatexReplacementCreateName();
+
+    arr->data[arr->size].token       = token;
+    arr->data[arr->size].replacementStr = replaceName;
+    arr->size++;
+    
+    return arr->data + arr->size - 1;
+}
+
+static char* ExpressionLatexReplacementCreateName()
+{
+    static int charId  = -1;
+    static int numId   = 0;
+    
+    int oldCharId = charId;
+    charId = (charId + 1) % ('z' - 'a' + 1);
+    if (charId < oldCharId)
+        numId++;
+
+    static const size_t      maxReplacementSz  = 32;
+    static char  replacement[maxReplacementSz] = "";
+
+    snprintf(replacement, maxReplacementSz, "%c_%d", charId + 'a', numId);
+
+    return strdup(replacement);
+}
+
+void ExpressionLatexReplacementArrayCtor(LatexReplacementArrType* arr, size_t capacity)
+{
+    assert(arr);
+
+    arr->data     = (LatexReplacementType*) calloc(capacity, sizeof(*(arr->data)));
+    arr->capacity = capacity;
+    arr->size     = 0;
+}
+
+void ExpressionLatexReplacementArrayDtor(LatexReplacementArrType* arr)
+{
+    assert(arr);
+
+    for (size_t i = 0; i < arr->size; ++i)
+    {
+        if (arr->data[i].replacementStr)
+        {
+            arr->data[i].token = nullptr;
+            free(arr->data[i].replacementStr);
+        }
+    }
+
+    arr->capacity = 0;
+    arr->size     = 0;
+    free(arr);
+}
+
+size_t ExpressionLatexReplacementArrayInit(const ExpressionTokenType* token, 
+                                           LatexReplacementArrType* arr)
+{
+    assert(arr);
+
+    if (token == nullptr)
+        return 0;
+
+    static const size_t maxTokenSize = 16;
+    if (token->valueType == ExpressionTokenValueTypeof::VALUE)
+        return 1;
+    
+    if (token->valueType == ExpressionTokenValueTypeof::VARIABLE)
+        return strlen(token->value.varPtr->variableName);
+    
+    size_t leftSz  = ExpressionLatexReplacementArrayInit(token->left,  arr);
+    size_t rightSz = ExpressionLatexReplacementArrayInit(token->right, arr);
+
+    assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
+    size_t mySz = ExpressionLatexGetLen(token->value.operation, leftSz, rightSz);
+    
+    if (mySz >= maxTokenSize)
+    {
+        ExpressionLatexAddReplacement(arr, token);
+        return 1;
+    }
+
+    return mySz;
+}
+
+static inline size_t max(const size_t leftSz, const size_t rightSz)
+{
+    return leftSz > rightSz ? leftSz : rightSz;
+}
+
+static size_t ExpressionLatexGetLen(ExpressionOperationId operation, const size_t leftSz, 
+                                                                     const size_t rightSz)
+{
+    #define GENERATE_OPERATION_CMD(NAME, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11,  \
+                                   SUM_LENS_CODE)                                       \
+            case ExpressionOperationId::NAME:                                           \
+            {                                                                           \
+                SUM_LENS_CODE;                                                          \
+                break;                                                                  \
+            }
+
+    switch (operation)
+    {
+        #include "Operations.h"
+        
+        default:
+            break;
+    }
+
+    #undef GENERATE_OPERATION_CMD
+
+    return 0;
+}
+
+ExpressionErrors ExpressionLatexReplacementPrint(LatexReplacementArrType* arr,
+                                                 const ExpressionTokenType* token,
+                                                 FILE* outStream)
+{
+    assert(arr);
+
+    if (arr->size == 0)
+        return ExpressionErrors::NO_ERR;
+
+    fprintf(outStream, "\\begin{gather*}\n");
+
+    if (token != nullptr)
+    {
+        LatexReplacementType* replacement = ExpressionLatexFindReplacement(arr, token);
+
+        if (replacement == nullptr)
+            return ExpressionErrors::NO_REPLACEMENT;
+
+        replacement->token = nullptr;
+
+        fprintf(outStream, "%s = ", replacement->replacementStr);
+        ExpressionTokenPrintTex(token, outStream, arr);
+        fprintf(outStream, "\n\\end{gather*}\n");
+
+        replacement->token = token;
+
+        return ExpressionErrors::NO_ERR;
+    }
+
+    for (size_t i = 0; i < arr->size; ++i)
+    {
+        fprintf(outStream, "%s = ", arr->data[i].replacementStr);
+
+        const ExpressionTokenType* tmpToken = arr->data[i].token;
+        arr->data[i].token = nullptr;
+
+        ExpressionTokenPrintTex(arr->data[i].token, outStream, arr);
+        fprintf(outStream, "\\\\\n");
+
+        arr->data[i].token = tmpToken;
+    }
+
+    fprintf(outStream, "\\end{gather}\n");
+    return ExpressionErrors::NO_ERR;
 }

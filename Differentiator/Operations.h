@@ -5,14 +5,15 @@
 //GENERATE_OPERATION_CMD(NAME, FORMAT, TEX_FORMAT, IS_UNARY, SHORT_CUT_STRING, TEX_NAME,
 //                       NEED_LEFT_TEX_BRACES, NEED_RIGHT_TEX_BRACES,                  
 //                       OPERATION_CALCULATION_CODE, OPERATION_DIFF_CODE,
-//                       GNU_PLOT_NAME, GNU_PLOT_FORMAT) 
+//                       GNU_PLOT_NAME, GNU_PLOT_FORMAT,
+//                       SUM_TEX_LENS_CODE) 
 
 //OPERATION_CALCILATION_CODE - format of function f(const double val1, const double val2)
 //OPERATION_DIFF_CODE        - format of function f(const ExpressionTokenType* token)
 
 /*
 
-NEED_DSL
+NEED DSL
 
 */
 
@@ -42,7 +43,10 @@ GENERATE_OPERATION_CMD(ADD, INFIX,  INFIX, false, "+", "+", false, false,
 
     return _ADD(D(token->left), D(token->right));
 },
-"+", INFIX)
+"+", INFIX,
+{
+    return leftSz + rightSz + 1;
+})
 
 GENERATE_OPERATION_CMD(SUB, INFIX,  INFIX, false, "-", "-",      false, false,
 {
@@ -55,7 +59,10 @@ GENERATE_OPERATION_CMD(SUB, INFIX,  INFIX, false, "-", "-",      false, false,
 
     return _SUB(D(token->left), D(token->right));
 },
-"-", INFIX)
+"-", INFIX,
+{
+    return leftSz + rightSz + 1;
+})
 
 GENERATE_OPERATION_CMD(MUL, INFIX,  INFIX, false, "*", "\\cdot", false, false,
 {
@@ -69,7 +76,10 @@ GENERATE_OPERATION_CMD(MUL, INFIX,  INFIX, false, "*", "\\cdot", false, false,
     return _ADD(_MUL(D(token->left), C(token->right)), 
                       _MUL(C(token->left), D(token->right)));
 },
-"*", INFIX)
+"*", INFIX,
+{
+    return leftSz + rightSz + 1;
+})
 
 GENERATE_OPERATION_CMD(DIV, INFIX, PREFIX, false, "/", "\\frac", true,  true,
 {
@@ -85,7 +95,10 @@ GENERATE_OPERATION_CMD(DIV, INFIX, PREFIX, false, "/", "\\frac", true,  true,
                                  _MUL(C(token->left), D(token->right))),
                       _POW(C(token->right), CRT_NUM(2)));
 },
-"/", INFIX)
+"/", INFIX,
+{
+    return max(leftSz, rightSz);
+})
 
 GENERATE_OPERATION_CMD(POW, INFIX, INFIX, false,     "^",     "^",  false, true,
 {
@@ -117,7 +130,10 @@ GENERATE_OPERATION_CMD(POW, INFIX, INFIX, false,     "^",     "^",  false, true,
                                             _DIV(D(token->left), C(token->left))),
                                  _MUL(_LN(C(token->left)), D(token->right))));
 },
-"**", INFIX)
+"**", INFIX,
+{
+    return leftSz + 0.8 * rightSz;
+})
 
 GENERATE_OPERATION_CMD(LOG, PREFIX, PREFIX, false, "log", "\\log_", true, false,
 {
@@ -134,7 +150,10 @@ GENERATE_OPERATION_CMD(LOG, PREFIX, PREFIX, false, "log", "\\log_", true, false,
 
     return _DIV(D(token->left), C(token->left));
 },
-"log", PREFIX)
+"log", PREFIX,
+{
+    return 0.8 * leftSz + rightSz + 3;
+})
 
 #undef  CALC_CHECK
 #define CALC_CHECK()        \
@@ -154,7 +173,10 @@ GENERATE_OPERATION_CMD(LN,  PREFIX, PREFIX, true,  "ln",  "\\ln",   false, false
 
     return _DIV(D(token->left), C(token->left));
 },
-"log", PREFIX)
+"log", PREFIX,
+{
+    return leftSz + rightSz + 2;
+})
 
 GENERATE_OPERATION_CMD(SIN, PREFIX, PREFIX, true, "sin", "\\sin", false, false,
 {
@@ -167,7 +189,10 @@ GENERATE_OPERATION_CMD(SIN, PREFIX, PREFIX, true, "sin", "\\sin", false, false,
 
     return _MUL(_COS(C(token->left)), D(token->left));
 },
-"sin", PREFIX)
+"sin", PREFIX,
+{
+    return leftSz + 3;
+})
 
 GENERATE_OPERATION_CMD(COS, PREFIX, PREFIX, true, "cos", "\\cos", false, false,
 {
@@ -181,7 +206,10 @@ GENERATE_OPERATION_CMD(COS, PREFIX, PREFIX, true, "cos", "\\cos", false, false,
     return _MUL(CRT_NUM(-1), 
                       _MUL(_SIN(C(token->left)), D(token->left)));
 },
-"cos", PREFIX)
+"cos", PREFIX,
+{
+    return leftSz + 3;
+})
 
 GENERATE_OPERATION_CMD(TAN, PREFIX, PREFIX, true, "tan", "\\tan", false, false,
 {
@@ -195,7 +223,10 @@ GENERATE_OPERATION_CMD(TAN, PREFIX, PREFIX, true, "tan", "\\tan", false, false,
     return _DIV(D(token->left), 
                       _POW(_COS(C(token->left)), CRT_NUM(2)));
 },
-"tan", PREFIX)
+"tan", PREFIX,
+{
+    return leftSz + 3;
+})
 
 GENERATE_OPERATION_CMD(COT, PREFIX, PREFIX, true, "cot", "\\cot", false, false,
 {
@@ -215,7 +246,10 @@ GENERATE_OPERATION_CMD(COT, PREFIX, PREFIX, true, "cot", "\\cot", false, false,
                       _DIV(D(token->left), 
                                  _POW(_SIN(C(token->left)), CRT_NUM(2))));
 },
-"1 / tan", PREFIX)
+"1 / tan", PREFIX,
+{
+    return leftSz + 3;
+})
 
 GENERATE_OPERATION_CMD(ARCSIN, PREFIX, PREFIX, true, "arcsin", "\\arcsin", false, false,
 {
@@ -231,7 +265,10 @@ GENERATE_OPERATION_CMD(ARCSIN, PREFIX, PREFIX, true, "arcsin", "\\arcsin", false
                                             _POW(C(token->left), CRT_NUM(2))),
                                  CRT_NUM(0.5)));
 },
-"asin", PREFIX)
+"asin", PREFIX,
+{
+    return leftSz + 6;
+})
 
 GENERATE_OPERATION_CMD(ARCCOS, PREFIX, PREFIX, true, "arccos", "\\arccos", false, false,
 {
@@ -248,7 +285,10 @@ GENERATE_OPERATION_CMD(ARCCOS, PREFIX, PREFIX, true, "arccos", "\\arccos", false
                                                        _POW(C(token->left), CRT_NUM(2))),
                                             CRT_NUM(0.5))));
 },
-"acos", PREFIX)
+"acos", PREFIX,
+{
+    return leftSz + 6;
+})
 
 GENERATE_OPERATION_CMD(ARCTAN, PREFIX, PREFIX, true, "arctan", "\\arctan", false, false,
 {
@@ -263,7 +303,10 @@ GENERATE_OPERATION_CMD(ARCTAN, PREFIX, PREFIX, true, "arctan", "\\arctan", false
                       _ADD(CRT_NUM(1),
                                  _POW(C(token->left), CRT_NUM(2))));
 },
-"atan", PREFIX)
+"atan", PREFIX,
+{
+    return leftSz + 6;
+})
 
 GENERATE_OPERATION_CMD(ARCCOT, PREFIX, PREFIX, true, "arccot", "\\arccot", false, false,
 {
@@ -279,7 +322,10 @@ GENERATE_OPERATION_CMD(ARCCOT, PREFIX, PREFIX, true, "arccot", "\\arccot", false
                                  _ADD(CRT_NUM(1),
                                             _POW(C(token->left), CRT_NUM(2)))));
 },
-"pi / 2 - atan", PREFIX)
+"pi / 2 - atan", PREFIX,
+{
+    return leftSz + 6;
+})
 
 #undef CALC_CHECK
 #undef DIFF_CHECK

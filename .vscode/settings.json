@@ -24,7 +24,8 @@
         "charconv": "cpp",
         "functional": "cpp",
         "utility": "cpp",
-        "format": "cpp"
+        "format": "cpp",
+        "__config": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

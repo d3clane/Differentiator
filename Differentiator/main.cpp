@@ -40,8 +40,6 @@ int main(const int argc, const char* argv[])
 
     LaTexStartNewSection("Derivative", outputTex);
     ExpressionType expressionDifferentiate =  ExpressionDifferentiate(&expression, outputTex);
-    err = ExpressionPrintTex   (&expressionDifferentiate, outputTex, 
-                                                    "Result differentiate answer: ");
     IF_ERR_RETURN(err);
     
     //-----------------------TANGENT--------------------

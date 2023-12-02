@@ -16,7 +16,7 @@ static double CalculateUsingOperation(const ExpressionOperationId operation,
 
 //--------------------DSL-----------------------------
 
-#define D(TOKEN) ExpressionDifferentiate(TOKEN, outTex)
+#define D(TOKEN) ExpressionDifferentiate(TOKEN, outTex, arr)
 #define C(TOKEN) ExpressionTokenCopy(TOKEN)    
 
 #define  OP_TYPE_CNST ExpressionTokenValueTypeof::OPERATION
@@ -67,53 +67,64 @@ static double CalculateUsingOperation(const ExpressionOperationId operation,
 
 //-------------------Differentiate---------------
 
-static ExpressionTokenType* ExpressionDifferentiate(
-                                        const ExpressionTokenType* token,
-                                        FILE* outTex = nullptr);
-
+static ExpressionTokenType* ExpressionDifferentiate(const ExpressionTokenType* token,
+                                                    FILE* outTex, 
+                                                    LatexReplacementArrType* arr);
 static ExpressionTokenType* ExpressionDiffOperation(const ExpressionTokenType* token,
-                                                    FILE* outTex = nullptr);
+                                                    FILE* outTex, 
+                                                    LatexReplacementArrType* arr);
 
 //--------------------------------Simplify-------------------------------------------
 
 static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* token,
                                                          int* simplifiesCount,
-                                                         bool* haveVariables = nullptr,
-                                                         FILE* outTex = nullptr);
+                                                         bool* haveVariables,
+                                                         FILE* outTex,
+                                                         LatexReplacementArrType* arr);
 
 static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType* token, 
                                                             int* simplifiesCount,
-                                                            FILE* outTex = nullptr);
+                                                            FILE* outTex,
+                                                            LatexReplacementArrType* arr);
 
 static inline ExpressionTokenType* ExpressionSimplifyAdd(ExpressionTokenType* token,   
                                                          int* simplifiesCount,
-                                                         FILE* outTex = nullptr);
+                                                         FILE* outTex,
+                                                         LatexReplacementArrType* arr);
 static inline ExpressionTokenType* ExpressionSimplifySub(ExpressionTokenType* token,   
                                                           int* simplifiesCount,
-                                                          FILE* outTex = nullptr);
+                                                          FILE* outTex,
+                                                          LatexReplacementArrType* arr);
 static inline ExpressionTokenType* ExpressionSimplifyMul(ExpressionTokenType* token,   
                                                           int* simplifiesCount,
-                                                          FILE* outTex = nullptr);
+                                                          FILE* outTex,
+                                                          LatexReplacementArrType* arr);
 static inline ExpressionTokenType* ExpressionSimplifyDiv(ExpressionTokenType* token,   
                                                           int* simplifiesCount,
-                                                          FILE* outTex = nullptr);
+                                                          FILE* outTex,
+                                                          LatexReplacementArrType* arr);
 static inline ExpressionTokenType* ExpressionSimplifyPow(ExpressionTokenType* token,   
                                                           int* simplifiesCount,
-                                                          FILE* outTex = nullptr);
+                                                          FILE* outTex,
+                                                          LatexReplacementArrType* arr);
 static inline ExpressionTokenType* ExpressionSimplifyLog(ExpressionTokenType* token,   
                                                           int* simplifiesCount,
-                                                          FILE* outTex = nullptr);
+                                                          FILE* outTex,
+                                                          LatexReplacementArrType* arr);
 
 static inline ExpressionTokenType* ExpressionSimplifyReturnLeftToken(
                                                                 ExpressionTokenType* token,
-                                                                FILE* outTex = nullptr);
+                                                                FILE* outTex,
+                                                                LatexReplacementArrType* arr);
 static inline ExpressionTokenType* ExpressionSimplifyReturnRightToken(
                                                                 ExpressionTokenType* token,
-                                                                FILE* outTex = nullptr);
+                                                                FILE* outTex,
+                                                                LatexReplacementArrType* arr);
 static inline ExpressionTokenType* ExpressionSimplifyReturnConstToken(
                                                                 ExpressionTokenType* token,
                                                                 double value,
-                                                                FILE* outTex = nullptr);
+                                                                FILE* outTex,
+                                                                LatexReplacementArrType* arr);
 
 //---------------------------------------------------------------------------------------
 
@@ -122,8 +133,9 @@ static bool ExpressionTokenContainVariable(const ExpressionTokenType* token);
 //---------------------------------------------------------------------------------------
 
 static inline void TokenPrintDifferenceToTex(const ExpressionTokenType* prevToken, 
-                                             const ExpressionTokenType* newToken, FILE* outTex, 
-                                             const char* stringToPrint);
+                                            const ExpressionTokenType* newToken, FILE* outTex, 
+                                            const char* stringToPrint,
+                                            LatexReplacementArrType* arr);
 
 //---------------------------------------------------------------------------------------
 
@@ -180,14 +192,17 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
                                        FILE* outTex)
 {
     assert(expression);
-    
+
+    LatexReplacementArrType replacementsArr = {};
+    ExpressionLatexReplacementArrayCtor(&replacementsArr);
+
     if (outTex)
         ExpressionPrintTex(expression, outTex, 
             "According to the legend, the ancient Ruses were able to defeat the Raptors "
-            "by taking this derivative:");
+            "by taking this derivative:", &replacementsArr);
 
     ExpressionTokenType* diffRootToken = ExpressionDifferentiate(expression->root, 
-                                                                 outTex);
+                                                                 outTex, &replacementsArr);
     ExpressionType diffExpression = {};
     ExpressionCtor(&diffExpression);
 
@@ -197,11 +212,15 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
 
     if (outTex)
     {
-        ExpressionPrintTex(&diffExpression, outTex, "The ancient Ruses got this result\n");
+        ExpressionPrintTex(&diffExpression, outTex, "The ancient Ruses got this result\n",
+                                                    &replacementsArr);
+
         fprintf(outTex, "No one gives a **** what's going on here, "
                         "but according to the standards I have to say it - "
                         "\"gksjfpejdsifljdkfjsefijdsflfj\".\\\\\n");
     }
+
+    //ExpressionLatexReplacementArrayDtor(&replacementsArr);
 
     ExpressionSimplify(&diffExpression, outTex);
 
@@ -209,7 +228,7 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
 }
 
 static ExpressionTokenType* ExpressionDifferentiate(const ExpressionTokenType* token,
-                                                    FILE* outTex)
+                                                    FILE* outTex, LatexReplacementArrType* arr)
 {
     assert(token);
 
@@ -228,14 +247,14 @@ static ExpressionTokenType* ExpressionDifferentiate(const ExpressionTokenType* t
             break;
 
         case ExpressionTokenValueTypeof::OPERATION:
-            diffToken = ExpressionDiffOperation(token, outTex);
+            diffToken = ExpressionDiffOperation(token, outTex, arr);
             break;
 
         default:
             break;
     }
 
-    TokenPrintDifferenceToTex(token, diffToken, outTex, "Let's take the derivative of: ");
+    TokenPrintDifferenceToTex(token, diffToken, outTex, "Let's take the derivative of: ", arr);
 
     return diffToken;  
 }
@@ -243,7 +262,7 @@ static ExpressionTokenType* ExpressionDifferentiate(const ExpressionTokenType* t
 //---------------------------------------------------------------------------------------
 
 static ExpressionTokenType* ExpressionDiffOperation(const ExpressionTokenType* token,
-                                                    FILE* outTex)
+                                                    FILE* outTex, LatexReplacementArrType* arr)
 {
     assert(token->valueType == ExpressionTokenValueTypeof::OPERATION);
 
@@ -276,22 +295,31 @@ void ExpressionSimplify(ExpressionType* expression,
     assert(expression);
 
     int simplifiesCount = 0;
+
+    LatexReplacementArrType replacementsArr = {};
+    ExpressionLatexReplacementArrayCtor(&replacementsArr);
+
     do
     {
         simplifiesCount = 0;
         expression->root = ExpressionSimplifyConstants(expression->root, &simplifiesCount, 
-                                                       nullptr, outTex);
+                                                       nullptr, outTex, &replacementsArr);
         expression->root = ExpressionSimplifyNeutralTokens(expression->root, &simplifiesCount,
-                                                           outTex);
+                                                           outTex, &replacementsArr);
     } while (simplifiesCount != 0);
 
-    if (outTex) ExpressionPrintTex(expression, outTex, "Final expression after simplifications:");
+    if (outTex) 
+        ExpressionPrintTex(expression, outTex, "Final expression after simplifications:", 
+                                                                         &replacementsArr);
+
+    //ExpressionLatexReplacementArrayDtor(&replacementsArr);
 }
 
 static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* token,
                                                          int* simplifiesCount,
                                                          bool* haveVariables,
-                                                         FILE* outTex)
+                                                         FILE* outTex,
+                                                         LatexReplacementArrType* arr)
 {
     assert(simplifiesCount);
 
@@ -316,11 +344,11 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
     ExpressionTokenType* left  = ExpressionSimplifyConstants(L(token),  
                                                              simplifiesCount,
                                                              &leftTokenHaveVariables,
-                                                             outTex);
+                                                             outTex, arr);
     ExpressionTokenType* right = ExpressionSimplifyConstants(R(token), 
                                                              simplifiesCount,
                                                              &rightTokenHaveVariables,
-                                                             outTex);
+                                                             outTex, arr);
 
     if (L(token) != left)
     {
@@ -352,7 +380,8 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
         ExpressionTokenType* simplifiedToken = CRT_NUM(
                                     CalculateUsingOperation(OP(token), leftVal, rightVal));
 
-        TokenPrintDifferenceToTex(token, simplifiedToken, outTex, "Let's simplify this expression: "); 
+        TokenPrintDifferenceToTex(token, simplifiedToken, outTex, 
+                                  "Let's simplify this expression: ", arr); 
 
         return simplifiedToken;
     }
@@ -362,30 +391,32 @@ static ExpressionTokenType* ExpressionSimplifyConstants (ExpressionTokenType* to
 //---------------------------------------------------------------------------------------
 
 static inline void TokenPrintDifferenceToTex(const ExpressionTokenType* prevToken, 
-                                         const ExpressionTokenType* newToken, FILE* outTex, 
-                                         const char* stringToPrint)
-{
+                                            const ExpressionTokenType* newToken, FILE* outTex, 
+                                            const char* stringToPrint,
+                                            LatexReplacementArrType* arr)
+{ 
     assert(prevToken);
     assert(newToken);
 
     if (outTex)
     {
-        ExpressionTokenPrintTexWithTrollString(prevToken, outTex, stringToPrint);
-        ExpressionTokenPrintTexWithTrollString(newToken, outTex);
+        ExpressionTokenPrintTexWithTrollString(prevToken, outTex, stringToPrint, arr);
+        ExpressionTokenPrintTexWithTrollString(newToken,  outTex,       nullptr, arr);
     }
 }
 
 static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType* token, 
                                                             int* simplifiesCount,
-                                                            FILE* outTex)
+                                                            FILE* outTex,
+                                                            LatexReplacementArrType* arr)
 {
     if (token == nullptr || !IS_OP(token))
         return token;
     
     ExpressionTokenType* left  = ExpressionSimplifyNeutralTokens(L(token), simplifiesCount,
-                                                                 outTex);
+                                                                 outTex, arr);
     ExpressionTokenType* right = ExpressionSimplifyNeutralTokens(R(token), simplifiesCount,
-                                                                 outTex);
+                                                                 outTex, arr);
     
     if (L(token) != left)
     {
@@ -405,7 +436,7 @@ static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType*
     assert(IS_OP(token));
 
     if (IS_VAR(right) && IS_VAR(left) && VAR(left) == VAR(right))
-        return ExpressionSimplifyReturnConstToken(token, 0, outTex);
+        return ExpressionSimplifyReturnConstToken(token, 0, outTex, arr);
 
     if (!IS_VAL(left) && !IS_VAL(right))
         return token;
@@ -415,18 +446,18 @@ static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType*
     switch (OP(token))
     {
         case ExpressionOperationId::ADD:
-            return ExpressionSimplifyAdd(token, simplifiesCount, outTex);
+            return ExpressionSimplifyAdd(token, simplifiesCount, outTex, arr);
         case ExpressionOperationId::SUB:
-            return ExpressionSimplifySub(token, simplifiesCount, outTex);
+            return ExpressionSimplifySub(token, simplifiesCount, outTex, arr);
         case ExpressionOperationId::MUL:
-            return ExpressionSimplifyMul(token, simplifiesCount, outTex);
+            return ExpressionSimplifyMul(token, simplifiesCount, outTex, arr);
         case ExpressionOperationId::DIV:
-            return ExpressionSimplifyDiv(token, simplifiesCount, outTex);
+            return ExpressionSimplifyDiv(token, simplifiesCount, outTex, arr);
         
         case ExpressionOperationId::POW:
-            return ExpressionSimplifyPow(token, simplifiesCount, outTex);
+            return ExpressionSimplifyPow(token, simplifiesCount, outTex, arr);
         case ExpressionOperationId::LOG:
-            return ExpressionSimplifyLog(token, simplifiesCount, outTex);
+            return ExpressionSimplifyLog(token, simplifiesCount, outTex, arr);
         
         default:
             break;
@@ -449,20 +480,21 @@ do                              \
 
 static inline ExpressionTokenType* ExpressionSimplifyAdd(ExpressionTokenType* token,   
                                                          int* simplifiesCount,
-                                                         FILE* outTex)
+                                                         FILE* outTex,
+                                                         LatexReplacementArrType* arr)
 {
     CHECK();
 
     if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 0))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnLeftToken(token, outTex);
+        return ExpressionSimplifyReturnLeftToken(token, outTex, arr);
     }
 
     if (L_IS_VAL(token) && DoubleEqual(L_VAL(token), 0))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnRightToken(token, outTex);
+        return ExpressionSimplifyReturnRightToken(token, outTex, arr);
     }
 
     return token;
@@ -470,14 +502,15 @@ static inline ExpressionTokenType* ExpressionSimplifyAdd(ExpressionTokenType* to
 
 static inline ExpressionTokenType* ExpressionSimplifySub(ExpressionTokenType* token,   
                                                           int* simplifiesCount,
-                                                         FILE* outTex)
+                                                         FILE* outTex,
+                                                          LatexReplacementArrType* arr)
 {
     CHECK();
 
     if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 0))
     {    
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnLeftToken(token, outTex);
+        return ExpressionSimplifyReturnLeftToken(token, outTex, arr);
     }
 
     if (L_IS_VAL(token) && DoubleEqual(L_VAL(token), 0))
@@ -498,32 +531,33 @@ static inline ExpressionTokenType* ExpressionSimplifySub(ExpressionTokenType* to
 
 static inline ExpressionTokenType* ExpressionSimplifyMul(ExpressionTokenType* token,   
                                                           int* simplifiesCount,
-                                                         FILE* outTex)
+                                                          FILE* outTex,
+                                                          LatexReplacementArrType* arr)
 {
     CHECK();
 
     if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 0))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnConstToken(token, 0, outTex);
+        return ExpressionSimplifyReturnConstToken(token, 0, outTex, arr);
     }
 
     if (L_IS_VAL(token) && DoubleEqual(L_VAL(token), 0))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnConstToken(token, 0, outTex);
+        return ExpressionSimplifyReturnConstToken(token, 0, outTex, arr);
     }
 
     if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 1))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnLeftToken(token, outTex);
+        return ExpressionSimplifyReturnLeftToken(token, outTex, arr);
     }
 
     if (L_IS_VAL(token) && DoubleEqual(L_VAL(token), 1))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnRightToken(token, outTex);
+        return ExpressionSimplifyReturnRightToken(token, outTex, arr);
     }
 
     return token;
@@ -531,20 +565,21 @@ static inline ExpressionTokenType* ExpressionSimplifyMul(ExpressionTokenType* to
 
 static inline ExpressionTokenType* ExpressionSimplifyDiv(ExpressionTokenType* token,   
                                                          int* simplifiesCount,
-                                                         FILE* outTex)
+                                                         FILE* outTex,
+                                                          LatexReplacementArrType* arr)
 {
     CHECK();
 
     if (L_IS_VAL(token) && DoubleEqual(L_VAL(token), 0))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnConstToken(token, 0, outTex);
+        return ExpressionSimplifyReturnConstToken(token, 0, outTex, arr);
     }
 
     if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 1))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnLeftToken(token, outTex);
+        return ExpressionSimplifyReturnLeftToken(token, outTex, arr);
     }
 
     return token;
@@ -552,32 +587,33 @@ static inline ExpressionTokenType* ExpressionSimplifyDiv(ExpressionTokenType* to
 
 static inline ExpressionTokenType* ExpressionSimplifyPow(ExpressionTokenType* token,   
                                                           int* simplifiesCount,
-                                                         FILE* outTex)
+                                                         FILE* outTex,
+                                                          LatexReplacementArrType* arr)
 {
     CHECK();
 
     if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 0))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnConstToken(token, 1, outTex);
+        return ExpressionSimplifyReturnConstToken(token, 1, outTex, arr);
     }
 
     if (L_IS_VAL(token) && DoubleEqual(L_VAL(token), 0))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnConstToken(token, 0, outTex);
+        return ExpressionSimplifyReturnConstToken(token, 0, outTex, arr);
     }
 
     if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 1))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnLeftToken(token, outTex);
+        return ExpressionSimplifyReturnLeftToken(token, outTex, arr);
     }
 
     if (L_IS_VAL(token) && DoubleEqual(L_VAL(token), 1))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnConstToken(token, 1, outTex);
+        return ExpressionSimplifyReturnConstToken(token, 1, outTex, arr);
     }
 
     return token;
@@ -585,14 +621,15 @@ static inline ExpressionTokenType* ExpressionSimplifyPow(ExpressionTokenType* to
 
 static inline ExpressionTokenType* ExpressionSimplifyLog(ExpressionTokenType* token,   
                                                           int* simplifiesCount,
-                                                         FILE* outTex)
+                                                         FILE* outTex,
+                                                          LatexReplacementArrType* arr)
 {
     CHECK();
 
     if (R_IS_VAL(token) && DoubleEqual(R_VAL(token), 1))
     {
         (*simplifiesCount)++;
-        return ExpressionSimplifyReturnConstToken(token, 0, outTex);
+        return ExpressionSimplifyReturnConstToken(token, 0, outTex, arr);
     }
 
     return token;
@@ -602,11 +639,13 @@ static inline ExpressionTokenType* ExpressionSimplifyLog(ExpressionTokenType* to
 //---------------------------------------------------------------------------------------
 
 static inline ExpressionTokenType* ExpressionSimplifyReturnLeftToken(ExpressionTokenType* token,
-                                                                     FILE* outTex)
+                                                                     FILE* outTex,
+                                                                    LatexReplacementArrType* arr)
 {
     assert(token);
 
-    TokenPrintDifferenceToTex(token, L(token), outTex, "Slozhno ne ponyat, chto delat s etim:");
+    TokenPrintDifferenceToTex(token, L(token), outTex, 
+                                    "Slozhno ne ponyat, chto delat s etim:", arr);
 
     ExpressionTokenDtor(token->right);
 
@@ -620,12 +659,13 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnLeftToken(ExpressionT
 
 static inline ExpressionTokenType* ExpressionSimplifyReturnRightToken(
                                                                 ExpressionTokenType* token,
-                                                                FILE* outTex)
+                                                                FILE* outTex,
+                                                                LatexReplacementArrType* arr)
 {
     assert(token);
 
     TokenPrintDifferenceToTex(token, R(token), outTex, 
-                        "Avtor ne smog perevesti na english(");
+                        "Avtor ne smog perevesti na english(", arr);
 
     ExpressionTokenDtor(token->left);
 
@@ -640,14 +680,15 @@ static inline ExpressionTokenType* ExpressionSimplifyReturnRightToken(
 static inline ExpressionTokenType* ExpressionSimplifyReturnConstToken(
                                                                 ExpressionTokenType* token,
                                                                 double value,
-                                                                FILE* outTex)
+                                                                FILE* outTex,
+                                                                LatexReplacementArrType* arr)
 {
     ExpressionTokenType* constToken = CRT_NUM(value);
     
     TokenPrintDifferenceToTex(token, constToken, outTex,
                         "Let's use the theorem ..."
                         "(The author doesn't know how this theorem is called in English, "
-                        "you are left to guess for yourself)");
+                        "you are left to guess for yourself)", arr);
     
     ExpressionTokenDtor(R(token));
     ExpressionTokenDtor(L(token));
