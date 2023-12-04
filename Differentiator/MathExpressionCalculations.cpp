@@ -441,7 +441,7 @@ static ExpressionTokenType* ExpressionSimplifyNeutralTokens(ExpressionTokenType*
     if (!IS_VAL(left) && !IS_VAL(right))
         return token;
 
-    assert(L(token)  == left);
+    assert(L(token) == left);
     assert(R(token) == right);
     switch (OP(token))
     {

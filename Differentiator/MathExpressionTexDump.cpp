@@ -19,7 +19,8 @@ static size_t ExpressionLatexGetLen(ExpressionOperationId operation, const size_
                                                                      const size_t rightSz);
 
 static bool HaveToPutBrackets(const ExpressionTokenType* parent, 
-                              const ExpressionTokenType* son);
+                              const ExpressionTokenType* son,
+                              const LatexReplacementArrType* arr);
 
 static void ExpressionTokenPrintValue   (const ExpressionTokenType* token, 
                                          FILE* outStream);
@@ -127,7 +128,7 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
     if (isPrefixOperation) fprintf(outStream, "%s ", 
                                     ExpressionOperationGetTexName(token->value.operation));
 
-    bool needLeftBrackets  = HaveToPutBrackets(token, token->left);
+    bool needLeftBrackets  = HaveToPutBrackets(token, token->left, replacementArr);
     bool needTexLeftBraces = ExpressionOperationNeedTexLeftBraces(token->value.operation);
 
     if (needTexLeftBraces)                      fprintf(outStream, "{");
@@ -145,7 +146,7 @@ ExpressionErrors ExpressionTokenPrintTex(const ExpressionTokenType* token,
         return err;
 
     bool needTexRightBraces = ExpressionOperationNeedTexRightBraces(token->value.operation);
-    bool needRightBrackets  = HaveToPutBrackets(token, token->right);
+    bool needRightBrackets  = HaveToPutBrackets(token, token->right, replacementArr);
     
     if (needTexRightBraces)                       fprintf(outStream, "{");
     if (!needTexRightBraces && needRightBrackets) fprintf(outStream, "(");
@@ -242,13 +243,17 @@ static void ExpressionTokenPrintValue(const ExpressionTokenType* token, FILE* ou
 }
 
 static bool HaveToPutBrackets(const ExpressionTokenType* parent, 
-                              const ExpressionTokenType* son)
+                              const ExpressionTokenType* son,
+                              const LatexReplacementArrType* arr)
 {
     assert(parent);
 
     assert(parent->valueType == ExpressionTokenValueTypeof::OPERATION);
 
     if (son->valueType != ExpressionTokenValueTypeof::OPERATION)
+        return false;
+
+    if (ExpressionLatexFindReplacement(arr, son) != nullptr)
         return false;
 
     ExpressionOperationId parentOperation = parent->value.operation;

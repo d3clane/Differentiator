@@ -153,18 +153,18 @@ int main(const int argc, const char* argv[])
     LaTexInsertImg(imgFuncAndMacloren1SmallRange, outputTex, 
                         "Comparing func graph and macloren's series o(x) graph, small range:\n");
     LaTexInsertImg(imgFuncAndMacloren3SmallRange, outputTex, 
-                        "Comparing func graph and macloren's series o(x**3) graph, small range:\n");
+                        "Comparing func graph and macloren's series o($x^3$) graph, small range:\n");
     LaTexInsertImg(imgFuncAndMacloren5SmallRange, outputTex, 
-                        "Comparing func graph and macloren's series o(x**5) graph, small range:\n");
+                        "Comparing func graph and macloren's series o($x^5$) graph, small range:\n");
     LaTexInsertImg(imgFuncAndMaclorenSmallRange, outputTex, 
                         "Comparing func graph and macloren's series graph, small range:\n");
 
     LaTexInsertImg(imgFuncAndMacloren1LargeRange, outputTex, 
                         "Comparing func graph and macloren's series o(x) graph, large range:\n");
     LaTexInsertImg(imgFuncAndMacloren3LargeRange, outputTex, 
-                        "Comparing func graph and macloren's series o(x**3) graph, large range:\n");
+                        "Comparing func graph and macloren's series o($x^3$) graph, large range:\n");
     LaTexInsertImg(imgFuncAndMacloren5LargeRange, outputTex, 
-                        "Comparing func graph and macloren's series o(x**5) graph, large range:\n");
+                        "Comparing func graph and macloren's series o($x^5$) graph, large range:\n");
     LaTexInsertImg(imgFuncAndMaclorenLargeRange, outputTex, 
                             "Comparing func graph and macloren's series graph, big range:\n");
 

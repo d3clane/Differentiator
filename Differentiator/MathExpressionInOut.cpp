@@ -26,7 +26,7 @@ static ExpressionTokenType* ExpressionReadPrefixFormat(
                                                 const char** stringEndPtr,
                                                 ExpressionVariablesArrayType* varsArr);
 
-static ExpressionTokenType* ExpressionReadInfixFormat(
+static ExpressionTokenType* ExpressionReadEquationFormat(
                                                 const char* const string, 
                                                 const char** stringEndPtr,
                                                 ExpressionVariablesArrayType* varsArr);
@@ -270,7 +270,7 @@ static ExpressionTokenType* ExpressionReadPrefixFormat(
 
 //---------------------------------------------------------------------------------------
 
-ExpressionErrors ExpressionReadInfixFormat (ExpressionType* expression, FILE* inStream)
+ExpressionErrors ExpressionReadEquationFormat (ExpressionType* expression, FILE* inStream)
 {
     assert(expression);
     assert(inStream);
@@ -282,7 +282,7 @@ ExpressionErrors ExpressionReadInfixFormat (ExpressionType* expression, FILE* in
     
     const char* inputExpressionEndPtr = inputExpression;
 
-    expression->root = ExpressionReadInfixFormat(inputExpression, 
+    expression->root = ExpressionReadEquationFormat(inputExpression, 
                                                      &inputExpressionEndPtr, 
                                                      &expression->variables);
 
@@ -293,7 +293,7 @@ ExpressionErrors ExpressionReadInfixFormat (ExpressionType* expression, FILE* in
 
 //---------------------------------------------------------------------------------------
 
-static ExpressionTokenType* ExpressionReadInfixFormat(
+static ExpressionTokenType* ExpressionReadEquationFormat(
                                             const char* const string, 
                                             const char** stringEndPtr,
                                             ExpressionVariablesArrayType* varsArr)
@@ -321,11 +321,11 @@ static ExpressionTokenType* ExpressionReadInfixFormat(
         return token;
     }
 
-    ExpressionTokenType* left  = ExpressionReadInfixFormat(stringPtr, &stringPtr, varsArr);
+    ExpressionTokenType* left  = ExpressionReadEquationFormat(stringPtr, &stringPtr, varsArr);
 
     stringPtr = ExpressionReadTokenValue(&value, &valueType, varsArr, stringPtr);
     ExpressionTokenType* token = ExpressionTokenCreate(value, valueType);
-    ExpressionTokenType* right = ExpressionReadInfixFormat(stringPtr, &stringPtr, varsArr);
+    ExpressionTokenType* right = ExpressionReadEquationFormat(stringPtr, &stringPtr, varsArr);
 
     ExpressionTokenSetEdges(token, left, right);
 

@@ -5,15 +5,14 @@
 
 #include "MathExpressionsMain.h"
 
-ExpressionErrors ExpressionPrintPrefixFormat     (const ExpressionType* expression, 
-                                                          FILE* outStream = stdout);
-ExpressionErrors ExpressionPrintEquationFormat   (const ExpressionType* expression, 
-                                                          FILE* outStream = stdout);
+ExpressionErrors ExpressionPrintPrefixFormat  (const ExpressionType* expression, 
+                                                        FILE* outStream = stdout);
+ExpressionErrors ExpressionPrintEquationFormat(const ExpressionType* expression, 
+                                                        FILE* outStream = stdout);
 
-ExpressionErrors ExpressionReadPrefixFormat(ExpressionType* expression, 
-                                            FILE* inStream = stdin);
-ExpressionErrors ExpressionReadInfixFormat (ExpressionType* expression, 
-                                            FILE* inStream = stdin);
+ExpressionErrors ExpressionReadPrefixFormat  (ExpressionType* expression, FILE* inStream = stdin);
+ExpressionErrors ExpressionReadEquationFormat(ExpressionType* expression, FILE* inStream = stdin);
+
 ExpressionErrors ExpressionReadVariables(ExpressionType* expression);
 
 #endif 
