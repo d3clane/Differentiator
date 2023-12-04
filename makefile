@@ -23,13 +23,14 @@ DOXYFILE = Others/Doxyfile
 
 HEADERS  = Differentiator/MathExpressionsMain.h 	Differentiator/MathExpressionCalculations.h	\
 		   Differentiator/MathExpressionInOut.h Differentiator/MathExpressionGnuPlot.h \
-		   Differentiator/MathExpressionTexDump.h 											\
+		   Differentiator/MathExpressionTexDump.h	Differentiator/DSL.h 				\
 		   Common/Log.h Common/Errors.h Common/Colors.h Common/StringFuncs.h Common/DoubleFuncs.h 	\
 		   FastInput/InputOutput.h 	FastInput/StringFuncs.h
 
 FILESCPP = Differentiator/MathExpressionsMain.cpp 	Differentiator/main.cpp \
 		   Differentiator/MathExpressionCalculations.cpp Differentiator/MathExpressionInOut.cpp \
-		   Differentiator/MathExpressionGnuPlot.cpp  Differentiator/MathExpressionTexDump.cpp \
+		   Differentiator/MathExpressionGnuPlot.cpp  Differentiator/MathExpressionTexDump.cpp 	\
+		   Differentiator/DSL.cpp \
 		   Common/Log.cpp Common/Errors.cpp Common/StringFuncs.cpp Common/DoubleFuncs.cpp 	\
 		   FastInput/InputOutput.cpp	FastInput/StringFuncs.cpp
 

@@ -6,6 +6,8 @@
 #include "Common/DoubleFuncs.h"
 #include "MathExpressionTexDump.h"
 
+#include "DSL.h"
+
 //---------------Calculation-------------------
 
 static double ExpressionCalculate(const ExpressionTokenType* token);
@@ -17,53 +19,6 @@ static double CalculateUsingOperation(const ExpressionOperationId operation,
 //--------------------DSL-----------------------------
 
 #define D(TOKEN) ExpressionDifferentiate(TOKEN, outTex, arr)
-#define C(TOKEN) ExpressionTokenCopy(TOKEN)    
-
-#define  OP_TYPE_CNST ExpressionTokenValueTypeof::OPERATION
-#define VAR_TYPE_CNST ExpressionTokenValueTypeof::VARIABLE
-#define VAL_TYPE_CNST ExpressionTokenValueTypeof::VALUE
-#define TOKEN_OP(token) token->value.operation
-
-#define VAL_TYPE(token) token->valueType
-#define VAL(token)      token->value.value
-#define VAR(token)      token->value.varPtr
-#define  OP(token)      token->value.operation
-#define   L(token)      token->left
-#define   R(token)      token->right
-
-#define L_VAL(token) token->left->value.value
-#define R_VAL(token) token->right->value.value
-#define L_VAR(token) token->left->value.varPtr
-#define R_VAR(token) token->right->value.varPtr
-#define  L_OP(token) token->left->value.operation
-#define  R_OP(token) token->right->value.operation
-
-#define   IS_VAL(token) (token->valueType        == VAL_TYPE_CNST)
-#define L_IS_VAL(token) (token->left->valueType  == VAL_TYPE_CNST)
-#define R_IS_VAL(token) (token->right->valueType == VAL_TYPE_CNST)
-#define   IS_VAR(token) (token->valueType        == VAR_TYPE_CNST)
-#define L_IS_VAR(token) (token->left->valueType  == VAR_TYPE_CNST)
-#define R_IS_VAR(token) (token->right->valueType == VAR_TYPE_CNST)
-#define    IS_OP(token) (token->valueType        ==  OP_TYPE_CNST)
-#define  L_IS_OP(token) (token->left->valueType  ==  OP_TYPE_CNST)
-#define  R_IS_OP(token) (token->right->valueType ==  OP_TYPE_CNST)
-
-#define CRT_NUM(VALUE)    ExpressionNumericTokenCreate(VALUE)
-#define CRT_VAR(VARS_ARR, VAR_NAME) ExpressionVariableTokenCreate(VARS_ARR, VAR_NAME)
-
-#define GENERATE_OPERATION_CMD(NAME, ...)                                                       \
-    static inline ExpressionTokenType* _##NAME(ExpressionTokenType* left,                       \
-                                               ExpressionTokenType* right = nullptr)            \
-    {                                                                                           \
-        return ExpressionTokenCreate(ExpressionTokenValueСreate(ExpressionOperationId::NAME),   \
-                                   ExpressionTokenValueTypeof::OPERATION,                       \
-                                   left, right);                                                \
-    }
-
-//GENERATING DSL _ADD, _MUL, _SUB, ...
-#include "Operations.h"
-
-#undef GENERATE_OPERATION_CMD
 
 //-------------------Differentiate---------------
 
@@ -199,7 +154,7 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
     if (outTex)
         ExpressionPrintTex(expression, outTex, 
             "According to the legend, the ancient Ruses were able to defeat the Raptors "
-            "by taking this derivative:", &replacementsArr);
+            "by taking this derivative \\cite{Ruses}:", &replacementsArr);
 
     ExpressionTokenType* diffRootToken = ExpressionDifferentiate(expression->root, 
                                                                  outTex, &replacementsArr);
@@ -212,7 +167,7 @@ ExpressionType ExpressionDifferentiate(const ExpressionType* expression,
 
     if (outTex)
     {
-        ExpressionPrintTex(&diffExpression, outTex, "The ancient Ruses got this result\n",
+        ExpressionPrintTex(&diffExpression, outTex, "The ancient Ruses got this result \\cite{Ruses} \n",
                                                     &replacementsArr);
 
         fprintf(outTex, "No one gives a **** what's going on here, "
