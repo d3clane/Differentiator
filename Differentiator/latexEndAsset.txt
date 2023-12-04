@@ -1,0 +1,9 @@
+
+\begin{thebibliography}{}
+\bibitem{Arithmetica} Margin of a copy of Arithmetica --- Diophantus of Alexandria, Pierre de Fermat
+\bibitem{Universe} Kak upravlat Vselennoi, ne privlekaya vnimaniya sanitarov --- Artem Bester
+\bibitem{Ruses} History of ancient Ruses - professor Bagirov
+
+\end{thebibliography}
+
+\end{document}

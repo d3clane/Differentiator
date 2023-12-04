@@ -1,0 +1,12 @@
+(add (pow (div (cos (x nil nil )nil )(pow (add (x nil nil )(1 nil nil ))(2 nil nil )))(sin (x nil nil )nil ))(div (x nil nil )(2 nil nil )))
+(pow (2 nil nil )(sin (x nil nil )nil ))
+(cos (x nil nil )nil )
+(tan (x nil nil ))
+(mul (2 nil nil )(x nil nil ))
+(mul (div (cot (ln (add (pow (x nil nil )(2 nil nil ))(3 nil nil ))nil )nil )(arctan (div (x nil nil )(100 nil nil ))nil )) (pow (add (pow (x nil nil )(2 nil nil ))(sin (x nil nil )nil ))(sub (div (1 nil nil )(cos (add (x nil nil )(2 nil nil ))nil ))(arcsin (div (x nil nil )(10 nil nil ))nil ))))
+(mul (sub (div (300 nil nil )(div (sub (x nil nil )(2 nil nil )) (arcsin (add (x nil nil )(4 nil nil )) nil )))(div (x nil nil )(10 nil nil )))(cot (mul (10 nil nil )(3 nil nil )) nil ))
+(mul (2 nil nil )(x nil nil ))
+(sin (x nil nil )nil )
+(arcsin (x nil nil )nil )
+
+add((pow (sin ((add (mul (15 nil nil )(x nil nil )) (6 nil nil ))nil )(3 nil nil )))(cos sub((pow (x nil nil )(3 nil nil ))(9 nil nil ))nil ))

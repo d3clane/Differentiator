@@ -1,0 +1,5 @@
+\selectlanguage *{english}
+\contentsline {section}{\numberline {I}Derivative}{2}{section.0.1}%
+\contentsline {section}{\numberline {II}Tangent}{7}{section.0.2}%
+\contentsline {section}{\numberline {III}Macloren}{7}{section.0.3}%
+\contentsline {section}{\numberline {IV}Graphs}{8}{section.0.4}%
