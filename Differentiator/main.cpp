@@ -20,9 +20,8 @@ int main(const int argc, const char* argv[])
     setbuf(stdout, nullptr);
     
     ExpressionType expr = {};
-    ExpressionRead("sin(x^2) + 2*x    - (3^(2 + 3*x)^21^(x+2))^2*16");
-
-    /*
+    ExpressionParse("sin(x^2) + 2*x    - (3^(2 + 3*x)^21^(x+2))^2*16");
+    
     ExpressionErrors err = ExpressionErrors::NO_ERR;
 
     ExpressionType  expression = {};
@@ -187,5 +186,4 @@ int main(const int argc, const char* argv[])
     free(imgFuncAndMaclorenSmallRange);
     free(imgFuncAndMaclorenLargeRange);
     free(imgFuncAndMaclorenDifference);
-    */
 }

@@ -196,7 +196,7 @@ static size_t ParseChar(const char* str, const size_t posStart, const size_t lin
     return posStart + 1;
 }
 
-ExpressionType ExpressionRead(const char* str)
+ExpressionType ExpressionParse(const char* str)
 {
     assert(str);
 

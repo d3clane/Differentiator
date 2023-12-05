@@ -32,6 +32,6 @@ TokenType TokenCreate(TokenValue value, TokenValueType valueType,   const size_t
 TokenValue TokenValueCreate(const char* word);
 TokenValue TokenValueCreate(double value);
 
-ExpressionType ExpressionRead(const char* str);
+ExpressionType ExpressionParse(const char* str);
 
 #endif
