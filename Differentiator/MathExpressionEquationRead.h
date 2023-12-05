@@ -1,6 +1,8 @@
 #ifndef MATH_EXPRESSION_EQUATION_READ
 #define MATH_EXPRESSION_EQUATION_READ
 
+#include "MathExpressionsMain.h"
+
 union TokenValue
 {
     char* word;
@@ -30,6 +32,6 @@ TokenType TokenCreate(TokenValue value, TokenValueType valueType,   const size_t
 TokenValue TokenValueCreate(const char* word);
 TokenValue TokenValueCreate(double value);
 
-ExpressionErrors ParseOnTokens(const char* str);
+ExpressionType ExpressionRead(const char* str);
 
 #endif

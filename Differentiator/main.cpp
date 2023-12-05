@@ -19,7 +19,8 @@ int main(const int argc, const char* argv[])
 
     setbuf(stdout, nullptr);
     
-    ParseOnTokens("sin(5)+2-3^(2+7)*cos(x + y)");
+    ExpressionType expr = {};
+    ExpressionRead("sin(x^2) + 2*x    - (3^(2 + 3*x)^21^(x+2))^2*16");
 
     /*
     ExpressionErrors err = ExpressionErrors::NO_ERR;
