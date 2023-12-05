@@ -131,6 +131,9 @@ void ExpressionTokenSetEdges(ExpressionTokenType* token, ExpressionTokenType* le
 ExpressionType       ExpressionCopy(const ExpressionType* expression);
 ExpressionTokenType* ExpressionTokenCopy(const ExpressionTokenType* token);
 
+ExpressionErrors ExpressionVariableArrayCtor(ExpressionVariablesArrayType* arr);
+ExpressionErrors ExpressionVariableArrayDtor(ExpressionVariablesArrayType* arr);
+
 ExpressionVariableType* ExpressionVariableSet(ExpressionType* expression, 
                                               const char*  variableName, 
                                               const double variableValue = 0);

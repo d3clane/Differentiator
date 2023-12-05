@@ -25,7 +25,8 @@
         "functional": "cpp",
         "utility": "cpp",
         "format": "cpp",
-        "__config": "cpp"
+        "__config": "cpp",
+        "__split_buffer": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

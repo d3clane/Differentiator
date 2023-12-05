@@ -5,6 +5,7 @@
 #include "MathExpressionCalculations.h"
 #include "MathExpressionGnuPlot.h"
 #include "MathExpressionTexDump.h"
+#include "MathExpressionEquationRead.h"
 
 #include "Common/Log.h"
 
@@ -16,11 +17,16 @@ int main(const int argc, const char* argv[])
 {
     LogOpen(argv[0]);
 
+    setbuf(stdout, nullptr);
+    
+    ParseOnTokens("sin(5)+2-3^(2+7)*cos(x + y)");
+
+    /*
     ExpressionErrors err = ExpressionErrors::NO_ERR;
 
     ExpressionType  expression = {};
     err = ExpressionCtor(&expression);
-
+    
     IF_ERR_RETURN(err);
 
     static const char* outputTexFileName = "PHD.tex";
@@ -180,4 +186,5 @@ int main(const int argc, const char* argv[])
     free(imgFuncAndMaclorenSmallRange);
     free(imgFuncAndMaclorenLargeRange);
     free(imgFuncAndMaclorenDifference);
+    */
 }

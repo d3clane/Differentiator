@@ -37,19 +37,30 @@ do                                                          \
 
 //---------------------------------------------------------------------------------------
 
+//TODO: докинуть возможность ввода capacity
 ExpressionErrors ExpressionCtor(ExpressionType* expression)
 {
     assert(expression);
 
     expression->root = nullptr;
 
-    expression->variables.capacity = 100;
-    expression->variables.size     =   0;
-    expression->variables.data     = (ExpressionVariableType*)
-                                        calloc(expression->variables.capacity, 
-                                               sizeof(*(expression->variables.data)));
+    ExpressionVariableArrayCtor(&expression->variables);
     
     EXPRESSION_CHECK(expression);
+
+    return ExpressionErrors::NO_ERR;
+}
+
+ExpressionErrors ExpressionVariableArrayCtor(ExpressionVariablesArrayType* arr)
+{
+    assert(arr);
+
+    arr->capacity = 100;
+    arr->size     = 0;
+    arr->data     = (ExpressionVariableType*) calloc(arr->capacity, sizeof(*(arr->data)));
+
+    if (arr->data == nullptr)
+        return ExpressionErrors::MEM_ERR;
 
     return ExpressionErrors::NO_ERR;
 }
@@ -63,17 +74,23 @@ ExpressionErrors ExpressionDtor(ExpressionType* expression)
     ExpressionDtor(expression->root);
     expression->root = nullptr;
 
-    for (size_t i = 0; i < expression->variables.capacity; ++i)
+    ExpressionVariableArrayDtor(&expression->variables);
+
+    return ExpressionErrors::NO_ERR;
+}
+
+ExpressionErrors ExpressionVariableArrayDtor(ExpressionVariablesArrayType* arr)
+{
+    for (size_t i = 0; i < arr->capacity; ++i)
     {
-        if (expression->variables.data->variableName)
-            ExpressionVariableValuesDtor(expression->variables.data + i);
+        if (arr->data->variableName)
+            ExpressionVariableValuesDtor(arr->data + i);
     }
 
-    free(expression->variables.data);
-    expression->variables.data     = nullptr;
-    expression->variables.size     = 0;
-    expression->variables.capacity = 0;
-
+    free(arr->data);
+    arr->data     = nullptr;
+    arr->size     = 0;
+    arr->capacity = 0;
 
     return ExpressionErrors::NO_ERR;
 }
