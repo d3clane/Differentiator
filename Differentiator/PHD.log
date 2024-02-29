@@ -1,4 +1,4 @@
-This is LuaHBTeX, Version 1.16.0 (TeX Live 2023)  (format=lualatex 2023.11.30)  4 DEC 2023 14:28
+This is LuaHBTeX, Version 1.16.0 (TeX Live 2023)  (format=lualatex 2023.11.30)  6 DEC 2023 23:23
  restricted system commands enabled.
 **PHD.tex
 (./PHD.tex
@@ -1311,90 +1311,90 @@ Underfull \hbox (badness 10000) in paragraph at lines 115--116
  []
 
 [2] [3] [4] [5] [6]
-<Graphs/graph_1337_time_14:28:22.png, id=136, 602.25pt x 451.6875pt>
-File: Graphs/graph_1337_time_14:28:22.png Graphic file (type png)
-<use Graphs/graph_1337_time_14:28:22.png>
-Package luatex.def Info: Graphs/graph_1337_time_14:28:22.png  used on input lin
+<Graphs/graph_1337_time_23:15:50.png, id=136, 602.25pt x 451.6875pt>
+File: Graphs/graph_1337_time_23:15:50.png Graphic file (type png)
+<use Graphs/graph_1337_time_23:15:50.png>
+Package luatex.def Info: Graphs/graph_1337_time_23:15:50.png  used on input lin
 e 364.
 (luatex.def)             Requested size: 361.35278pt x 271.01459pt.
  [7]
-<Graphs/graph_1338_time_14:28:22.png, id=148, 602.25pt x 451.6875pt>
-File: Graphs/graph_1338_time_14:28:22.png Graphic file (type png)
-<use Graphs/graph_1338_time_14:28:22.png>
-Package luatex.def Info: Graphs/graph_1338_time_14:28:22.png  used on input lin
+<Graphs/graph_1338_time_23:15:50.png, id=148, 602.25pt x 451.6875pt>
+File: Graphs/graph_1338_time_23:15:50.png Graphic file (type png)
+<use Graphs/graph_1338_time_23:15:50.png>
+Package luatex.def Info: Graphs/graph_1338_time_23:15:50.png  used on input lin
 e 370.
 (luatex.def)             Requested size: 361.35278pt x 271.01459pt.
- [8<./Graphs/graph_1337_time_14:28:22.png>]
-<Graphs/graph_1339_time_14:28:22.png, id=155, 602.25pt x 451.6875pt>
-File: Graphs/graph_1339_time_14:28:22.png Graphic file (type png)
-<use Graphs/graph_1339_time_14:28:22.png>
-Package luatex.def Info: Graphs/graph_1339_time_14:28:22.png  used on input lin
+ [8<./Graphs/graph_1337_time_23:15:50.png>]
+<Graphs/graph_1339_time_23:15:50.png, id=155, 602.25pt x 451.6875pt>
+File: Graphs/graph_1339_time_23:15:50.png Graphic file (type png)
+<use Graphs/graph_1339_time_23:15:50.png>
+Package luatex.def Info: Graphs/graph_1339_time_23:15:50.png  used on input lin
 e 376.
 (luatex.def)             Requested size: 361.35278pt x 271.01459pt.
-<Graphs/graph_1340_time_14:28:22.png, id=156, 602.25pt x 451.6875pt>
-File: Graphs/graph_1340_time_14:28:22.png Graphic file (type png)
-<use Graphs/graph_1340_time_14:28:22.png>
-Package luatex.def Info: Graphs/graph_1340_time_14:28:22.png  used on input lin
+<Graphs/graph_1340_time_23:15:50.png, id=156, 602.25pt x 451.6875pt>
+File: Graphs/graph_1340_time_23:15:50.png Graphic file (type png)
+<use Graphs/graph_1340_time_23:15:50.png>
+Package luatex.def Info: Graphs/graph_1340_time_23:15:50.png  used on input lin
 e 382.
 (luatex.def)             Requested size: 361.35278pt x 271.01459pt.
- [9<./Graphs/graph_1338_time_14:28:22.png><./Graphs/graph_1339_time_14:28:22.png
+ [9<./Graphs/graph_1338_time_23:15:50.png><./Graphs/graph_1339_time_23:15:50.png
 >]
-<Graphs/graph_1341_time_14:28:22.png, id=165, 602.25pt x 451.6875pt>
-File: Graphs/graph_1341_time_14:28:22.png Graphic file (type png)
-<use Graphs/graph_1341_time_14:28:22.png>
-Package luatex.def Info: Graphs/graph_1341_time_14:28:22.png  used on input lin
+<Graphs/graph_1341_time_23:15:50.png, id=165, 602.25pt x 451.6875pt>
+File: Graphs/graph_1341_time_23:15:50.png Graphic file (type png)
+<use Graphs/graph_1341_time_23:15:50.png>
+Package luatex.def Info: Graphs/graph_1341_time_23:15:50.png  used on input lin
 e 388.
 (luatex.def)             Requested size: 361.35278pt x 271.01459pt.
- [10<./Graphs/graph_1340_time_14:28:22.png>]
-<Graphs/graph_1342_time_14:28:22.png, id=173, 602.25pt x 451.6875pt>
-File: Graphs/graph_1342_time_14:28:22.png Graphic file (type png)
-<use Graphs/graph_1342_time_14:28:22.png>
-Package luatex.def Info: Graphs/graph_1342_time_14:28:22.png  used on input lin
+ [10<./Graphs/graph_1340_time_23:15:50.png>]
+<Graphs/graph_1342_time_23:15:50.png, id=173, 602.25pt x 451.6875pt>
+File: Graphs/graph_1342_time_23:15:50.png Graphic file (type png)
+<use Graphs/graph_1342_time_23:15:50.png>
+Package luatex.def Info: Graphs/graph_1342_time_23:15:50.png  used on input lin
 e 394.
 (luatex.def)             Requested size: 361.35278pt x 271.01459pt.
-<Graphs/graph_1343_time_14:28:22.png, id=174, 602.25pt x 451.6875pt>
-File: Graphs/graph_1343_time_14:28:22.png Graphic file (type png)
-<use Graphs/graph_1343_time_14:28:22.png>
-Package luatex.def Info: Graphs/graph_1343_time_14:28:22.png  used on input lin
+<Graphs/graph_1343_time_23:15:50.png, id=174, 602.25pt x 451.6875pt>
+File: Graphs/graph_1343_time_23:15:50.png Graphic file (type png)
+<use Graphs/graph_1343_time_23:15:50.png>
+Package luatex.def Info: Graphs/graph_1343_time_23:15:50.png  used on input lin
 e 400.
 (luatex.def)             Requested size: 361.35278pt x 271.01459pt.
- [11<./Graphs/graph_1341_time_14:28:22.png><./Graphs/graph_1342_time_14:28:22.pn
+ [11<./Graphs/graph_1341_time_23:15:50.png><./Graphs/graph_1342_time_23:15:50.pn
 g>]
-<Graphs/graph_1344_time_14:28:22.png, id=183, 602.25pt x 451.6875pt>
-File: Graphs/graph_1344_time_14:28:22.png Graphic file (type png)
-<use Graphs/graph_1344_time_14:28:22.png>
-Package luatex.def Info: Graphs/graph_1344_time_14:28:22.png  used on input lin
+<Graphs/graph_1344_time_23:15:50.png, id=183, 602.25pt x 451.6875pt>
+File: Graphs/graph_1344_time_23:15:50.png Graphic file (type png)
+<use Graphs/graph_1344_time_23:15:50.png>
+Package luatex.def Info: Graphs/graph_1344_time_23:15:50.png  used on input lin
 e 406.
 (luatex.def)             Requested size: 361.35278pt x 271.01459pt.
- [12<./Graphs/graph_1343_time_14:28:22.png>]
-<Graphs/graph_1345_time_14:28:22.png, id=190, 602.25pt x 451.6875pt>
-File: Graphs/graph_1345_time_14:28:22.png Graphic file (type png)
-<use Graphs/graph_1345_time_14:28:22.png>
-Package luatex.def Info: Graphs/graph_1345_time_14:28:22.png  used on input lin
+ [12<./Graphs/graph_1343_time_23:15:50.png>]
+<Graphs/graph_1345_time_23:15:50.png, id=190, 602.25pt x 451.6875pt>
+File: Graphs/graph_1345_time_23:15:50.png Graphic file (type png)
+<use Graphs/graph_1345_time_23:15:50.png>
+Package luatex.def Info: Graphs/graph_1345_time_23:15:50.png  used on input lin
 e 412.
 (luatex.def)             Requested size: 361.35278pt x 271.01459pt.
-<Graphs/graph_1346_time_14:28:22.png, id=191, 602.25pt x 451.6875pt>
-File: Graphs/graph_1346_time_14:28:22.png Graphic file (type png)
-<use Graphs/graph_1346_time_14:28:22.png>
-Package luatex.def Info: Graphs/graph_1346_time_14:28:22.png  used on input lin
+<Graphs/graph_1346_time_23:15:50.png, id=191, 602.25pt x 451.6875pt>
+File: Graphs/graph_1346_time_23:15:50.png Graphic file (type png)
+<use Graphs/graph_1346_time_23:15:50.png>
+Package luatex.def Info: Graphs/graph_1346_time_23:15:50.png  used on input lin
 e 418.
 (luatex.def)             Requested size: 361.35278pt x 271.01459pt.
- [13<./Graphs/graph_1344_time_14:28:22.png><./Graphs/graph_1345_time_14:28:22.pn
+ [13<./Graphs/graph_1344_time_23:15:50.png><./Graphs/graph_1345_time_23:15:50.pn
 g>]
-<Graphs/graph_1347_time_14:28:22.png, id=200, 602.25pt x 451.6875pt>
-File: Graphs/graph_1347_time_14:28:22.png Graphic file (type png)
-<use Graphs/graph_1347_time_14:28:22.png>
-Package luatex.def Info: Graphs/graph_1347_time_14:28:22.png  used on input lin
+<Graphs/graph_1347_time_23:15:50.png, id=200, 602.25pt x 451.6875pt>
+File: Graphs/graph_1347_time_23:15:50.png Graphic file (type png)
+<use Graphs/graph_1347_time_23:15:50.png>
+Package luatex.def Info: Graphs/graph_1347_time_23:15:50.png  used on input lin
 e 424.
 (luatex.def)             Requested size: 361.35278pt x 271.01459pt.
- [14<./Graphs/graph_1346_time_14:28:22.png>]
-<Graphs/graph_1348_time_14:28:22.png, id=207, 602.25pt x 451.6875pt>
-File: Graphs/graph_1348_time_14:28:22.png Graphic file (type png)
-<use Graphs/graph_1348_time_14:28:22.png>
-Package luatex.def Info: Graphs/graph_1348_time_14:28:22.png  used on input lin
+ [14<./Graphs/graph_1346_time_23:15:50.png>]
+<Graphs/graph_1348_time_23:15:50.png, id=207, 602.25pt x 451.6875pt>
+File: Graphs/graph_1348_time_23:15:50.png Graphic file (type png)
+<use Graphs/graph_1348_time_23:15:50.png>
+Package luatex.def Info: Graphs/graph_1348_time_23:15:50.png  used on input lin
 e 430.
 (luatex.def)             Requested size: 361.35278pt x 271.01459pt.
- [15<./Graphs/graph_1347_time_14:28:22.png><./Graphs/graph_1348_time_14:28:22.pn
+ [15<./Graphs/graph_1347_time_23:15:50.png><./Graphs/graph_1348_time_23:15:50.pn
 g>]
 The property list \polyglossia@langsetup contains the pairs (without outer
 braces):

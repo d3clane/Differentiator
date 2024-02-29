@@ -26,7 +26,13 @@
         "utility": "cpp",
         "format": "cpp",
         "__config": "cpp",
-        "__split_buffer": "cpp"
+        "__split_buffer": "cpp",
+        "span": "cpp",
+        "string_view": "cpp",
+        "__hash_table": "cpp",
+        "initializer_list": "cpp",
+        "queue": "cpp",
+        "unordered_map": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

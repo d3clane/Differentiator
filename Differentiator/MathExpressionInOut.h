@@ -1,5 +1,5 @@
 #ifndef MATH_EXPRESSION_IN_OUT_H
-#define MATH_EXRPESSION_IN_OUT_H
+#define MATH_EXPRESSION_IN_OUT_H
 
 #include <stdio.h>
 

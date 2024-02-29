@@ -8,7 +8,6 @@
 #include <math.h>
 #include <stdio.h>
 
-#include "Differentiator/MathExpressionsMain.h"
 #include "Differentiator/MathExpressionEquationRead.h"
 
 /// @brief ElemType for stack

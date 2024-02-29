@@ -1,5 +1,5 @@
 #ifndef MATH_EXPRESSION_CALCULATIONS_H
-#define MATH_EXPRESSION_CALCULATINS_h
+#define MATH_EXPRESSION_CALCULATIONS_H
 
 #include "MathExpressionsMain.h"
 

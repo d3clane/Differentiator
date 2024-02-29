@@ -47,7 +47,7 @@ static ExpressionTokenType* GetNum          (DescentStorage* storage);
 static ExpressionTokenType* GetTrig         (DescentStorage* storage);
 static ExpressionTokenType* GetVariable     (DescentStorage* storage);
 
-#define T_CRT_VAL(val)  TokenValueCreate(val);
+#define T_CRT_VAL(val)  TokenValueCreate(val)
 #define  T_OP_TYPE_CNST TokenValueType::OPERATION
 #define T_NUM_TYPE_CNST TokenValueType::VALUE
 #define T_VAR_TYPE_CNST TokenValueType::VARIABLE
@@ -114,6 +114,11 @@ static inline bool T_CMP_WORD(const DescentStorage* storage, const size_t pos, c
     return (strcmp(T_WORD(storage, pos), str) == 0);
 }
 
+static inline bool T_CMP_WORD(const TokensArrType* tokens, const size_t pos, const char* str)
+{
+    return (strcmp(tokens->data[pos].value.word, str) == 0);
+}
+
 static size_t ParseDigit(const char* str, const size_t posStart, const size_t line, 
                                                                 TokensArrType* tokens)
 {
@@ -162,7 +167,7 @@ static size_t ParseWord(const char* str, const size_t posStart, const size_t lin
         if (strcmp(word, SHORT_NAME) == 0)                                              \
         {                                                                               \
             VectorPush(tokens,                                                          \
-                TokenCreate(TokenValueCreate(word), TokenValueType::OPERATION,          \
+                TokenCreate(T_CRT_VAL(word), TokenValueType::OPERATION,                 \
                                                                 line, posStart));       \
             return pos;                                                                 \
         }
@@ -189,6 +194,46 @@ static size_t ParseChar(const char* str, const size_t posStart, const size_t lin
 
     charWord[0] = str[posStart];
     charWord[1] = '\0';
+
+    bool isUnaryOperator = (tokens->size == 0 || 
+                            ((tokens->data[tokens->size - 1].valueType == T_OP_TYPE_CNST) &&
+                             ((T_CMP_WORD(tokens, tokens->size - 1, "+")) ||
+                              (T_CMP_WORD(tokens, tokens->size - 1, "-")) ||
+                              (T_CMP_WORD(tokens, tokens->size - 1, "*")) ||
+                              (T_CMP_WORD(tokens, tokens->size - 1, "/")) ||
+                              (T_CMP_WORD(tokens, tokens->size - 1, "^"))))) &&
+                           (isdigit(str[posStart + 1]) || isalpha(str[posStart + 1]) ||
+                            str[posStart + 1] == '(');
+
+    switch (str[posStart])
+    {
+        //TODO: если в языке у меня будет ++, -- эту часть переделывать
+        case '+':
+        {
+            //if (isUnaryOperator)
+            //    return posStart + 1;
+            
+            break;
+        }
+
+        case '-':
+        {
+            /*if (isUnaryOperator)
+            {
+                VectorPush(tokens, TokenCreate(T_CRT_VAL("("), T_OP_TYPE_CNST, line, posStart));
+                VectorPush(tokens, TokenCreate(T_CRT_VAL(-1), T_NUM_TYPE_CNST, line, posStart));
+                VectorPush(tokens, TokenCreate(T_CRT_VAL("*"), T_OP_TYPE_CNST, line, posStart));
+                VectorPush(tokens, TokenCreate(T_CRT_VAL(")"), T_OP_TYPE_CNST, line, posStart));
+
+                return posStart + 1;
+            }*/
+
+            break;
+        }
+        
+        default:
+            break;
+    }
 
     VectorPush(tokens, TokenCreate(TokenValueCreate(charWord), TokenValueType::OPERATION,
                                                                             line, posStart));
@@ -298,18 +343,18 @@ static ExpressionErrors ParseOnTokens(const char* str, TokensArrType* tokens)
         }
     }
 
-    /*for (size_t i = 0; i < tokens.size; ++i)
+    /*for (size_t i = 0; i < tokens->size; ++i)
     {
-        switch (tokens.data[i].valueType)
+        switch (tokens->data[i].valueType)
         {
             case TokenValueType::OPERATION:
-                printf("Operation - %s\n", tokens.data[i].value.word);
+                printf("Operation - %s\n", tokens->data[i].value.word);
                 break;
             case TokenValueType::VARIABLE:
-                printf("Variable - %s\n", tokens.data[i].value.word);
+                printf("Variable - %s\n", tokens->data[i].value.word);
                 break;
             case TokenValueType::VALUE:
-                printf("Value - %lf\n", tokens.data[i].value.val);
+                printf("Value - %lf\n", tokens->data[i].value.val);
                 break;
             default:
                 abort();

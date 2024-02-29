@@ -19,9 +19,10 @@ int main(const int argc, const char* argv[])
 
     setbuf(stdout, nullptr);
     
-    ExpressionType expr = {};
+    //ExpressionParse("5 - -(2 + 3)^4");
     ExpressionParse("sin(x^2) + 2*x    - (3^(2 + 3*x)^21^(x+2))^2*16");
-    
+    //TODO: парсинг унарного минуса, очень просто за счет рекурсивного спуска просто создавать
+
     ExpressionErrors err = ExpressionErrors::NO_ERR;
 
     ExpressionType  expression = {};

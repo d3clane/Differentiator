@@ -64,6 +64,22 @@ GENERATE_OPERATION_CMD(SUB, INFIX,  INFIX, false, "-", "-",      false, false,
     return leftSz + rightSz + 1;
 })
 
+GENERATE_OPERATION_CMD(UNARY_SUB, PREFIX, PREFIX, true, "-", "-",      false, false,
+{
+    assert(isfinite(val1));
+
+    return -val1;
+},
+{
+    DIFF_CHECK(UNARY_SUB);
+
+    return _UNARY_SUB(D(token->left));
+},
+"-", PREFIX,
+{
+    return leftSz + 1;
+})
+
 GENERATE_OPERATION_CMD(MUL, INFIX,  INFIX, false, "*", "\\cdot", false, false,
 {
     CALC_CHECK();
