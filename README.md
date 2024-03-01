@@ -51,7 +51,7 @@ Recursive descent is creating different nodes and I can use it to differentiate 
 
 Example:
 
-Tree of math expression $ \sin(x^2) + 2 \cdot x - (3^{{2 + 3 \cdot x}^{{21}^{x+2}}})^2 \cdot 16$:
+Tree of math expression $\sin(x^2) + 2 \cdot x - (3^{{2 + 3 \cdot x}^{{21}^{x+2}}})^2 \cdot 16$:
 
 ![math expr tree](https://github.com/d3clane/Differentiator/tree/main/ReadmeAssets/imgs/Tree.png)
 
@@ -70,7 +70,7 @@ As you may already mentioned tree seems to be really bulky and there could be un
 Things that are simplified:
 - Calculating constants which contain only number values. So, any subtree which consists only of constants would be merged in one node.
 
-- Deleting neutral tokens. For example $x * 0 = 0$, $x + 0 = 0$, $x^0 = 1$, $ \log_k(1) = 0$, etc.
+- Deleting neutral tokens. For example $x * 0 = 0$, $x + 0 = 0$, $x^0 = 1$, $\log_k(1) = 0$, etc.
 
 Result after simplifying:
 
