@@ -53,7 +53,7 @@ Example:
 
 Tree of math expression $\sin(x^2) + 2 \cdot x - (3^{{2 + 3 \cdot x}^{{21}^{x+2}}})^2 \cdot 16$:
 
-![math expr tree](https://github.com/d3clane/Differentiator/tree/main/ReadmeAssets/imgs/Tree.png)
+![math expr tree](https://github.com/d3clane/Differentiator/blob/main/ReadmeAssets/imgs/Tree.png)
 
 ## Differentiating the tree
 
@@ -61,7 +61,7 @@ Differentiating is done recursively, algorithm is pretty the same as people do i
 
 Previous tree differentiated:
 
-![math expr tree diff](https://github.com/d3clane/Differentiator/tree/main/ReadmeAssets/imgs/DiffTree.png)
+![math expr tree diff](https://github.com/d3clane/Differentiator/blob/main/ReadmeAssets/imgs/DiffTree.png)
 
 ## Simplifying the tree
 
@@ -74,7 +74,7 @@ Things that are simplified:
 
 Result after simplifying:
 
-![math expr tree simple](https://github.com/d3clane/Differentiator/tree/main/ReadmeAssets/imgs/SimpleTree.png)
+![math expr tree simple](https://github.com/d3clane/Differentiator/blob/main/ReadmeAssets/imgs/SimpleTree.png)
 
 ## Derivative, Maclaurin Series
 
@@ -84,11 +84,11 @@ Calculating derivative and Maclaurin Series are pretty simple as soon I have alr
 
 Program builds tree and I have decided to dump it into gnu plot, call gnu plot to build it and then save. So, the main part - dumping. It's kind of obvious - tree dump in infix order. Gnu plot building result:
 
-![MainGraph](https://github.com/d3clane/Differentiator/tree/main/ReadmeAssets/imgs/MainGraph.png)
+![MainGraph](https://github.com/d3clane/Differentiator/blob/main/ReadmeAssets/imgs/MainGraph.png)
 
-![Tangent](https://github.com/d3clane/Differentiator/tree/main/ReadmeAssets/imgs/Tangent.png)
+![Tangent](https://github.com/d3clane/Differentiator/blob/main/ReadmeAssets/imgs/Tangent.png)
 
-![Maclaurin](https://github.com/d3clane/Differentiator/tree/main/ReadmeAssets/imgs/Maclaurin.png)
+![Maclaurin](https://github.com/d3clane/Differentiator/blob/main/ReadmeAssets/imgs/Maclaurin.png)
 
 ## Tex dump
 
@@ -96,5 +96,5 @@ Building tex file using [tex start asset](Differentiator/latexStartAsset.txt) an
 
 Some formulas could be really big and overstep the boundaries of latex file. Because of that I have coded mechanism of variable replacement that finds too long parts of formula and redefines them with variables. There's an example of this behaviour:
 
-![variable replacement](https://github.com/d3clane/Differentiator/tree/main/ReadmeAssets/imgs/Replacement.png)
+![variable replacement](https://github.com/d3clane/Differentiator/blob/main/ReadmeAssets/imgs/Replacement.png)
 
