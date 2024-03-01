@@ -9,18 +9,18 @@ make
 
 ## Description
 
-This program can read math expression in human-readable common form and convert it into the tree. After that math expression could be differentiated and returned as another tree. There are different operations working with differentiating tree:
+This program can read math expression in human-readable common form and convert it into a tree. After that math expression could be differentiated and returned as another tree. There are different operations working with the tree:
 - Differentiate and print
 - Set up Maclaurin Series up to nth term, print it and show up on the graph.
 - Find derivative, print it and show it up on the graph
 
-Also program dumps all stages of differentiating into tex file, shows graphs and series there. This tex is kind of parody on math books that often use such phrases as "It's obvious that", "Easy to see that" and so on.
+Also program dumps all stages of differentiating into tex file, shows graphs and series there. This tex is kind of parody on math books that often use such phrases as "It's obviously that", "Easy to see that" and so on.
 
 Software used:
 - C language, makefile
 - GnuPlot to build graphs
 - Luatex to auto generate pdf file
-- Graphviz to build image of tree
+- Graphviz to build image of the tree
 
 ## Reading math expression
 
@@ -45,7 +45,7 @@ NUM     ::= ['0'-'9']+
 Recursive descent is implemented in file [Differentiator/MathExpressionEquationRead.cpp](https://github.com/d3clane/Differentiator/blob/main/Differentiator/MathExpressionEquationRead.cpp)
 
 
-## Building a tree
+## Building the tree
 
 Recursive descent is creating different nodes and I can use it to differentiate math expression and build new tree.
 
@@ -65,7 +65,7 @@ Previous tree differentiated:
 
 ## Simplifying the tree
 
-As you may already mentioned tree seems to be really bulky and there could be unnecessary nodes. Tree looks like this because, for example, $d(x^n) = n * x^(n - 1)$ and my program doesn't calculate $n - 1$ on stage of differentiating. So, there's stage of simplifying for this cases.
+As you may already mentioned the tree seems to be really bulky and there could be unnecessary nodes. The tree looks like this because, for example, $d(x^n) = n * x^(n - 1)$ and my program doesn't calculate $n - 1$ on stage of differentiating. So, there's stage of simplifying for this cases.
 
 Things that are simplified:
 - Calculating constants which contain only number values. So, any subtree which consists only of constants would be merged in one node.
@@ -78,11 +78,11 @@ Result after simplifying:
 
 ## Derivative, Maclaurin Series
 
-Calculating derivative and Maclaurin Series are pretty simple as soon I have already implemented differentiating function. All I needed was calculating tree with variables values from array. I already had this function and just used it.
+Calculating derivative and Maclaurin Series are pretty simple as soon I have already implemented differentiating function. All I needed was calculating the tree with variables values from array. I already had this function and just used it.
 
 ## Graphs building 
 
-Program builds tree and I have decided to dump it into gnu plot, call gnu plot to build it and then save. So, the main part - dumping. It's kind of obvious - tree dump in infix order. Gnu plot building result:
+Program builds a tree and I have decided to dump it into gnu plot, call gnu plot to build it and then save. So, the main part - dumping. It's kind of obvious - tree dump in infix order. Gnu plot building result:
 
 ![MainGraph](https://github.com/d3clane/Differentiator/blob/main/ReadmeAssets/imgs/MainGraph.png)
 
