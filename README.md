@@ -65,7 +65,7 @@ Previous tree differentiated:
 
 ## Simplifying the tree
 
-As you may already mentioned the tree seems to be really bulky and there could be unnecessary nodes. The tree looks like this because, for example, $d(x^n) = n * x^(n - 1)$ and my program doesn't calculate $n - 1$ on stage of differentiating. So, there's stage of simplifying for this cases.
+As you may already mentioned the tree seems to be really bulky and there could be unnecessary nodes. The tree looks like this because, for example, $d(x^n) = n * x^{n - 1}$ and my program doesn't calculate $n - 1$ on stage of differentiating. So, there's stage of simplifying for this cases.
 
 Things that are simplified:
 - Calculating constants which contain only number values. So, any subtree which consists only of constants would be merged in one node.
@@ -82,7 +82,7 @@ Calculating derivative and Maclaurin Series are pretty simple as soon I have alr
 
 ## Graphs building 
 
-Program builds a tree and I have decided to dump it into gnu plot, call gnu plot to build it and then save. So, the main part - dumping. It's kind of obvious - tree dump in infix order. Gnu plot building result:
+Program builds the tree and I have decided to dump it into gnu plot, call gnu plot to build it and then save. So, the main part - dumping. It's kind of obvious - tree dump in infix order. Gnu plot building result:
 
 ![MainGraph](https://github.com/d3clane/Differentiator/blob/main/ReadmeAssets/imgs/MainGraph.png)
 
@@ -94,7 +94,7 @@ Program builds a tree and I have decided to dump it into gnu plot, call gnu plot
 
 Building tex file using [tex start asset](Differentiator/latexStartAsset.txt) and [tex end asset](Differentiator/latexEndAsset.txt). After that program call luatex and compile [pdf](Differentiator/PHD.pdf). In latex file there are much more graphs and also parody on research paper provided.
 
-Some formulas could be really big and overstep the boundaries of latex file. Because of that I have coded mechanism of variable replacement that finds too long parts of formula and redefines them with variables. There's an example of this behaviour:
+Some formulas could be really big and overstep the boundaries of latex file. Because of that I have coded mechanism of variable replacement that finds too long parts of formula and redefines them with variables. Here's an example of this behaviour:
 
 ![variable replacement](https://github.com/d3clane/Differentiator/blob/main/ReadmeAssets/imgs/Replacement.png)
 
